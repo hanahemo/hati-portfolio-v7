@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Hati — Director of Visual Creative</title>
+  <meta name="description" content="Hati — private portfolio.">
+
+  <!-- Open Graph (프라이빗이지만 공유 시 미리보기용) -->
+  <meta property="og:title" content="Hati — Director of Visual Creative">
+  <meta property="og:description" content="Photo · Graphic · Video · Generative AI">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/assets/images/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/assets/images/og-image.png">
+
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+
+  <link rel="modulepreload" href="/assets/js/main.js">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://lh3.googleusercontent.com">
+
+  <!-- Google Fonts — Inter Tight(디스플레이/UI) + Instrument Serif(악센트) + JetBrains Mono(인덱스) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/components/hud.css">
+  <link rel="stylesheet" href="/assets/css/components/cursor.css">
+  <link rel="stylesheet" href="/assets/css/components/project-modal.css">
+  <link rel="stylesheet" href="/assets/css/sections/gate.css">
+  <link rel="stylesheet" href="/assets/css/sections/hero.css">
+  <link rel="stylesheet" href="/assets/css/sections/selected.css">
+  <link rel="stylesheet" href="/assets/css/sections/allworks.css">
+  <link rel="stylesheet" href="/assets/css/sections/philosophy.css">
+  <link rel="stylesheet" href="/assets/css/sections/clients.css">
+  <link rel="stylesheet" href="/assets/css/sections/about.css">
+  <link rel="stylesheet" href="/assets/css/sections/contact.css">
+  <link rel="stylesheet" href="/assets/css/mobile.css">
+
+  <!-- Libs (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/split-type@0.3.4/umd/index.min.js" defer></script>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<!-- 2막 배경 — Selected 마지막 이미지가 확대·블러·그레인되어 배경이 됨 -->
+<div class="act-bg" id="actBg" aria-hidden="true">
+  <div class="act-bg__frame" id="actBgFrame"><img class="act-bg__img" id="actBgImg" alt="" decoding="async"></div>
+  <div class="act-bg__grain" id="actBgGrain"></div>
+  <div class="act-bg__scrim" id="actBgScrim"></div>
+</div>
+
+<!-- grain overlay -->
+<div class="grain" aria-hidden="true"></div>
+
+<!-- LOADER — 시네마틱 프리로더 -->
+<div class="loader" id="loader" aria-hidden="true">
+  <span class="loader__label">Loading</span>
+  <span class="loader__pct" id="loaderPct">000%</span>
+</div>
+
+<!-- GATE -->
+<section class="gate" id="gate" role="dialog" aria-modal="true" aria-label="Private room gate">
+  <div class="gate__head">
+    <span class="gate__label">Private Room</span>
+    <span class="gate__label gate__label--r">Hati — Portfolio</span>
+  </div>
+  <div class="gate__main">
+    <h1 class="gate__title">Hati<sup class="gate__sup">®</sup></h1>
+    <p class="gate__sub"></p>
+    <button id="gateEnter" class="gate__enter tlink">Enter <span class="tlink__arrow">→</span></button>
+  </div>
+  <div class="gate__foot">© Hati — Private Room</div>
+</section>
+
+<!-- HUD — 고정 마이크로 내비게이션 -->
+<header class="hud" id="hud">
+  <a class="hud__brand" href="#main">Hati<sup>®</sup></a>
+  <nav class="hud__nav" aria-label="Site">
+    <a href="#works">Works</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- HERO — 스테이트먼트 타이포 → 스크롤 시 웍스 롤(필름스트립) -->
+  <section class="hero" id="hero">
+    <h1 class="sr-only" tabindex="-1">Hati — Director of Visual Creative</h1>
+    <div class="hero__pin">
+      <!-- 색상 여정 앰비언트 글로우 (롤 구간, 포커스 작품 색을 따라감) -->
+      <div class="hero__glow" id="heroGlow" aria-hidden="true"></div>
+      <!-- 시네마틱 영상 인트로 (데스크탑 스크럽 경로에서 JS가 src 주입+재생) -->
+      <div class="hero__media" id="heroMedia" aria-hidden="true">
+        <video class="hero__video" id="heroVideo" playsinline muted preload="none" poster="/uploads/hero-poster.jpg"></video>
+        <div class="hero__scrim"></div>
+      </div>
+      <div class="hero__veil" id="heroVeil" aria-hidden="true"></div>
+      <div class="hero__ticks" id="heroTicks" aria-hidden="true"></div>
+      <div class="hero__inner">
+        <p class="hero__eyebrow" id="heroEyebrow">Hati® — Visual Creative Studio</p>
+        <div class="hero__display" aria-hidden="true">
+          <span class="hero__line"><span class="hero__line-inner">Director <em class="hero__em">of</em></span></span>
+          <span class="hero__line"><span class="hero__line-inner"><em class="hero__em">Visual</em> Creative</span></span>
+        </div>
+        <div class="hero__meta">
+          <span class="hero__meta-roles">Photo · Graphic · Video · Generative AI</span>
+          <span class="hero__meta-loc">Seoul — EST. 2024</span>
+        </div>
+      </div>
+      <div class="hero__roll" id="heroRoll" role="group" aria-label="Works reel">
+        <div class="hero__strip" id="heroStrip"></div>
+      </div>
+      <div class="hero__foot" aria-hidden="true">
+        <span class="hero__status"><span class="hero__status-dot"></span> Open for projects</span>
+        <span class="hero__scroll">Scroll</span>
+        <span class="hero__copy">©2026</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLIENTS — Trusted By 로고 띠 -->
+  <section class="clients" id="clients">
+    <span class="clients__label">Trusted By</span>
+    <div class="marquee"><div class="marquee__track" id="clientsTrack"></div></div>
+  </section>
+
+  <!-- STATS — 스튜디오 크레덴셜 밴드 (monolog 참고: 대형 스탯 콜아웃) -->
+  <section class="stats" id="stats" aria-label="Studio at a glance">
+    <dl class="stats__row" id="statsRow"></dl>
+  </section>
+
+  <!-- SELECTED WORKS — 가로 시네마 (핀 + 스크롤 구동 수평 이동) -->
+  <section id="selected" aria-label="Selected Works">
+    <h2 class="sr-only">Selected Works</h2>
+    <div class="cinema__pin">
+      <div class="cinema__bar">
+        <span class="section__label"><span class="section__num">01</span>Selected Works</span>
+        <span class="cinema__pos"><span id="cinemaPos">01</span> / <span id="selectedCount">09</span></span>
+      </div>
+      <div class="cinema__viewport">
+        <div class="cinema__track" id="cinemaTrack"></div>
+      </div>
+      <div class="cinema__ticks" id="cinemaTicks" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- COLOR BLEED — Selected 마지막 이미지가 확대·블러·그레인되어 배경(act-bg)이 됨 (1막 다크 → 2막 진입) -->
+  <section class="bleed" id="bleed" aria-hidden="true">
+    <div class="bleed__pin"></div>
+  </section>
+
+  <!-- ALL WORKS -->
+  <section class="section act-light" id="works">
+    <div class="allworks__header">
+      <div>
+        <span class="section__label"><span class="section__num">02</span>Index</span>
+        <h2 class="allworks__title">All Works</h2>
+      </div>
+      <div class="filter-tabs" role="group" aria-label="Filter works">
+        <button class="filter-tab is-active" data-cat="all" aria-pressed="true">All <span class="filter-tab__count">42</span></button>
+        <button class="filter-tab" data-cat="video" aria-pressed="false">Video <span class="filter-tab__count">25</span></button>
+        <button class="filter-tab" data-cat="photo" aria-pressed="false">Photo <span class="filter-tab__count">10</span></button>
+        <button class="filter-tab" data-cat="graphic" aria-pressed="false">Graphic <span class="filter-tab__count">07</span></button>
+      </div>
+    </div>
+    <div class="allworks__list" id="allWorksGrid"></div>
+  </section>
+
+  <!-- PHILOSOPHY -->
+  <section class="philosophy section act-light" id="philosophy">
+    <h2 class="sr-only">Philosophy</h2>
+    <p class="philosophy__text" id="philosophyText">Purpose breeds density.<span class="line2">Density breathes life.</span></p>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section act-light" id="about">
+    <span class="section__label"><span class="section__num">03</span>About</span>
+    <div class="about__grid">
+      <div>
+        <span class="about__meta">Director · EST. 2024</span>
+        <h2 class="about__title" id="aboutTitle">Hati Studio</h2>
+        <p class="about__text" id="aboutText"></p>
+        <blockquote class="about__quote" id="aboutQuote"></blockquote>
+        <div class="about__sns" id="aboutSns"></div>
+      </div>
+      <div class="about__gallery" id="aboutGallery"></div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact section act-light" id="contact">
+    <span class="section__label"><span class="section__num">04</span>Contact</span>
+    <h2 class="contact__mega">Let’s <em class="contact__em">create</em>.</h2>
+    <div class="contact__links">
+      <button class="contact__link" id="contactEmail" data-cursor="copy">Email</button>
+      <button class="contact__link" id="contactPhone" data-cursor="copy">Phone</button>
+    </div>
+    <div class="contact__foot">© 2026 Hati Studio. All rights reserved.</div>
+  </section>
+
+</main>
+
+<!-- Project view — 풀페이지 시네마틱 (키컬러 배경 전환 + 거대 타이틀) -->
+<div class="pview" id="projectModal" role="dialog" aria-modal="true" aria-labelledby="pmTitle" hidden>
+  <div class="pview__bg" aria-hidden="true"></div>
+  <div class="pview__scroll" data-lenis-prevent>
+    <header class="pview__top">
+      <span class="pview__pos"><span id="pmNum">01</span> <span class="pview__slash">/</span> <span id="pmTotal">42</span></span>
+      <span class="pview__cat" id="pmCat"></span>
+      <button class="pview__close" data-close aria-label="Close">Close <span aria-hidden="true">✕</span></button>
+    </header>
+
+    <section class="pview__hero">
+      <h2 class="pview__title" id="pmTitle"></h2>
+      <div class="pview__lead" id="pmLead"></div>
+      <div class="pview__explore" id="pmExplore" aria-hidden="true">Explore <span>↓</span></div>
+    </section>
+
+    <section class="pview__about">
+      <p class="pview__desc" id="pmDesc"></p>
+      <dl class="pview__facts" id="pmDetails"></dl>
+    </section>
+
+    <section class="pview__more">
+      <div class="pview__gallery" id="pmGallery"></div>
+      <div class="pview__tags" id="pmTags"></div>
+    </section>
+
+    <nav class="pview__nav" aria-label="Project navigation">
+      <button class="pv-nav pv-nav--prev" id="pmPrev" type="button">
+        <span class="pv-nav__dir" aria-hidden="true">← Prev</span>
+        <span class="pv-nav__title" id="pmPrevTitle"></span>
+      </button>
+      <button class="pv-nav pv-nav--next" id="pmNext" type="button">
+        <span class="pv-nav__dir" aria-hidden="true">Next →</span>
+        <span class="pv-nav__title" id="pmNextTitle"></span>
+      </button>
+    </nav>
+  </div>
+  <div class="pview__actions" id="pmActions" hidden></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="/assets/js/main.js"></script>
+</body>
+</html>

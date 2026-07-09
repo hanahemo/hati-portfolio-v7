@@ -1,0 +1,263 @@
+/* Hero v7.1 — 스테이트먼트 타이포 → 스크롤 웍스 롤 (aristide 필름스트립 문법) */
+.hero { position: relative; }
+
+/* 핀 스테이지 — GSAP pin 대상 */
+.hero__pin {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  padding: var(--space-8) var(--page-pad-x) var(--space-5);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── 시네마틱 영상 인트로 (스테이트먼트 뒤 재생, 스크롤 시 줌+암전 핸드오프) ── */
+.hero__media {
+  position: absolute; inset: 0;
+  /* 패딩을 상쇄해 풀블리드 (transform은 gsap 스케일 전용이라 마진으로 센터링/블리드 처리) */
+  margin: calc(-1 * var(--space-8)) calc(-1 * var(--page-pad-x)) calc(-1 * var(--space-5));
+  z-index: 0;
+  overflow: hidden;
+  transform-origin: center center;
+  will-change: transform;
+}
+.hero__video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* 영상이 주인공 — 거의 풀 밝기 (Hati 지시: 더 밝고 전면적으로) */
+  filter: brightness(0.94) saturate(1.06) contrast(1.02);
+}
+.hero__scrim {
+  position: absolute; inset: 0;
+  /* 스크림은 타이포 영역(좌하단)에만 국소 — 우상단 영상은 밝게 노출 */
+  background:
+    linear-gradient(118deg, rgba(16,16,16,0.72) 0%, rgba(16,16,16,0.34) 36%, rgba(16,16,16,0.06) 64%, rgba(16,16,16,0) 100%),
+    linear-gradient(0deg, rgba(16,16,16,0.66) 0%, rgba(16,16,16,0.14) 38%, rgba(16,16,16,0) 66%);
+}
+.hero__veil {
+  position: absolute; inset: 0;
+  margin: calc(-1 * var(--space-8)) calc(-1 * var(--page-pad-x)) calc(-1 * var(--space-5));
+  z-index: 0;                          /* media 다음 DOM → 위에 합성. 롤 구간에 암전 */
+  background: var(--color-bg);
+  opacity: 0;
+  pointer-events: none;
+}
+/* 영상 인트로는 데스크탑 스크럽 경로 전용 — 정적/감속모드는 기존 다크 히어로 */
+.hero--static .hero__media,
+.hero--static .hero__veil { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .hero__media, .hero__veil { display: none; }
+}
+
+/* ── 색상 여정 앰비언트 글로우 — 포커스 작품 색을 따라 은은히 번짐(바이어스 조명) ── */
+.hero__glow {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 56vw; height: 52vh;       /* 릴을 감싸는 헤일로 크기(배경은 다크 유지) */
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: hsl(40, 60%, 55%);   /* JS가 포커스 색으로 갱신 */
+  filter: blur(85px);
+  opacity: 0;                       /* JS가 롤 구간에 페이드 인 */
+  z-index: 0;                       /* 슬랫/미디어 뒤 — 위아래 데드존에 헤일로로 노출 */
+  pointer-events: none;
+  mix-blend-mode: screen;          /* 다크 캔버스에 빛을 더함 */
+  transition: opacity 0.6s ease, background-color 0.5s linear;
+  will-change: opacity, background-color;
+}
+.hero--static .hero__glow,
+.hero__pin .hero__glow[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .hero__glow { display: none; } }
+
+.hero__inner {
+  grid-row: 1;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--space-6);
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;   /* 텍스트 레이어(인터랙션 요소 없음) — 롤 슬랫 클릭이 통과되도록 */
+}
+
+.hero__eyebrow {
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--color-text-mute);
+}
+
+/* 디스플레이 라인 — 마스크 리빌 */
+.hero__display { display: grid; gap: 0; user-select: none; }
+.hero__line {
+  display: block;
+  overflow: hidden;
+  padding: 0.04em 0.12em 0.08em 0;   /* 이탤릭 글리프 오버행 여유 */
+  margin-left: -0.02em;
+}
+.hero__line-inner {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-mega);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  color: var(--color-text);
+  will-change: transform;
+  text-shadow: 0 2px 34px rgba(0, 0, 0, 0.55);   /* 밝은 영상 위 가독성 */
+}
+.hero__em {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  background: var(--grad-key);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;   /* 그라데이션 클립 텍스트는 섀도 제외(할로 방지) */
+}
+
+.hero__meta {
+  display: flex; align-items: baseline; gap: var(--space-6);
+  flex-wrap: wrap;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.hero__meta-loc { color: var(--color-text-mute); }
+
+/* ── 인덱스 틱 (작품 수만큼, 상단 중앙) ── */
+.hero__ticks {
+  position: absolute;
+  top: calc(var(--space-5) + 44px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: flex-start; gap: 5px;
+  z-index: 3;
+  opacity: 0;                      /* 롤 페이즈에서 JS로 표시 */
+  pointer-events: none;
+}
+.hero__tick {
+  width: 1px; height: 10px;
+  background: var(--color-text-mute);
+  transition: height var(--dur-fast) linear, background var(--dur-fast) linear;
+}
+.hero__tick.is-on {
+  height: 18px;
+  background: var(--grad-key);
+}
+
+/* ── 웍스 롤 — 얇은 세로 스트립 물결 필름스트립 ── */
+.hero__roll {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  z-index: 1;
+  opacity: 0;                      /* 스크럽 타임라인이 페이드 인 */
+  pointer-events: none;            /* 표시 전 클릭 차단 — JS가 해제 */
+}
+.hero__roll.is-live { pointer-events: auto; }
+.hero__strip {
+  position: relative;
+  width: 100%;
+  height: min(78vh, 900px);        /* JS가 SLATH로 인라인 오버라이드 — 데드밴드 최소화 */
+  margin: 0 auto;
+}
+/* 슬랫: 절대배치, JS가 매 프레임 translate3d + scaleX 로 물결 폭 구동 */
+.hero__slat {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: var(--color-bg-soft);
+  overflow: hidden;
+  display: block;
+  transform-origin: left center;   /* scaleX 압축 기준 */
+  backface-visibility: hidden;
+  contain: layout paint;           /* 슬랫 내부 변경이 바깥 레이아웃/페인트에 전파 안 되게 */
+}
+/* 레이어 승격은 롤이 실제로 구동되는 활성 구간에만 — 상시 84레이어 승격 방지 */
+.hero__roll--dyn.is-live .hero__slat { will-change: transform; }
+.hero__slat img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) brightness(0.5);
+}
+.hero--static .hero__slat:hover img,
+.hero--static .hero__slat:focus-visible img {
+  filter: grayscale(0) brightness(1);
+}
+
+/* 정적 폴백 — 얇은 세로 스트립 가로 스크롤 */
+.hero--static .hero__strip {
+  height: auto;
+  display: flex; gap: 4px;
+  overflow-x: auto;
+  padding-bottom: var(--space-4);
+}
+.hero--static .hero__slat {
+  position: relative;
+  flex: 0 0 auto;
+  width: 84px !important;
+  height: 40vh;
+  transform: none !important;
+}
+
+/* 하단 스트립 */
+.hero__foot {
+  grid-row: 2;
+  display: flex; justify-content: space-between; align-items: center;
+  max-width: 1600px; width: 100%; margin: 0 auto;
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--color-text-mute);
+  position: relative;
+  z-index: 2;
+  pointer-events: none;   /* 장식 스트립 — 롤 슬랫 클릭 통과 */
+}
+.hero__status { display: inline-flex; align-items: center; gap: 8px; }
+.hero__status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--grad-key);
+}
+.hero__scroll { animation: heroScrollHint 2.6s ease-in-out infinite; }
+@keyframes heroScrollHint {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+/* ── 정적 폴백 (reduced-motion / GSAP 부재) — 롤을 일반 가로 스크롤 열로 ── */
+.hero--static .hero__pin { grid-template-rows: 1fr auto auto; }
+.hero--static .hero__roll {
+  position: static;
+  opacity: 1;
+  pointer-events: auto;
+  overflow-x: auto;
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.hero--static .hero__strip { padding-left: 0; }
+.hero--static .hero__slat { height: 32vh; }
+.hero--static .hero__slat img { filter: grayscale(0.4) brightness(0.8); }
+.hero--static .hero__ticks { display: none; }
+.hero--static .hero__inner { align-content: start; padding-top: var(--space-7); }
+/* 터치엔 hover가 없어 폴백이 영구 흑백으로 죽음 — 풀컬러로 노출 */
+@media (hover: none) {
+  .hero--static .hero__slat img { filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll { animation: none; }
+  .hero__slat img { transition: none; }
+}
+
+@media (max-width: 767px) {
+  /* 슬랫은 스트립(SLATH, 모바일 캡)의 100% 유지 — 별도 높이 지정 시 스트립과 어긋나 데드밴드 발생 */
+  .hero__ticks { gap: 3px; top: calc(var(--space-4) + 40px); }
+  .hero__tick { height: 8px; }
+  .hero__tick.is-on { height: 14px; }
+}

@@ -1,0 +1,54 @@
+/* Gate — 프라이빗 진입, 리파인드 다크 */
+.gate {
+  position: fixed; inset: 0;
+  z-index: var(--z-gate);
+  background: var(--color-bg);
+  display: grid; grid-template-rows: auto 1fr auto;
+  padding: var(--space-5) var(--page-pad-x);
+  transition: opacity var(--dur-slow) var(--ease-signature), visibility var(--dur-slow);
+}
+.gate.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.gate__head {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.gate__label {
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--color-text-mute);
+}
+
+.gate__main {
+  display: grid; place-items: center; text-align: center;
+  align-content: center;
+  gap: var(--space-6);
+}
+.gate__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-hero);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--color-text);
+}
+.gate__sup {
+  font-size: 0.14em;
+  font-weight: 500;
+  vertical-align: super;
+  letter-spacing: 0;
+  color: var(--color-text-dim);
+}
+.gate__sub {
+  font-size: var(--fs-body);
+  color: var(--color-text-dim);
+  max-width: 52ch;
+  letter-spacing: 0.02em;
+}
+.gate__enter { font-size: 12px; }
+
+.gate__foot {
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--color-text-mute);
+  text-align: center;
+}

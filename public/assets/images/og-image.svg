@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="vign" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#151515"/>
+      <stop offset="100%" stop-color="#0E0E0E"/>
+    </radialGradient>
+  </defs>
+
+  <!-- bg -->
+  <rect width="1200" height="630" fill="url(#vign)"/>
+
+  <!-- top hud row -->
+  <text x="80" y="92" font-family="'Inter Tight', 'Helvetica Neue', sans-serif" font-weight="600" font-size="22" fill="#E9E7E2" letter-spacing="0">Hati®</text>
+  <text x="1120" y="92" text-anchor="end" font-family="'Inter Tight', sans-serif" font-weight="500" font-size="13" fill="rgba(233,231,226,0.5)" letter-spacing="4">PRIVATE ROOM — PORTFOLIO</text>
+
+  <!-- statement -->
+  <text x="80" y="330" font-family="'Inter Tight', 'Helvetica Neue', sans-serif" font-weight="600" font-size="104" fill="#E9E7E2" letter-spacing="-4">Director <tspan font-family="Georgia, serif" font-style="italic" font-weight="400" fill="rgba(233,231,226,0.65)">of</tspan></text>
+  <text x="80" y="440" font-family="'Inter Tight', 'Helvetica Neue', sans-serif" font-weight="600" font-size="104" fill="#E9E7E2" letter-spacing="-4"><tspan font-family="Georgia, serif" font-style="italic" font-weight="400" fill="rgba(233,231,226,0.65)">Visual</tspan> Creative</text>
+
+  <!-- meta row -->
+  <text x="80" y="512" font-family="'Inter Tight', sans-serif" font-weight="500" font-size="14" fill="rgba(233,231,226,0.6)" letter-spacing="4">PHOTO · GRAPHIC · VIDEO · GENERATIVE AI</text>
+
+  <!-- bottom footer -->
+  <text x="80" y="566" font-family="'Inter Tight', sans-serif" font-weight="500" font-size="11" fill="rgba(233,231,226,0.4)" letter-spacing="3">© 2026 HATI STUDIO</text>
+  <text x="1120" y="566" text-anchor="end" font-family="'Inter Tight', sans-serif" font-weight="500" font-size="11" fill="rgba(233,231,226,0.4)" letter-spacing="3">SEOUL — EST. 2024</text>
+</svg>

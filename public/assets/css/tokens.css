@@ -1,0 +1,92 @@
+/* Hati Portfolio — Design Tokens v7 "refined dark minimal"
+   refs: aristidebenoist.com (근검정, 마이크로 HUD, 딤→브라이튼) · elvalabs.ai (시네마틱, 대형 스테이트먼트)
+   변수명은 v5.1과 호환 유지 — 값만 모노크롬 체계로 교체 */
+:root {
+  /* colors — warm monochrome */
+  --color-bg: #101010;
+  --color-bg-soft: #161616;
+  --color-surface: #1B1B1B;
+  --color-neon: #E9E7E2;                     /* (legacy name) accent = warm off-white */
+  --color-neon-soft: rgba(233,231,226,0.07);
+  --color-neon-glow: rgba(233,231,226,0.16);
+  --color-text: #E9E7E2;
+  --color-text-dim: rgba(233,231,226,0.62);
+  --color-text-mute: rgba(233,231,226,0.55);   /* 라벨/필터탭 등 텍스트 — WCAG AA(≈5:1) 확보 (구 0.40은 대비 미달) */
+  --color-hairline: rgba(233,231,226,0.32);     /* 순수 장식 헤어라인/틱 — 텍스트 아님 */
+  --color-border: rgba(233,231,226,0.14);
+  --color-border-neon: rgba(233,231,226,0.55);
+  --color-error-border: rgba(233,231,226,0.28);
+  /* category accents — v7 모노크롬 통일 (컬러는 작업물 미디어에만) */
+  --cat-photo: rgba(233,231,226,0.62);
+  --cat-graphic: rgba(233,231,226,0.62);
+  --cat-video: rgba(233,231,226,0.62);
+  /* key color — 라벤더 → 파스텔핑크 그라데이션 (어드민 settings.keyColorA/B 연동) */
+  --key-a: #C7B9FF;
+  --key-b: #FFC4DC;
+  --grad-key: linear-gradient(120deg, var(--key-a) 0%, var(--key-b) 100%);
+  /* light inversion — 프로젝트 모달 (aristide 프로젝트 페이지 반전) */
+  --light-bg: #E9E7E2;
+  --light-surface: #DEDCD6;
+  --light-text: #131313;
+  --light-dim: rgba(19,19,19,0.62);
+  --light-mute: rgba(19,19,19,0.42);
+  --light-line: rgba(19,19,19,0.16);
+
+  /* spacing (8px base) */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 80px;
+  --space-9: 120px; --space-10: 160px;
+  --grid-gap: 20px; --grid-gap-mobile: 12px;
+  --page-pad-x: clamp(20px, 4vw, 64px);
+
+  /* radii — 프리미엄 에디토리얼: 거의 샤프 */
+  --radius-pill: 999px;
+  --radius-card: 2px;
+  --radius-sticker: 2px;
+  --radius-chip: 2px;
+
+  /* typography */
+  --font-display: 'Inter Tight', 'Pretendard Variable', 'Noto Sans KR', system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Pretendard Variable', ui-monospace, monospace;
+  --fs-micro: 10px;
+  --fs-label: 11px;
+  --fs-body:  clamp(14px, 1vw, 16px);
+  --fs-body-lg: clamp(16px, 1.2vw, 19px);
+  --fs-h3: clamp(20px, 2.2vw, 30px);
+  --fs-h2: clamp(32px, 4.5vw, 60px);
+  --fs-h1: clamp(48px, 7vw, 110px);
+  --fs-mega: clamp(52px, 8.5vw, 150px);      /* hero display / contact */
+  --fs-hero: clamp(80px, 14vw, 220px);       /* gate wordmark */
+
+  /* z-index */
+  --z-base: 0;
+  --z-grain: 5;
+  --z-overlay-card: 10;
+  --z-nav: 50;
+  --z-toast: 80;
+  --z-gate: 200;
+  --z-cursor: 2000;   /* 항상 최상위 — 모달(1000)/게이트(200) 위 */
+
+  /* motion */
+  --ease-signature: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-snap: cubic-bezier(0.7, 0, 0.3, 1);
+  --dur-fast: 120ms; --dur-base: 280ms; --dur-slow: 560ms; --dur-reveal: 900ms;
+
+  /* shadows — 글로우 제거, 뉴트럴 깊이만 */
+  --glow-neon-sm: 0 6px 24px rgba(0,0,0,0.35);
+  --glow-neon-md: 0 12px 40px rgba(0,0,0,0.45);
+  --glow-neon-lg: 0 24px 80px rgba(0,0,0,0.55);
+  --glow-neon-text: none;
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

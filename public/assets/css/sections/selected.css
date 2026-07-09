@@ -1,0 +1,144 @@
+/* Selected Works — 가로 시네마 */
+#selected { position: relative; }
+.cinema__pin {
+  height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: var(--space-6) 0 var(--space-6);
+  overflow: hidden;
+}
+
+/* 상단 바 */
+.cinema__bar {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 0 var(--page-pad-x);
+}
+.cinema__pos {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label); letter-spacing: 0.14em;
+  color: var(--color-text-mute);
+}
+.cinema__pos #cinemaPos {
+  background: var(--grad-key);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* 뷰포트 + 트랙 — 프레임은 JS가 절대배치(포커스 카루셀) */
+.cinema__viewport {
+  align-self: center;
+  width: 100%;
+  overflow: visible;
+}
+.cinema__track {
+  position: relative;
+  width: 100%;
+  will-change: transform;
+}
+/* 2막 인수인계 중 — 트랙 숨김. act-bg 복사본이 동일 좌표로 자리를 이어받으므로
+   원본 프레임이 위로 흘러가며 겹쳐 보이는 이중노출(고스트)을 제거. transform은 JS 스크럽이 계속 구동. */
+.cinema__track.is-handed-off { opacity: 0; pointer-events: none; }
+
+/* 프레임 — 포커스 카루셀. 중앙 1.0 → 사이드 0.5 스케일(극적 크기차), 풀컬러 + 베일 */
+.cframe {
+  position: absolute;
+  top: 0; left: 0;
+  display: block;
+  transform-origin: left center;   /* 렌더폭이 JS의 rw와 일치하도록 좌단 기준 스케일 */
+  will-change: transform;
+  backface-visibility: hidden;
+}
+.cframe__media {
+  position: relative;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--color-bg-soft);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);   /* 정적 그림자 — 이동 시 리페인트 없음(합성만) */
+}
+.cframe__media img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;                             /* 풀컬러, filter 없음 */
+}
+/* 다크 베일 — 사이드로 갈수록 어둡게 (opacity = 컴포지터) */
+.cframe__media::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: #0a0a0a;
+  opacity: calc((1 - var(--focus, 0)) * 0.62);
+  pointer-events: none;
+}
+.cframe__n {
+  position: absolute; top: 18px; left: 22px; z-index: 2;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.85);
+  text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+}
+.cframe__title {
+  position: absolute; left: 24px; bottom: 22px; z-index: 2;
+  max-width: 82%;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(24px, 4vw, 60px);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-shadow: 0 2px 30px rgba(0,0,0,0.6);
+  opacity: calc(0.35 + var(--focus, 0) * 0.65);
+  transform: translateY(calc((1 - var(--focus, 0)) * 10px));
+  word-break: keep-all;   /* --focus는 JS 스크럽이 구동 — CSS 트랜지션이 스크럽과 어긋나므로 제거 */
+}
+.cframe__view {
+  position: absolute; right: 24px; bottom: 26px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+  opacity: var(--focus, 0);
+}
+.cframe__view span { transition: transform var(--dur-base) var(--ease-out-quart); }
+.cframe:hover .cframe__view span { transform: translateX(5px); }
+
+/* 하단 진행 틱 */
+.cinema__ticks {
+  display: flex; justify-content: center; gap: 6px;
+  padding: 0 var(--page-pad-x);
+}
+.cinema__tick {
+  width: 22px; height: 2px;
+  background: var(--color-border);
+  transition: background 200ms linear;
+}
+.cinema__tick.is-on { background: var(--grad-key); }
+
+/* 폴백 — 네이티브 가로 스크롤-스냅 (터치/reduced-motion). 절대배치 카루셀 → 일반 플로우 복구 */
+.cinema--static .cinema__pin { height: auto; padding: var(--space-9) 0; }
+.cinema--static .cinema__track {
+  position: static;
+  display: flex; align-items: center;
+  gap: clamp(20px, 3vw, 48px);
+  height: auto !important;
+  padding: 0 var(--page-pad-x);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.cinema--static .cinema__track::-webkit-scrollbar { display: none; }
+.cinema--static .cframe {
+  position: relative; flex: 0 0 auto;
+  width: min(82vw, 900px) !important; height: auto !important;
+  transform: none !important;                       /* 스케일 없음 */
+  scroll-snap-align: center;
+}
+.cinema--static .cframe__media { aspect-ratio: 16 / 9; height: auto; }
+.cinema--static .cframe__media::after { opacity: 0; }   /* 베일 없음 — 전부 밝게(풀컬러) */
+.cinema--static .cframe__title, .cinema--static .cframe__view { opacity: 1; transform: none; }
+
+@media (max-width: 767px) {
+  .cinema--static .cframe__title { font-size: clamp(20px, 6vw, 34px); }
+}

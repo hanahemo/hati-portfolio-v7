@@ -1,0 +1,193 @@
+/* Project view — 풀페이지 시네마틱 (키컬러 배경 전환 + 거대 키네틱 타이틀) */
+.pview {
+  position: fixed; inset: 0;
+  z-index: 1000;
+  --pv-text: #1a1622;
+  --pv-dim: rgba(26,22,34,0.62);
+  --pv-mute: rgba(26,22,34,0.42);
+  --pv-line: rgba(26,22,34,0.14);
+  --pv-surface: rgba(26,22,34,0.05);
+  color: var(--pv-text);
+}
+.pview[hidden] { display: none; }
+
+/* 키컬러 라이트 워시 배경 — 어드민 key-a/key-b 연동 */
+.pview__bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(155deg, #ECE8FF 0%, #FDEAF2 55%, #FFF5F9 100%);
+  background: linear-gradient(155deg,
+    color-mix(in srgb, var(--key-a) 30%, white) 0%,
+    color-mix(in srgb, var(--key-b) 26%, white) 60%,
+    color-mix(in srgb, var(--key-b) 12%, white) 100%);
+  clip-path: inset(0 0 100% 0);          /* 열림 시 위→아래로 펼쳐짐 */
+  transition: clip-path 720ms var(--ease-signature);
+}
+.pview.is-in .pview__bg { clip-path: inset(0 0 0 0); }
+
+.pview__scroll {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  opacity: 0;
+  transition: opacity 500ms var(--ease-signature) 180ms;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pv-mute) transparent;
+}
+.pview.is-in .pview__scroll { opacity: 1; }
+.pview__scroll::-webkit-scrollbar { width: 9px; }
+.pview__scroll::-webkit-scrollbar-thumb { background: var(--pv-mute); border-radius: 5px; }
+
+/* 상단 바 — sticky */
+.pview__top {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: baseline; gap: var(--space-5);
+  padding: var(--space-5) var(--page-pad-x);
+  mix-blend-mode: normal;
+}
+.pview__pos {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.12em;
+}
+.pview__slash { color: var(--pv-mute); }
+.pview__cat {
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--pv-dim);
+}
+.pview__close {
+  margin-left: auto;
+  position: relative;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--pv-text);
+  padding: 4px 0 6px;
+  cursor: pointer;
+}
+.pview__close::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px; background: var(--pv-text);
+  transform-origin: left; transition: transform var(--dur-slow) var(--ease-out-quart);
+}
+.pview__close:hover::after { transform: scaleX(0.3); }
+
+/* 히어로 랜딩 — 거대 타이틀 + 대형 리드 미디어 (레이어드) */
+.pview__hero {
+  padding: clamp(40px, 9vh, 96px) var(--page-pad-x) var(--space-8);
+  position: relative;
+}
+.pview__title {
+  font-family: var(--font-display);       /* 시스템 타입 팔레트 통일 — Inter Tight 700 (구 Anton 포스터체 폐기) */
+  font-weight: 700;
+  font-size: clamp(48px, 10.5vw, 180px);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  color: var(--pv-text);
+  max-width: 15ch;
+  word-break: keep-all;
+  position: relative; z-index: 2;
+  margin-bottom: -0.04em;                 /* 리드 이미지가 타이틀 하단에 겹치도록 */
+}
+.pview__title .pv-word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; }
+.pview__title .pv-word > span { display: inline-block; will-change: transform; }
+
+.pview__lead {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;                      /* 초대형 이미지 제한 (레이아웃 안정) */
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--pv-surface);
+  z-index: 1;
+}
+.pview__lead > img { display: block; width: 100%; height: auto; }   /* 원본 비율 */
+.pview__lead .pv-media--video { position: relative; aspect-ratio: 16/9; }
+.pview__lead .pv-media--video iframe, .pview__lead .pv-media--video video {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000;
+}
+
+.pview__explore {
+  margin-top: var(--space-6);
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--pv-dim);
+}
+.pview__explore span { animation: pvNudge 2s ease-in-out infinite; }
+@keyframes pvNudge { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+/* About — 설명 + 팩트(Role/Contribution/Result/Credits). 확실히 노출 */
+.pview__about {
+  display: grid; grid-template-columns: 1.15fr 1fr;
+  gap: clamp(28px, 6vw, 96px);
+  padding: var(--space-8) var(--page-pad-x);
+  border-top: 1px solid var(--pv-line);
+  align-items: start;
+}
+.pview__about:has(.pview__desc:empty):has(.pview__facts:empty) { display: none; }
+.pview__desc {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.2vw, 28px);
+  line-height: 1.55; color: var(--pv-text);
+  white-space: pre-line; word-break: keep-all;
+  letter-spacing: -0.01em;
+}
+.pview__desc:empty { display: none; }
+.pview__facts { display: grid; gap: var(--space-5); align-content: start; }
+.pview__facts:empty { display: none; }
+.pview__row { display: grid; grid-template-columns: 130px 1fr; gap: var(--space-4); align-items: baseline; }
+.pview__row dt {
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--pv-mute);
+}
+.pview__row dd { font-size: 15px; line-height: 1.7; color: var(--pv-dim); white-space: pre-line; word-break: keep-all; }
+
+/* 케이스 스터디 갤러리 — 원본 비율 메이슨리(컬럼 패킹) */
+.pview__more { padding: var(--space-7) var(--page-pad-x) var(--space-8); }
+.pview__gallery { columns: 2; column-gap: var(--grid-gap); }
+.pview__gallery:empty { display: none; }
+.pv-media {
+  break-inside: avoid;
+  margin-bottom: var(--grid-gap);
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-card); background: var(--pv-surface);
+}
+.pv-media img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+.pv-media--video { position: relative; aspect-ratio: 16/9; }
+.pv-media--video iframe, .pv-media--video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+.pview__media-fail {
+  min-height: 150px; display: grid; place-items: center;
+  border: 1px dashed var(--pv-line); border-radius: var(--radius-card);
+  font-size: 13px; color: var(--pv-dim);
+}
+.pview__tags { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--pv-line); }
+.pview__tags:empty { display: none; }
+.pview__tag { font-size: var(--fs-micro); font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pv-mute); }
+
+/* 이전/다음 */
+.pview__nav {
+  display: flex; justify-content: space-between; gap: var(--space-4);
+  padding: var(--space-7) var(--page-pad-x) var(--space-9);
+  border-top: 1px solid var(--pv-line);
+}
+.pv-nav { display: flex; flex-direction: column; gap: 6px; cursor: pointer; max-width: 46%; }
+.pv-nav[hidden] { display: none; }
+.pv-nav--next { align-items: flex-end; text-align: right; margin-left: auto; }
+.pv-nav__dir { font-size: var(--fs-label); font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pv-mute); transition: color var(--dur-base); }
+.pv-nav__title { font-family: var(--font-display); font-weight: 600; font-size: clamp(16px, 1.8vw, 24px); letter-spacing: -0.02em; color: var(--pv-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; transition: color var(--dur-base); }
+.pv-nav:hover .pv-nav__dir, .pv-nav:hover .pv-nav__title { color: var(--pv-text); }
+
+body.pm-open { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pview__bg { transition: none; clip-path: inset(0 0 0 0); }
+  .pview__scroll { transition: none; }
+  .pview__explore span { animation: none; }
+}
+
+@media (max-width: 767px) {
+  .pview__hero { padding-top: var(--space-6); }
+  .pview__title { font-size: clamp(38px, 13vw, 72px); margin-bottom: -0.02em; }
+  .pview__about { grid-template-columns: 1fr; gap: var(--space-6); }
+  .pview__gallery { columns: 1; }
+  .pview__row { grid-template-columns: 90px 1fr; gap: var(--space-3); }
+  .pview__explore { display: none; }
+}

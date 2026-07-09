@@ -1,0 +1,58 @@
+/* Clients — Trusted By 로고 띠 (심리스 마퀴) */
+.clients {
+  padding: var(--space-7) 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+}
+.clients__label {
+  display: block; text-align: center;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--color-text-mute);
+  margin-bottom: var(--space-5);
+}
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
+}
+.marquee__track {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+  animation: clientsMarquee 56s linear infinite;
+}
+/* 아이템 자체 간격 — -50% 루프 이음새 정확히 일치 */
+.marquee__item {
+  display: inline-block;
+  vertical-align: middle;
+  padding-right: clamp(56px, 6.5vw, 110px);
+  opacity: 0.62;
+  transition: opacity var(--dur-base) var(--ease-signature);
+}
+.marquee__item:hover { opacity: 1; }
+.marquee__item img {
+  display: block;
+  height: clamp(40px, 4vw, 68px); width: auto; max-width: none; object-fit: contain;
+  filter: brightness(0) invert(0.92);
+}
+@keyframes clientsMarquee {
+  to { transform: translateX(-50%); }
+}
+/* 호버/포커스 시 일시정지 (WCAG 2.2.2 배려) */
+.marquee:hover .marquee__track,
+.marquee:focus-within .marquee__track { animation-play-state: paused; }
+
+/* reduced-motion — 정적 랩 로우 (JS가 복제 없이 1세트만 렌더) */
+@media (prefers-reduced-motion: reduce) {
+  .clients { padding: var(--space-7) var(--page-pad-x); }
+  .marquee { mask-image: none; -webkit-mask-image: none; }
+  .marquee__track {
+    animation: none;
+    display: flex; flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-5) 0;
+    white-space: normal;
+  }
+}

@@ -1,0 +1,299 @@
+/* Reset + base — v7 refined dark minimal */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  background: var(--color-bg);   /* 캔버스 배경은 html에만 — body에 두면 z-index:-1인 .act-bg가 가려짐 */
+}
+html, body {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+body { font-feature-settings: "tnum"; background: transparent; }
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; line-height: 1.02; letter-spacing: -0.03em; }
+a { color: inherit; text-decoration: none; }
+img, video { max-width: 100%; display: block; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+input, textarea { font: inherit; color: inherit; }
+ul, ol { list-style: none; }
+[hidden] { display: none !important; }
+::selection { background: var(--key-b); color: var(--color-bg); }
+
+/* 키컬러 그라데이션 텍스트 유틸 */
+.grad-text {
+  background: var(--grad-key);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 접근성 포커스 */
+:focus { outline: none; }
+:focus-visible {
+  outline: 1px solid var(--color-text);
+  outline-offset: 4px;
+}
+
+/* Skip link (키보드 전용) */
+.skip-link {
+  position: fixed; top: -120%; left: 50%; transform: translateX(-50%);
+  padding: 10px 20px; background: var(--color-text); color: var(--color-bg);
+  border-radius: var(--radius-chip);
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  z-index: 9999; transition: top 200ms var(--ease-snap);
+}
+.skip-link:focus-visible { top: 16px; }
+
+/* 시각적으로 숨기고 스크린리더에만 노출 */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* 2막 배경 — Selected 마지막 이미지가 확대·블러·그레인되어 배경이 됨 (JS 스크럽) */
+.act-bg {
+  position: fixed; inset: 0;
+  z-index: -1;                 /* body bg 위, 콘텐츠(투명 섹션) 아래 */
+  background: var(--color-bg); /* 1막 = 근검정 */
+  opacity: 0;                  /* 1막엔 숨김, 블리드 때 JS가 페이드 인 */
+  pointer-events: none;
+  overflow: hidden;
+}
+/* 시네마 마지막 프레임과 동일한 16:9 창 — JS가 그 위치/크기로 배치 후 그대로 확대(scale) */
+.act-bg__frame {
+  position: absolute;
+  left: 0; top: 0;
+  transform-origin: center center;   /* 프레임 중심 = 마지막 프레임 중심 → 제자리에서 커짐 */
+  will-change: transform;
+  overflow: hidden;
+  border-radius: var(--radius-card); /* 시네마 프레임과 동일한 라운드 (확대되면 화면 밖) */
+  backface-visibility: hidden;
+}
+.act-bg__img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;     /* .cframe__media img와 동일 크롭 */
+  filter: blur(0px);           /* JS가 블러 심화 */
+  will-change: filter;
+}
+.act-bg__grain {
+  position: absolute; inset: 0;
+  background-image: url('/assets/images/grain.png');
+  background-repeat: repeat;
+  opacity: 0;                  /* JS가 그레인 강화 */
+  mix-blend-mode: overlay;
+}
+.act-bg__scrim {
+  position: absolute; inset: 0;
+  background: rgba(240, 238, 233, 0.72);   /* 2막 = 밝은 프로스티드(웜 페이퍼) 오버레이 — 블러 이미지가 파스텔로 */
+  opacity: 0;
+}
+
+/* 2막 라이트 반전 — 밝은 프로스티드 배경 위 다크 텍스트 (토큰 스코프 오버라이드) */
+.act-light {
+  --color-text: #17140f;
+  --color-text-dim: rgba(23, 20, 15, 0.66);
+  --color-text-mute: rgba(23, 20, 15, 0.46);
+  --color-border: rgba(23, 20, 15, 0.16);
+  --color-bg-soft: rgba(23, 20, 15, 0.05);
+  --color-surface: rgba(23, 20, 15, 0.07);
+  --color-bg: #ecebe6;
+  /* 키컬러 그라데이션(create·인용·philosophy 2행 등)은 라이트에서 흐리므로 진한 버전으로 */
+  --key-a: #6d4fd0;
+  --key-b: #c23d78;
+  --grad-key: linear-gradient(120deg, #6d4fd0, #c23d78);
+  color: var(--color-text);
+}
+
+/* 블리드 전환 — 스크롤 길이 확보용 스페이서 (핀 아님; 확대는 fixed .act-bg가 담당) */
+.bleed { position: relative; }
+.bleed__pin { min-height: 130svh; }
+@media (prefers-reduced-motion: reduce) {
+  .bleed { display: none; }
+  /* 모션 최소화 시 .act-bg가 안 뜨므로 2막 섹션에 라이트 배경 폴백 (다크텍스트 가독 보장) */
+  .act-light { background: #ecebe6; }
+}
+
+/* Grain overlay — 필르믹 노이즈, 극히 미세 */
+.grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: var(--z-grain);
+  background-image: url('/assets/images/grain.png');
+  background-repeat: repeat;
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+}
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .grain { display: none; }
+}
+
+/* 섹션 공통 */
+.section {
+  padding: var(--space-10) var(--page-pad-x);
+  position: relative;
+}
+.section__label {
+  display: inline-flex; align-items: baseline; gap: 10px;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--color-text-mute);
+  margin-bottom: var(--space-5);
+}
+.section__label::before {
+  content: '';
+  width: 24px; height: 1px;
+  background: var(--color-text-mute);
+  align-self: center;
+}
+/* 챕터 넘버 — 에디토리얼 목차(bymonolog 참고) */
+.section__num {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.92em;
+  letter-spacing: 0.04em;
+  color: var(--color-text);
+}
+
+/* ── Stats — 스튜디오 크레덴셜 밴드 (대형 스탯 콜아웃) ── */
+.stats {
+  padding: clamp(52px, 9vh, 120px) var(--page-pad-x);
+  border-bottom: 1px solid var(--color-border);
+}
+.stats__row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
+  max-width: 1600px; margin: 0 auto;
+}
+.stat { display: flex; flex-direction: column; gap: var(--space-3); }
+.stat__label {
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--color-text-mute);
+}
+.stat__num {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(46px, 7vw, 108px);
+  letter-spacing: -0.045em;
+  line-height: 0.88;
+  color: var(--color-text);
+}
+.stat__num .stat__sup {
+  font-family: var(--font-mono);
+  font-size: 0.28em; font-weight: 500;
+  vertical-align: super;
+  letter-spacing: 0;
+  background: var(--grad-key);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+@media (max-width: 767px) {
+  .stats__row { grid-template-columns: repeat(2, 1fr); gap: var(--space-7) var(--space-5); }
+  .stat__num { font-size: clamp(42px, 15vw, 76px); }
+}
+
+/* 마이크로 캡스 유틸 (HUD/메타 공용) */
+.u-caps {
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+}
+
+/* 언더라인 텍스트 링크 — v7 기본 CTA 언어 */
+.tlink {
+  position: relative;
+  display: inline-flex; align-items: baseline; gap: 8px;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--color-text);
+  padding-bottom: 6px;
+  cursor: pointer;
+}
+.tlink::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px; background: var(--grad-key);
+  transform-origin: left center;
+  transition: transform var(--dur-slow) var(--ease-out-quart);
+}
+.tlink:hover::after {
+  transform: scaleX(0.35);
+}
+.tlink .tlink__arrow { transition: transform var(--dur-base) var(--ease-out-quart); }
+.tlink:hover .tlink__arrow { transform: translateX(4px); }
+
+/* 구 pill 클래스 호환 (404 등) — 뉴트럴 텍스트 버튼으로 재해석 */
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--color-text-dim);
+  transition: color var(--dur-base), border-color var(--dur-base), background var(--dur-base);
+}
+.pill:hover { color: var(--color-bg); background: var(--color-text); border-color: var(--color-text); }
+.pill--primary { color: var(--color-text); border-color: var(--color-border-neon); }
+
+/* Loader — 시네마틱 프리로더 (elva 문법: 블러 초대형 % 카운터) */
+.loader {
+  position: fixed; inset: 0;
+  z-index: 300;                        /* gate(200) 위 */
+  background: var(--color-bg);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--page-pad-x);
+  transition: opacity 700ms var(--ease-signature), visibility 700ms;
+}
+.loader.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+.loader__label {
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+.loader__pct {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(64px, 10vw, 160px);
+  letter-spacing: -0.04em;
+  background: var(--grad-key);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: blur(10px);
+  opacity: 0.5;
+  transition: filter 600ms var(--ease-signature), opacity 600ms;
+  font-feature-settings: "tnum";
+}
+.loader.is-ready .loader__pct { filter: blur(0); opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .loader__pct { filter: none; opacity: 1; }
+}
+
+/* Toast */
+.toast {
+  position: fixed; left: 50%; bottom: 28px;
+  transform: translate(-50%, 12px);
+  padding: 10px 18px;
+  background: var(--color-text); color: var(--color-bg);
+  border-radius: var(--radius-chip);
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  opacity: 0; pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-signature),
+              transform var(--dur-base) var(--ease-signature);
+  z-index: var(--z-toast);
+}
+.toast.is-show { opacity: 1; transform: translate(-50%, 0); }
+
+/* 터치 기기 — 마이크로 타이포 컨트롤에 44px 히트 영역 부여 (시각 크기는 유지) */
+@media (hover: none) {
+  .tlink, .hud__nav a, .filter-tab, .contact__link, .pview__close {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}

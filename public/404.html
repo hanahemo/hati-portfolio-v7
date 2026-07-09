@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>404 — Hati</title>
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <style>
+    .err {
+      min-height: 100svh;
+      display: grid; grid-template-rows: auto 1fr auto;
+      padding: var(--space-5) var(--page-pad-x);
+      position: relative;
+    }
+    .err__head, .err__footrow {
+      display: flex; justify-content: space-between;
+      font-size: var(--fs-label); font-weight: 500;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--color-text-mute);
+    }
+    .err__inner {
+      display: grid; place-items: center; align-content: center;
+      text-align: center; gap: var(--space-6);
+    }
+    .err__code {
+      font-size: var(--fs-label); font-weight: 500;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--color-text-mute);
+    }
+    .err__title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: clamp(120px, 24vw, 320px);
+      letter-spacing: -0.05em;
+      line-height: 0.9;
+      color: var(--color-text);
+    }
+    .err__title em {
+      font-family: var(--font-serif);
+      font-style: italic; font-weight: 400;
+      color: var(--color-text-dim);
+    }
+    .err__sub {
+      font-size: var(--fs-body);
+      color: var(--color-text-dim);
+      max-width: 44ch;
+      word-break: keep-all;
+    }
+    .err__cta { display: inline-flex; gap: var(--space-6); flex-wrap: wrap; justify-content: center; }
+    @media (max-width: 640px) {
+      .err__head span:last-child, .err__footrow span:last-child { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <section class="err">
+    <div class="err__head">
+      <span>Private Room — Off Air</span>
+      <span>Hati® Portfolio</span>
+    </div>
+
+    <div class="err__inner">
+      <div class="err__code">Error — Page Not Found</div>
+      <h1 class="err__title" aria-label="404 not found">4<em>0</em>4</h1>
+      <p class="err__sub">이 주파수에서는 아무것도 송출되고 있지 않습니다.</p>
+      <div class="err__cta">
+        <a href="/" class="tlink">Back Home <span class="tlink__arrow">→</span></a>
+        <a href="/#works" class="tlink">All Works <span class="tlink__arrow">→</span></a>
+      </div>
+    </div>
+
+    <div class="err__footrow">
+      <span>© 2026 Hati Studio</span>
+      <span>Seoul — EST. 2024</span>
+    </div>
+  </section>
+</body>
+</html>

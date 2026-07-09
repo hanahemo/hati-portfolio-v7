@@ -1,0 +1,80 @@
+{
+  "heroTitle": "Hati",
+  "heroSubtitle": "Director of Visual Creative, Photography, Graphics & Video, Generative AI",
+  "heroVideo": "/uploads/hero_cerial.mp4",
+  "est": "2020",
+  "keyColorA": "#c7b9ff",
+  "keyColorB": "#ffc4dc",
+  "heroBackground": "",
+  "heroBackgroundType": "",
+  "aboutText": "두 번 다시 오지 않는 순간을 만듭니다. 아티스트의 첫 번째 팬이 되어, \n내 심장이 먼저 뛰게 만드는 것 부터 시작합니다. \n예쁜 것은 스쳐가지만, 이유가 있는 것은 남습니다. \n콘텐츠에 생명력을 불어넣는 그 한 순간을 위해 오늘도 집착합니다.\n",
+  "aboutImage": "/uploads/gallery-1774337315296.JPG",
+  "contactEmail": "gonj917@naver.com",
+  "contactInstagram": "https://www.instagram.com/h.ati.st/",
+  "contactPhone": "010-4187-2759",
+  "contactVimeo": "",
+  "philosophy": "Purpose breeds density. Density breathes life.",
+  "curtainMain": "This is a Private Portfolio Room",
+  "curtainSub": "관람 중에는 정숙해 주시기 바랍니다",
+  "curtainAuthor": "Hati",
+  "clientLogos": [
+    {
+      "url": "/assets/images/logos/lucra.png",
+      "name": "lucra",
+      "id": 1774278172159
+    },
+    {
+      "url": "/assets/images/logos/firstone.png",
+      "name": "firstone",
+      "id": 1774278182604
+    },
+    {
+      "url": "/assets/images/logos/gcwb.png",
+      "name": "gcwb",
+      "id": 1774278187606
+    },
+    {
+      "url": "/assets/images/logos/lotte.png",
+      "name": "lotte",
+      "id": 1774278192987
+    },
+    {
+      "url": "/assets/images/logos/pan_ent.png",
+      "name": "pan ent",
+      "id": 1774278203026
+    },
+    {
+      "url": "/assets/images/logos/pledis.png",
+      "name": "pledis",
+      "id": 1774278209553
+    },
+    {
+      "url": "/assets/images/logos/duo.png",
+      "name": "duo",
+      "id": 1774335617535
+    },
+    {
+      "url": "/assets/images/logos/earnetree.png",
+      "name": "earnetree",
+      "id": 1774335623064
+    }
+  ],
+  "aboutGallery": [
+    "/uploads/gallery-1774337315296.JPG",
+    "/uploads/gallery-1774337320647.JPG",
+    "/uploads/gallery-1774337535022.JPG",
+    "/uploads/gallery-1774338131652.JPG"
+  ],
+  "featuredProjectIds": [
+    4,
+    6,
+    13,
+    2,
+    5,
+    8,
+    3,
+    11,
+    24
+  ],
+  "reelAnchorHue": 46
+}

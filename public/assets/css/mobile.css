@@ -1,0 +1,66 @@
+/* Hati — Mobile overrides (v7)
+   대상: ≤ 767px, 세밀 튠 ≤ 400px */
+
+@media (max-width: 767px) {
+  /* ── 공통 ── */
+  .section { padding: var(--space-8) var(--page-pad-x); }
+  :root {
+    --fs-hero: clamp(56px, 17vw, 110px);
+    --fs-mega: clamp(40px, 11vw, 76px);
+    --fs-h1: clamp(36px, 10vw, 64px);
+    --fs-h2: clamp(26px, 7.5vw, 44px);
+    --space-9: 72px;
+    --space-10: 96px;
+  }
+
+  /* ── Loader ── */
+  .loader__pct { font-size: clamp(48px, 16vw, 96px); }
+
+  /* ── Gate ── */
+  .gate { padding: var(--space-4) var(--page-pad-x); }
+  .gate__main { gap: var(--space-5); }
+  .gate__sub { font-size: 13px; padding: 0 var(--space-2); }
+  .gate__label--r { display: none; }
+
+  /* ── Hero ── */
+  .hero { padding: var(--space-8) var(--page-pad-x) var(--space-4); }
+  .hero__inner { gap: var(--space-5); }
+  .hero__meta { gap: var(--space-3); font-size: 10px; letter-spacing: 0.14em; flex-direction: column; align-items: flex-start; }
+  .hero__foot { font-size: 9px; }
+  .hero__copy { display: none; }
+
+  /* ── All Works ── */
+  .allworks__header { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+  .filter-tabs { gap: var(--space-4); }
+
+  /* ── Philosophy ── */
+  .philosophy { min-height: 70vh; padding: var(--space-8) var(--page-pad-x); }
+  .philosophy__text { font-size: clamp(28px, 8.5vw, 48px); max-width: 100%; }
+
+  /* ── Clients ── */
+  .clients { padding: var(--space-7) var(--page-pad-x); }
+  .marquee__track { gap: var(--space-5) var(--space-6); }
+  .marquee__item img { height: 34px; }
+  .marquee__item { font-size: 10px; }
+
+  /* ── About ── */
+  .about__text { font-size: 15px; line-height: 1.85; }
+  .about__quote { font-size: 18px; }
+
+  /* ── Contact ── */
+  .contact { min-height: 70vh; }
+  .contact__links { gap: var(--space-5); flex-direction: column; align-items: center; margin-bottom: var(--space-7); }
+  .contact__link { font-size: 16px; }
+}
+
+/* 좁은 폰 (iPhone SE 등) */
+@media (max-width: 400px) {
+  :root { --page-pad-x: 16px; }
+}
+
+/* 가로 방향 모바일 */
+@media (max-width: 767px) and (orientation: landscape) {
+  .hero { min-height: auto; }
+  .philosophy { min-height: 90vh; }
+  .contact { min-height: 90vh; }
+}

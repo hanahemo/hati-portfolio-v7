@@ -1,0 +1,90 @@
+/* About — 에디토리얼 2단 */
+.about__grid {
+  display: grid;
+  grid-template-columns: 55fr 45fr;
+  gap: var(--space-8);
+  align-items: start;
+}
+@media (max-width: 1199px) { .about__grid { grid-template-columns: 1fr; gap: var(--space-7); } }
+
+.about__meta {
+  display: inline-block;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--color-text-mute);
+  margin-bottom: var(--space-4);
+}
+.about__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-h1);
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  margin-bottom: var(--space-6);
+}
+.about__text {
+  font-size: var(--fs-body-lg);
+  color: var(--color-text-dim);
+  white-space: pre-line;
+  margin-bottom: var(--space-6);
+  line-height: 1.9;
+  letter-spacing: -0.005em;
+  max-width: 54ch;
+  word-break: keep-all;
+}
+.about__quote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-h3);
+  line-height: 1.4;
+  background: var(--grad-key);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: var(--space-6);
+  max-width: 40ch;
+}
+.about__quote:empty { display: none; }
+.about__sns { display: flex; gap: var(--space-5); flex-wrap: wrap; }
+.about__sns .pill {
+  border: none; padding: 4px 0 8px;
+  border-radius: 0;
+  position: relative;
+  color: var(--color-text);
+}
+.about__sns .pill::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px; background: var(--color-text);
+  transform-origin: left center;
+  transition: transform var(--dur-slow) var(--ease-out-quart);
+}
+.about__sns .pill:hover { background: none; color: var(--color-text); }
+.about__sns .pill:hover::after { transform: scaleX(0.35); }
+
+/* Gallery — 무겹침 스택 */
+.about__gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--grid-gap);
+}
+.about__gallery img {
+  width: 100%; height: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  filter: grayscale(1) brightness(0.85);
+  transition: filter 700ms var(--ease-signature);
+}
+.about__gallery img:hover { filter: grayscale(0) brightness(1); }
+.about__gallery img:nth-child(1) {
+  grid-column: span 2;
+  aspect-ratio: 16 / 10;
+}
+
+@media (max-width: 767px) {
+  .about__gallery { grid-template-columns: repeat(2, 1fr); gap: var(--grid-gap-mobile); }
+}
+@media (hover: none) {
+  .about__gallery img { filter: none; }
+}

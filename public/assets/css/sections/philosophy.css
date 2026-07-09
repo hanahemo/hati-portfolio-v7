@@ -1,0 +1,38 @@
+/* Philosophy — 시네마틱 스테이트먼트 (스크롤 워드 리빌) */
+.philosophy {
+  min-height: 100vh;
+  display: grid; place-items: center;
+  padding: var(--space-9) var(--page-pad-x);
+  position: relative;
+  overflow: hidden;
+}
+
+.philosophy__text {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(36px, 6vw, 96px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-align: center;
+  max-width: 18ch;
+  color: var(--color-text);
+  position: relative; z-index: 1;
+}
+.philosophy__text .line1 { color: var(--color-text); }
+.philosophy__text .line2 {
+  display: block;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  background: var(--grad-key);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* SplitType가 word 스팬으로 분해해도 그라데이션 유지 (transform 스택 컨텍스트 대응) */
+.philosophy__text .line2 .word {
+  background: var(--grad-key);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

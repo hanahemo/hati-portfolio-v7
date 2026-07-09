@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>admin · hati</title>
+  <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&family=Nanum+Gothic+Coding:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body class="admin-body">
+
+  <h1 class="sr-only">hati admin — control room</h1>
+
+  <header class="admin-header">
+    <div class="admin-header__brand">
+      <span class="admin-header__logo">hati</span>
+      <span class="admin-header__tag">/ control room</span>
+    </div>
+    <nav class="admin-header__nav">
+      <a class="admin-pill admin-pill--ghost" href="/" target="_blank" rel="noopener">view site ↗</a>
+      <button id="logoutBtn" class="admin-pill admin-pill--ghost">logout</button>
+    </nav>
+  </header>
+
+  <div class="admin-tabs" role="tablist">
+    <button class="admin-tab is-active" data-tab="projects" role="tab" aria-selected="true">projects</button>
+    <button class="admin-tab" data-tab="featured" role="tab" aria-selected="false">featured</button>
+    <button class="admin-tab" data-tab="reel" role="tab" aria-selected="false">reel order</button>
+    <button class="admin-tab" data-tab="settings" role="tab" aria-selected="false">settings</button>
+    <button class="admin-tab" data-tab="media" role="tab" aria-selected="false">media</button>
+  </div>
+
+  <main class="admin-main">
+
+    <!-- PROJECTS -->
+    <section class="admin-panel is-active" data-panel="projects">
+      <div class="admin-panel__head">
+        <h2 class="admin-panel__title">projects</h2>
+        <div class="admin-panel__actions">
+          <input id="projSearch" class="admin-input admin-input--sm" type="search" placeholder="search…" aria-label="search projects">
+          <select id="projCatFilter" class="admin-input admin-input--sm" aria-label="filter by category">
+            <option value="all">all</option>
+            <option value="photo">photo</option>
+            <option value="graphic">graphic</option>
+            <option value="video">video</option>
+          </select>
+          <span id="projCount" class="admin-muted">0 total</span>
+          <button id="addProjectBtn" class="admin-pill admin-pill--primary">+ new project</button>
+        </div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th scope="col" style="width:36px"><span class="sr-only">reorder</span></th>
+              <th scope="col" style="width:64px">id</th>
+              <th scope="col">title</th>
+              <th scope="col" style="width:100px">category</th>
+              <th scope="col" style="width:80px">featured</th>
+              <th scope="col" style="width:160px">externalLink</th>
+              <th scope="col" style="width:140px"><span class="sr-only">actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="projectsBody"></tbody>
+        </table>
+      </div>
+      <p class="admin-muted admin-hint">행을 드래그하여 순서를 변경하면 <code>order</code>가 자동 재할당됩니다.</p>
+    </section>
+
+    <!-- FEATURED -->
+    <section class="admin-panel" data-panel="featured">
+      <div class="admin-panel__head">
+        <h2 class="admin-panel__title">featured projects</h2>
+        <div class="admin-panel__actions">
+          <span id="featCount" class="admin-muted">0 selected</span>
+        </div>
+      </div>
+      <p class="admin-muted admin-hint">왼쪽에서 토글 → 오른쪽 목록을 드래그하여 <strong>featuredProjectIds</strong> 순서 조정.</p>
+      <div class="admin-feat">
+        <div class="admin-feat__col">
+          <div class="admin-feat__label">all projects</div>
+          <div id="featAll" class="admin-feat__list"></div>
+        </div>
+        <div class="admin-feat__col">
+          <div class="admin-feat__label">featured (순서 고정)</div>
+          <div id="featSelected" class="admin-feat__list admin-feat__list--selected"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REEL ORDER — 히어로 시네마릴 전 작품 순서 -->
+    <section class="admin-panel" data-panel="reel">
+      <div class="admin-panel__head">
+        <h2 class="admin-panel__title">reel order</h2>
+        <div class="admin-panel__actions">
+          <button type="button" class="admin-pill admin-pill--sm" id="reelColorSort" title="전 작품 썸네일의 대표 색상을 다시 감지해 저장">✦ 색상 재감지</button>
+          <span id="reelCount" class="admin-muted">0 works</span>
+        </div>
+      </div>
+      <p class="admin-muted admin-hint">히어로 <strong>시네마릴</strong>은 각 작품 썸네일의 <strong>대표 색상을 자동 감지해 색이 자연스럽게 흐르도록 배치</strong>됩니다(그레이 → 색상 스펙트럼). 새 작품을 올리면 자동 반영되고, 아래는 그 배치 미리보기입니다. 썸네일이 바뀌었으면 <strong>색상 재감지</strong>를 누르세요.</p>
+      <div class="admin-reel" id="reelGrid"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="admin-panel" data-panel="settings">
+      <div class="admin-panel__head">
+        <h2 class="admin-panel__title">site settings</h2>
+      </div>
+      <form id="settingsForm" class="admin-form">
+        <label class="admin-field">
+          <span>hero title</span>
+          <input type="text" name="heroTitle" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>hero subtitle</span>
+          <input type="text" name="heroSubtitle" class="admin-input">
+        </label>
+        <label class="admin-field admin-field--wide">
+          <span>hero video (인트로 시네마틱 영상 — media 탭에서 업로드 후 /uploads/… URL 붙여넣기)</span>
+          <input type="text" name="heroVideo" class="admin-input" placeholder="/uploads/hero_cerial.mp4">
+        </label>
+        <label class="admin-field">
+          <span>est. year (스탯 밴드 · Est. Seoul)</span>
+          <input type="text" name="est" class="admin-input" placeholder="2024">
+        </label>
+        <label class="admin-field">
+          <span>key color A (라벤더)</span>
+          <input type="color" name="keyColorA" class="admin-input admin-input--color" value="#C7B9FF">
+        </label>
+        <label class="admin-field">
+          <span>key color B (파스텔핑크)</span>
+          <input type="color" name="keyColorB" class="admin-input admin-input--color" value="#FFC4DC">
+        </label>
+        <label class="admin-field">
+          <span>curtain main (gate 메인카피)</span>
+          <input type="text" name="curtainMain" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>curtain author</span>
+          <input type="text" name="curtainAuthor" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>contact email</span>
+          <input type="email" name="contactEmail" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>contact phone</span>
+          <input type="text" name="contactPhone" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>contact instagram</span>
+          <input type="url" name="contactInstagram" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>curtain sub (gate 서브카피)</span>
+          <input type="text" name="curtainSub" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>philosophy (두 줄 — 마침표로 분리)</span>
+          <input type="text" name="philosophy" class="admin-input">
+        </label>
+        <label class="admin-field admin-field--wide">
+          <span>about text</span>
+          <textarea name="aboutText" rows="6" class="admin-input admin-textarea"></textarea>
+        </label>
+        <div class="admin-field admin-field--wide">
+          <span>about gallery (이미지 업로드 · 드래그로 순서 변경 · 최대 5장)</span>
+          <div class="admin-uploader">
+            <div class="admin-uploader__grid" id="galleryGrid"></div>
+            <button type="button" class="admin-pill admin-pill--sm" id="galleryAdd">+ 이미지 업로드</button>
+            <input type="file" id="galleryInput" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="admin-field admin-field--wide">
+          <span>client logos (로고 이미지 업로드 · 드래그로 순서 변경)</span>
+          <div class="admin-uploader">
+            <div class="admin-uploader__grid admin-uploader__grid--logos" id="logosGrid"></div>
+            <button type="button" class="admin-pill admin-pill--sm" id="logosAdd">+ 로고 업로드</button>
+            <input type="file" id="logosInput" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="admin-pill admin-pill--primary">save settings</button>
+          <span id="settingsStatus" class="admin-muted"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- MEDIA UPLOAD -->
+    <section class="admin-panel" data-panel="media">
+      <div class="admin-panel__head">
+        <h2 class="admin-panel__title">media upload</h2>
+      </div>
+      <p class="admin-muted admin-hint">이미지/영상 파일을 업로드하면 <code>/uploads/</code>로 저장되고 URL이 복사됩니다.</p>
+      <div class="admin-drop" id="mediaDrop">
+        <input type="file" id="mediaInput" accept="image/*,video/*" hidden>
+        <button id="mediaPick" class="admin-pill admin-pill--primary">choose file</button>
+        <span class="admin-muted">또는 드래그&드롭</span>
+      </div>
+      <ul id="mediaList" class="admin-media-list"></ul>
+    </section>
+
+  </main>
+
+  <!-- ── Project Edit Modal ── -->
+  <div id="projectModal" class="admin-modal" hidden>
+    <div class="admin-modal__backdrop" data-close></div>
+    <div class="admin-modal__panel" role="dialog" aria-modal="true" aria-labelledby="projModalTitle">
+      <div class="admin-modal__head">
+        <h3 id="projModalTitle" class="admin-modal__title">edit project</h3>
+        <button class="admin-modal__close" data-close aria-label="close">×</button>
+      </div>
+      <form id="projectForm" class="admin-form">
+        <input type="hidden" name="id">
+        <label class="admin-field">
+          <span>title</span>
+          <input type="text" name="title" class="admin-input" required>
+        </label>
+        <label class="admin-field">
+          <span>category</span>
+          <select name="category" class="admin-input">
+            <option value="photo">photo</option>
+            <option value="graphic">graphic</option>
+            <option value="video">video</option>
+          </select>
+        </label>
+        <label class="admin-field admin-field--wide">
+          <span>description</span>
+          <textarea name="description" rows="3" class="admin-input admin-textarea"></textarea>
+        </label>
+        <label class="admin-field">
+          <span>externalLink (비디오 URL · Drive 링크 등)</span>
+          <input type="url" name="externalLink" class="admin-input" placeholder="https://...">
+        </label>
+        <label class="admin-field">
+          <span>tags (쉼표 구분)</span>
+          <input type="text" name="tags" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>order</span>
+          <input type="number" name="order" class="admin-input">
+        </label>
+        <label class="admin-field">
+          <span>role (역할)</span>
+          <input type="text" name="role" class="admin-input" placeholder="기획 / 연출 / 촬영 ...">
+        </label>
+        <label class="admin-field">
+          <span>contribution (기여도)</span>
+          <input type="text" name="contribution" class="admin-input" placeholder="50%">
+        </label>
+        <label class="admin-field admin-field--wide">
+          <span>result (결과 — 줄바꿈 가능)</span>
+          <textarea name="result" rows="3" class="admin-input admin-textarea"></textarea>
+        </label>
+        <label class="admin-field admin-field--wide">
+          <span>credits (한 줄에 하나씩 — "역할 — 이름")</span>
+          <textarea name="credits" rows="3" class="admin-input admin-textarea admin-textarea--mono"
+            placeholder="Director — 우상희"></textarea>
+        </label>
+        <div class="admin-field admin-field--wide">
+          <span>media (구글드라이브 주소 · 한 항목씩 · 첫 번째가 대표 썸네일)</span>
+          <div class="admin-media-rows" id="mediaRows"></div>
+          <button type="button" class="admin-pill admin-pill--sm" id="mediaAddRow">+ 드라이브 주소 추가</button>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="admin-pill admin-pill--primary">save</button>
+          <button type="button" class="admin-pill admin-pill--ghost" data-close>cancel</button>
+          <span id="projFormStatus" class="admin-muted"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="admin-toast" role="status" aria-live="polite"></div>
+
+  <script src="/admin/admin.js" type="module"></script>
+</body>
+</html>

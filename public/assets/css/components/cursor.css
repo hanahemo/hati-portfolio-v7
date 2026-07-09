@@ -1,0 +1,60 @@
+/* Custom cursor — 미니멀 도트 (difference 블렌드로 라이트 모달에서도 반전 가독) */
+.cursor {
+  position: fixed; top: 0; left: 0;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  pointer-events: none;
+  z-index: var(--z-cursor);
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+  transition: width 300ms var(--ease-signature),
+              height 300ms var(--ease-signature),
+              background-color var(--dur-base);
+  display: grid; place-items: center;
+}
+.cursor::after { content: none; }
+.cursor__text {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #000; opacity: 0;
+  transition: opacity var(--dur-fast), transform 220ms var(--ease-signature);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.cursor.is-hover { width: 52px; height: 52px; }
+.cursor.is-hover .cursor__text {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.cursor.is-down { width: 6px; height: 6px; }
+.cursor.is-hover.is-down { width: 44px; height: 44px; }
+
+/* ring pulse on click */
+.cursor-ring {
+  position: fixed; top: 0; left: 0;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid #fff;
+  pointer-events: none;
+  z-index: var(--z-cursor);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  mix-blend-mode: difference;
+}
+.cursor-ring.is-ping {
+  animation: cursorPing 520ms var(--ease-out-quart) forwards;
+}
+@keyframes cursorPing {
+  0%   { opacity: 0.9; width: 10px; height: 10px; }
+  100% { opacity: 0;   width: 64px; height: 64px; }
+}
+
+body.has-cursor { cursor: none; }
+body.has-cursor a, body.has-cursor button, body.has-cursor .card { cursor: none; }
+
+@media (hover: none) {
+  .cursor, .cursor-ring { display: none; }
+  body.has-cursor { cursor: auto; }
+}

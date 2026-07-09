@@ -1,0 +1,50 @@
+/* HUD — 고정 마이크로 내비게이션 (aristide 4코너 문법) */
+.hud {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: var(--z-nav);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--page-pad-x), env(safe-area-inset-right)) var(--space-5) max(var(--page-pad-x), env(safe-area-inset-left));
+  pointer-events: none;               /* 빈 영역은 통과 */
+  mix-blend-mode: difference;         /* 라이트 모달 위에서도 가독 */
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity var(--dur-slow) var(--ease-signature),
+              transform var(--dur-slow) var(--ease-signature);
+}
+.hud.is-on { opacity: 1; transform: translateY(0); }
+
+.hud__brand {
+  pointer-events: auto;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: #fff;                        /* difference 블렌드 기준 화이트 */
+}
+.hud__brand sup { font-size: 0.5em; font-weight: 500; }
+
+.hud__nav {
+  pointer-events: auto;
+  display: flex; gap: var(--space-6);
+}
+.hud__nav a {
+  position: relative;
+  font-size: var(--fs-label); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.72);
+  padding: 4px 0;
+  transition: color var(--dur-base);
+}
+.hud__nav a::after {
+  content: '';
+  position: absolute; left: 0; right: 100%; bottom: 0;
+  height: 1px; background: #fff;
+  transition: right var(--dur-base) var(--ease-out-quart);
+}
+.hud__nav a:hover { color: #fff; }
+.hud__nav a:hover::after { right: 0; }
+
+@media (max-width: 767px) {
+  .hud { padding: var(--space-4) var(--page-pad-x); }
+  .hud__nav { gap: var(--space-4); }
+}
