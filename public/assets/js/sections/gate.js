@@ -68,6 +68,18 @@ export function initGate(settings, lenis) {
     setTimeout(play, 3500);   // 로더가 이벤트를 못 쏜 경우 안전 폴백
   }
 
+  // ── 자동 진입 — 클릭 없이 잠시 후 문 열리듯 자동으로 열림(첫 방문). ENTER는 즉시 스킵용. ──
+  if (!alreadyIn) {
+    const delay = reduced ? 500 : 2000;   // 게이트를 잠깐 보여준 뒤 자동으로 열림
+    let armed = false;
+    const arm = () => {
+      if (armed) return; armed = true;
+      setTimeout(() => { if (!gate.classList.contains('is-hidden')) enter(); }, delay);
+    };
+    window.addEventListener('hati:loaded', arm, { once: true });
+    setTimeout(arm, 3800);   // 로더 이벤트 누락 대비 폴백
+  }
+
   // 포커스 트랩 (gate 내부에서 Tab 순환)
   gate.addEventListener('keydown', (e) => {
     if (e.key !== 'Tab') return;

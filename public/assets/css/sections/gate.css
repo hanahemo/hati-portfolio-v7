@@ -5,9 +5,17 @@
   background: var(--color-bg);
   display: grid; grid-template-rows: auto 1fr auto;
   padding: var(--space-5) var(--page-pad-x);
-  transition: opacity var(--dur-slow) var(--ease-signature), visibility var(--dur-slow);
+  /* 진입 = 커튼이 위로 걷히듯 슬라이드(문 열리는 연출). 클릭 없이 자동으로 열림. */
+  transform: translateY(0);
+  will-change: transform;
+  transition: transform 0.9s var(--ease-signature), visibility 0.9s;
 }
-.gate.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.gate.is-hidden { visibility: hidden; pointer-events: none; transform: translateY(-100%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .gate { transition: opacity 0.3s, visibility 0.3s; transform: none; }
+  .gate.is-hidden { opacity: 0; transform: none; }
+}
 
 .gate__head {
   display: flex; justify-content: space-between; align-items: baseline;
