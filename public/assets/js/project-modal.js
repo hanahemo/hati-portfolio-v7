@@ -148,6 +148,8 @@ export function initProjectModal(state) {
   const titleEl = modal.querySelector('#pmTitle');
   const descEl = modal.querySelector('#pmDesc');
   const detailsEl = modal.querySelector('#pmDetails');
+  const creditsSection = modal.querySelector('#pmCredits');
+  const creditsGrid = modal.querySelector('#pmCreditsGrid');
   const numEl = modal.querySelector('#pmNum');
   const totalEl = modal.querySelector('#pmTotal');
   const catEl = modal.querySelector('#pmCat');
@@ -217,9 +219,18 @@ export function initProjectModal(state) {
     const role = String(project.role || '').trim(); if (role) rows.push(['Role', role]);
     const contribution = String(project.contribution || '').trim(); if (contribution) rows.push(['Contribution', contribution]);
     const result = String(project.result || '').trim(); if (result) rows.push(['Result', result]);
-    const credits = Array.isArray(project.credits) ? project.credits.filter(c => c && (c.role || c.name)) : [];
-    if (credits.length) rows.push(['Credits', credits.map(c => [c.role, c.name].filter(Boolean).join(' — ')).join('\n')]);
     detailsEl.innerHTML = rows.map(([label, value]) => `<div class="pview__row"><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
+
+    // 크레딧 — 전용 섹션에 자동 다단 그리드(auto-fill). 양이 늘어나도 열로 알아서 정리됨.
+    const credits = Array.isArray(project.credits) ? project.credits.filter(c => c && (c.role || c.name)) : [];
+    if (creditsGrid && creditsSection) {
+      creditsGrid.innerHTML = credits.map(c => `
+        <div class="pview__credit">
+          <dt>${escapeHtml(c.role || '—')}</dt>
+          <dd>${escapeHtml(c.name || '')}</dd>
+        </div>`).join('');
+      creditsSection.hidden = credits.length === 0;
+    }
 
     // 미디어 — 첫 미디어 = 대형 리드(원본 비율), 나머지 = 메이슨리 그리드
     const media = orderedMedia(project);

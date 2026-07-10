@@ -156,6 +156,38 @@
 }
 .pview__row dd { font-size: 15px; line-height: 1.7; color: var(--pv-dim); white-space: pre-line; word-break: keep-all; }
 
+/* 크레딧 — 전용 풀폭 섹션 + 자동 다단 그리드(양이 늘어나도 열로 알아서 정리) */
+.pview__credits {
+  padding: var(--space-7) var(--page-pad-x) var(--space-2);
+  border-top: 1px solid var(--pv-line);
+}
+.pview__credits[hidden] { display: none; }
+.pview__credits-label {
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--pv-mute);
+  margin-bottom: var(--space-4);
+}
+.pview__credits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  column-gap: clamp(28px, 5vw, 72px);
+}
+.pview__credit {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 0;
+  border-top: 1px solid var(--pv-line);
+}
+.pview__credit dt {
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--pv-mute);
+}
+.pview__credit dd {
+  font-size: 15px; line-height: 1.5;
+  color: var(--pv-text); word-break: keep-all;
+}
+
 /* 케이스 스터디 갤러리 — 원본 비율 메이슨리(컬럼 패킹) */
 .pview__more { padding: var(--space-7) var(--page-pad-x) var(--space-8); }
 .pview__gallery { columns: 2; column-gap: var(--grid-gap); }

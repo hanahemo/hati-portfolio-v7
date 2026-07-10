@@ -370,7 +370,7 @@ select.admin-input option {
 .admin-credits__add { display: flex; gap: 8px; align-items: center; }
 .admin-credits__role { flex: 0 0 38%; min-width: 0; }
 .admin-credits__name { flex: 1; min-width: 0; }
-.admin-credits__list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.admin-credits__list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
 .admin-credits__list:empty { display: none; }
 .admin-credits__item {
   display: flex; align-items: center; gap: 10px;
