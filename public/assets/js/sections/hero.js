@@ -117,10 +117,10 @@ export function initHero(settings, portfolio) {
   if (sessionStorage.getItem('hati:entered')) reveal();
   else window.addEventListener('hati:entered', reveal, { once: true });
 
-  // ── 폴백: reduced-motion / GSAP 부재 / 터치 → 정적 가로 스크롤 ──
-  // 터치에선 42-슬랫 프레임 루프+320% 핀이 무겁고 물결이 뭉개지므로 정적 필름스트립으로.
-  const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const canScrub = fine && !reduced && window.gsap && window.ScrollTrigger && strip && projects.length;
+  // ── 폴백: reduced-motion / GSAP 부재 → 정적 가로 스크롤 ──
+  // 터치(모바일)도 데스크톱과 동일한 키비주얼(영상 스크럽 → 릴 핸드오프 → 물결)을 쓴다.
+  // sizeConsts에 모바일 치수 분기(MAXW/SLATH/THUMB_W) 있음 + 프레임 루프는 GPU 변환·페인트 스킵 최적화 완료.
+  const canScrub = !reduced && window.gsap && window.ScrollTrigger && strip && projects.length;
   if (!canScrub) {
     hero.classList.add('hero--static');
     slats.forEach(a => { a.style.width = ''; }); // CSS 정적 폭 사용

@@ -47,9 +47,9 @@ export function initSelected(portfolio, settings) {
   const ticks = ticksWrap ? [...ticksWrap.children] : [];
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  // 터치 / reduced-motion → 네이티브 가로 스크롤-스냅 폴백 (그 자체로 부드러움 — 핀 스크럽 회피)
-  const canPin = fine && !reduced && window.gsap && window.ScrollTrigger;
+  // 터치(모바일)도 데스크톱과 동일한 포커스 카루셀 + 마지막 프레임→배경 인수인계(__cinemaEnd)를 쓴다.
+  // reduced-motion / GSAP 부재만 네이티브 가로 스크롤-스냅 폴백.
+  const canPin = !reduced && window.gsap && window.ScrollTrigger;
   if (!canPin) {
     section.classList.add('cinema--static');
     dragScroll(track);
