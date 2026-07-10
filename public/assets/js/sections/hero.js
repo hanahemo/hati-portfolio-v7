@@ -1,11 +1,7 @@
 // Hero v7.4 — 스테이트먼트 타이포 → 스크롤 웍스 롤 (aristide 필름스트립 물결)
 // 전 작품(42)을 얇은 세로 스트립으로. 포커스 지점이 물결처럼 넓어지고 컬러가 되며,
 // 스크롤에 따라 그 봉우리가 전 작품을 훑고 지나간다. GPU 변환(scaleX+translateX)만 사용.
-import { pickThumb, safeThumb, driveThumbFallback } from './cards.js';
-
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+import { thumbImg } from './cards.js';
 
 export function initHero(settings, portfolio) {
   const hero = document.getElementById('hero');
@@ -67,17 +63,13 @@ export function initHero(settings, portfolio) {
   if (strip && projects.length) {
     const frag = document.createDocumentFragment();
     projects.forEach(p => {
-      const thumb = safeThumb(p, THUMB_W);
-      const fb = driveThumbFallback(pickThumb(p));
       const a = document.createElement('a');
       a.className = 'hero__slat';
       a.href = `#project/${p.id}`;
       a.tabIndex = -1;                 // 롤은 시각적 티저 — AT/키보드 내비게이션은 All Works 인덱스가 담당
       a.dataset.cursor = 'view';
       a.style.width = MAXW + 'px';
-      a.innerHTML = thumb
-        ? `<img src="${escapeHtml(thumb)}" data-fb="${escapeHtml(fb)}" alt="" decoding="async" onerror="if(this.dataset.fb&&this.src!==this.dataset.fb){this.src=this.dataset.fb}else{this.remove()}">`
-        : '';
+      a.innerHTML = thumbImg(p, THUMB_W, '', { lazy: false, onEmpty: 'remove' });
       a.addEventListener('click', (e) => {
         e.preventDefault();
         if (window.openProjectDetail) window.openProjectDetail(p.id);

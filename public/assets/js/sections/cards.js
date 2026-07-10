@@ -40,11 +40,10 @@ function getYouTubeId(url) { const m = String(url || '').match(/(?:youtube\.com\
 function getVimeoId(url) { const m = String(url || '').match(/vimeo\.com\/(?:video\/)?(\d+)/); return m ? m[1] : ''; }
 
 // Drive lh3 실패 시 2차 시도할 썸네일 URL
-function driveThumbFallback(raw) { const id = getDriveId(raw); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1600` : ''; }
+function driveThumbFallback(raw, w = 1600) { const id = getDriveId(raw); return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${w}` : ''; }
 
-// 공용 안전 썸네일 — 로컬 영상은 스틸 없음('') / Drive·YouTube는 포스터 해결 / 일반 이미지는 그대로
-function safeThumb(project, w = 600) {
-  const raw = pickThumb(project);
+// 미디어 하나가 낼 수 있는 썸네일 URL — 로컬 영상은 스틸이 없어 ''
+function mediaThumbUrl(raw, w) {
   if (!raw) return '';
   const id = getDriveId(raw);
   if (id) return `https://lh3.googleusercontent.com/d/${id}=w${w}`;
@@ -53,16 +52,35 @@ function safeThumb(project, w = 600) {
   if (getVimeoId(raw)) return '';   // Vimeo 포스터는 oEmbed 필요 → 생략
   return raw;
 }
-// onerror 폴백 문자열 — Drive 2차 URL 시도 후 실패 시 숨김
-function thumbImg(project, w, cls) {
-  const src = safeThumb(project, w);
-  if (!src) return '';
-  const fb = driveThumbFallback(pickThumb(project));
-  return `<img${cls ? ` class="${cls}"` : ''} src="${escapeHtml(src)}" data-fb="${escapeHtml(fb)}" alt="" loading="lazy" decoding="async" onerror="if(this.dataset.fb&&this.src!==this.dataset.fb){this.src=this.dataset.fb}else{this.style.visibility='hidden'}">`;
-}
-export { safeThumb, driveThumbFallback };
 
-function rowThumbUrl(project, w) { return safeThumb(project, w); }
+// 썸네일 후보 체인 — 이미지 먼저, 그다음 영상 포스터(Drive/YouTube).
+// 첫 후보가 404 여도(지워진 업로드 등) 다음 후보로 넘어가므로 프레임이 비지 않는다.
+function thumbCandidates(project, w = 600) {
+  const media = Array.isArray(project.media) ? project.media : [];
+  const isImg = m => (m.type || '').startsWith('image');
+  const urls = [];
+  for (const m of [...media.filter(isImg), ...media.filter(m => !isImg(m))]) {
+    const u = mediaThumbUrl(m.url, w); if (u) urls.push(u);
+    const alt = driveThumbFallback(m.url, w); if (alt) urls.push(alt);
+  }
+  return [...new Set(urls)];
+}
+
+// 공용 안전 썸네일 — 체인의 첫 후보
+function safeThumb(project, w = 600) { return thumbCandidates(project, w)[0] || ''; }
+
+// onerror 체인 — 후보를 하나씩 소진하고, 다 떨어지면 숨기거나(기본) 지운다(히어로 슬랫).
+function fallbackJs(onEmpty) {
+  const give = onEmpty === 'remove' ? 'this.remove()' : "this.style.visibility='hidden'";
+  return `var a=this.dataset.alts?JSON.parse(this.dataset.alts):[];if(a.length){this.src=a.shift();this.dataset.alts=JSON.stringify(a)}else{${give}}`;
+}
+function thumbImg(project, w, cls, opts = {}) {
+  const [src, ...alts] = thumbCandidates(project, w);
+  if (!src) return '';
+  const lazy = opts.lazy === false ? '' : ' loading="lazy"';
+  return `<img${cls ? ` class="${cls}"` : ''} src="${escapeHtml(src)}" data-alts="${escapeHtml(JSON.stringify(alts))}" alt=""${lazy} decoding="async" onerror="${fallbackJs(opts.onEmpty)}">`;
+}
+export { safeThumb, driveThumbFallback, thumbCandidates, thumbImg };
 
 // ── 커서 팔로우 프리뷰 (데스크탑 hover 전용) ──
 function createPreview() {
@@ -89,8 +107,14 @@ function createPreview() {
   window.addEventListener('pointermove', (e) => { mx = e.clientX; my = e.clientY; });
 
   return {
-    show(src) {
-      if (src) img.src = src;
+    // 후보 체인을 받아 404 면 다음 후보로 넘어간다
+    show(srcs) {
+      const list = Array.isArray(srcs) ? srcs.slice() : (srcs ? [srcs] : []);
+      if (list.length) {
+        img.onerror = () => { if (list.length) img.src = list.shift(); else img.style.visibility = 'hidden'; };
+        img.style.visibility = '';
+        img.src = list.shift();
+      }
       if (!on) { px = mx; py = my; }
       on = true;
       el.classList.add('is-on');
@@ -187,7 +211,7 @@ export function initAllWorks(portfolio) {
       if (id === lastPreviewId) return;
       lastPreviewId = id;
       const p = byId.get(id);
-      preview.show(p ? rowThumbUrl(p, 800) : '');
+      preview.show(p ? thumbCandidates(p, 800) : []);
     });
     list.addEventListener('pointerleave', () => { lastPreviewId = -1; preview.hide(); });
   }
