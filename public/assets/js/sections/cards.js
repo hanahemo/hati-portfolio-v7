@@ -25,22 +25,30 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// 작품 키컬러(썸네일에서 추출한 HSL) → 태그 바 색. light=밝은 배경(All Works)용은 약간 진하게.
-function keyColor(project, light) {
-  const c = project && project.color;
-  if (!c || typeof c.h !== 'number') return '';
-  const h = Math.round(c.h);
-  const s = Math.round(Math.max(light ? 35 : 45, Math.min(light ? 60 : 78, (c.s || 0.4) * 100)));
-  const l = light ? 50 : 62;
-  return `hsl(${h}, ${s}%, ${l}%)`;
+// 역할별 고유 색 — 각 롤(태그)마다 다른 파스텔. 다크 텍스트(#17130a)가 읽히는 밝기.
+// 알려진 롤은 지정색, 새 태그는 문자열 해시로 팔레트에서 자동 배정(사이트 전역 일관).
+const ROLE_HUES = {
+  '기획': 258, '미술': 340, '사진': 205, '그래픽디자인': 152, '브랜드필름': 24,
+  '앨범': 45, 'MV': 8, 'AI': 186, '이벤트': 288, '굿즈': 104, '온드미디어': 62
+};
+const FALLBACK_HUES = [258, 340, 205, 152, 24, 45, 8, 186, 288, 104, 62, 320, 128, 178];
+function roleColor(tag) {
+  const key = String(tag || '').trim();
+  let hue = ROLE_HUES[key];
+  if (hue == null) {
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+    hue = FALLBACK_HUES[h % FALLBACK_HUES.length];
+  }
+  return `hsl(${hue}, 72%, 75%)`;
 }
-// 역할 태그(사진/미술/기획 등) 소형 마크업 — 썸네일 캡션 공용(All Works·Selected).
+// 역할 태그 — "Director of" 컬러바처럼 텍스트가 든 컬러 필(역할별 색). 썸네일 캡션 공용.
 function renderTags(project, wrapCls, itemCls, max = 6) {
   const tags = Array.isArray(project.tags) ? project.tags.filter(Boolean).slice(0, max) : [];
   if (!tags.length) return '';
-  return `<span class="${wrapCls}">${tags.map(t => `<span class="${itemCls}">${escapeHtml(t)}</span>`).join('')}</span>`;
+  return `<span class="${wrapCls}">${tags.map(t => `<span class="${itemCls}" style="--rolecolor:${roleColor(t)}">${escapeHtml(t)}</span>`).join('')}</span>`;
 }
-export { keyColor, renderTags };
+export { roleColor, renderTags };
 
 // 행/프리뷰용 안전 썸네일 — Drive는 영상도 스틸을 주지만 로컬 영상 파일은 <img> 불가
 const DIRECT_VIDEO_RE = /\.(mp4|mov|webm|m4v)(\?|#|$)/i;
@@ -121,8 +129,6 @@ function renderRow(project) {
   a.href = `#project/${project.id}`;
   a.dataset.id = project.id;
   a.dataset.cursor = 'view';
-  const key = keyColor(project, true);
-  if (key) a.style.setProperty('--cardkey', key);
   a.innerHTML = `
     ${thumbHtml || `<span class="idx-row__thumb idx-row__thumb--empty" aria-hidden="true"></span>`}
     <span class="idx-row__num">${idStr}</span>

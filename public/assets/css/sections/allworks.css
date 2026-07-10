@@ -78,22 +78,18 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   transition: color var(--dur-base) var(--ease-signature);
 }
-/* 역할 태그 — 제목 아래 소형 줄. 앞에 작품 키컬러 바(--cardkey). */
+/* 역할 태그 — 제목 아래 소형 줄. 각 태그는 역할별 컬러 필(--rolecolor). */
 .idx-row__tags {
   display: flex; flex-wrap: wrap; align-items: center;
-  gap: 6px 12px;
+  gap: 6px 7px;
 }
-.idx-row__tags::before {
-  content: ''; flex: none;
-  width: 16px; height: 2px; border-radius: 2px;
-  background: var(--cardkey, var(--color-text-mute));
-  opacity: 0.9;
-}
+/* 역할 태그 = 컬러바(역할별 색) + 다크 텍스트 — hero 'Director of' 바와 동일 어법 */
 .idx-row__tag {
-  font-size: var(--fs-micro); font-weight: 500;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--color-text-mute);
-  transition: color var(--dur-base);
+  padding: 3px 9px 4px; border-radius: 4px;
+  background: var(--rolecolor, var(--color-text-mute));
+  color: #17130a;
+  font-size: var(--fs-micro); font-weight: 700;
+  letter-spacing: 0.01em; line-height: 1.15;
 }
 .idx-row__cat {
   font-size: var(--fs-label); font-weight: 500;
@@ -108,8 +104,6 @@
 .idx-row:focus-visible .idx-row__main { transform: translateX(14px); }
 .idx-row:hover .idx-row__title,
 .idx-row:focus-visible .idx-row__title { color: var(--color-text); }
-.idx-row:hover .idx-row__tag,
-.idx-row:focus-visible .idx-row__tag { color: var(--color-text-dim); }
 .idx-row:hover .idx-row__num,
 .idx-row:focus-visible .idx-row__num { color: var(--color-text); }
 .idx-row:hover .idx-row__cat,
@@ -163,5 +157,5 @@
   .idx-row__thumb--empty { display: block; }
   .idx-row__title { font-size: 16px; white-space: normal; line-height: 1.3; }
   .idx-row:hover .idx-row__main { transform: none; }
-  .idx-row__tag { font-size: 10px; letter-spacing: 0.1em; }
+  .idx-row__tag { font-size: 10px; padding: 2px 7px 3px; }
 }
