@@ -25,30 +25,14 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-// 역할별 고유 색 — 각 롤(태그)마다 다른 파스텔. 다크 텍스트(#17130a)가 읽히는 밝기.
-// 알려진 롤은 지정색, 새 태그는 문자열 해시로 팔레트에서 자동 배정(사이트 전역 일관).
-const ROLE_HUES = {
-  '기획': 258, '미술': 340, '사진': 205, '그래픽디자인': 152, '브랜드필름': 24,
-  '앨범': 45, 'MV': 8, 'AI': 186, '이벤트': 288, '굿즈': 104, '온드미디어': 62
-};
-const FALLBACK_HUES = [258, 340, 205, 152, 24, 45, 8, 186, 288, 104, 62, 320, 128, 178];
-function roleColor(tag) {
-  const key = String(tag || '').trim();
-  let hue = ROLE_HUES[key];
-  if (hue == null) {
-    let h = 0;
-    for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-    hue = FALLBACK_HUES[h % FALLBACK_HUES.length];
-  }
-  return `hsl(${hue}, 72%, 75%)`;
-}
-// 역할 태그 — "Director of" 컬러바처럼 텍스트가 든 컬러 필(역할별 색). 썸네일 캡션 공용.
+// 역할 태그 — 모노톤 라인 알약(헤어라인 아웃라인). 컬러 필은 튀어서 폐기(Hati).
+// 색은 작품 미디어만 갖고, 메타 정보는 조용히 물러나는 에디토리얼 문법.
 function renderTags(project, wrapCls, itemCls, max = 6) {
   const tags = Array.isArray(project.tags) ? project.tags.filter(Boolean).slice(0, max) : [];
   if (!tags.length) return '';
-  return `<span class="${wrapCls}">${tags.map(t => `<span class="${itemCls}" style="--rolecolor:${roleColor(t)}">${escapeHtml(t)}</span>`).join('')}</span>`;
+  return `<span class="${wrapCls}">${tags.map(t => `<span class="${itemCls}">${escapeHtml(t)}</span>`).join('')}</span>`;
 }
-export { roleColor, renderTags };
+export { renderTags };
 
 // 행/프리뷰용 안전 썸네일 — Drive는 영상도 스틸을 주지만 로컬 영상 파일은 <img> 불가
 const DIRECT_VIDEO_RE = /\.(mp4|mov|webm|m4v)(\?|#|$)/i;

@@ -82,20 +82,19 @@
   max-width: 82%;
   display: flex; flex-direction: column; gap: 12px;
 }
-/* 역할 태그 — 제목 위 소형 줄. 각 태그는 역할별 컬러 필(--rolecolor). --focus로 제목과 함께 페이드. */
+/* 역할 태그 — 모노톤 라인 알약. --focus로 제목과 함께 페이드. */
 .cframe__tags {
   display: flex; flex-wrap: wrap; align-items: center;
   gap: 7px;
   opacity: calc(0.15 + var(--focus, 0) * 0.85);
 }
-/* 역할 태그 = 컬러바(역할별 색) + 다크 텍스트 */
 .cframe__tag {
-  padding: 3px 10px 4px; border-radius: 4px;
-  background: var(--rolecolor, rgba(255,255,255,0.85));
-  color: #17130a;
-  font-size: 12px; font-weight: 700;
-  letter-spacing: 0.01em;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+  padding: 4px 12px 5px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.38);
+  background: rgba(10,10,10,0.22);        /* 밝은 이미지 위 가독용 미세 워시 */
+  color: rgba(255,255,255,0.9);
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.08em;
 }
 .cframe__title {
   font-family: var(--font-display);

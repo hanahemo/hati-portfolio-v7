@@ -130,10 +130,19 @@
 .pview__explore span { animation: pvNudge 2s ease-in-out infinite; }
 @keyframes pvNudge { 0%,100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
 
-/* About — 설명 + 팩트(Role/Contribution/Result/Credits). 확실히 노출 */
+/* 섹션 라벨 — About / Credits / Gallery 공통. 지면 전체에 일관된 편집 리듬. */
+.pview__label {
+  grid-column: 1 / -1;
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--pv-mute);
+  margin-bottom: var(--space-4);
+}
+
+/* About — 설명 + 팩트(Role/Contribution/Result). 확실히 노출 */
 .pview__about {
   display: grid; grid-template-columns: 1.15fr 1fr;
-  gap: clamp(28px, 6vw, 96px);
+  gap: 0 clamp(28px, 6vw, 96px);
   padding: var(--space-8) var(--page-pad-x);
   border-top: 1px solid var(--pv-line);
   align-items: start;
@@ -147,9 +156,15 @@
   letter-spacing: -0.01em;
 }
 .pview__desc:empty { display: none; }
-.pview__facts { display: grid; gap: var(--space-5); align-content: start; }
+/* 팩트 — 크레딧과 동일한 원장(ledger) 헤어라인 리듬 */
+.pview__facts { display: grid; align-content: start; }
 .pview__facts:empty { display: none; }
-.pview__row { display: grid; grid-template-columns: 130px 1fr; gap: var(--space-4); align-items: baseline; }
+.pview__row {
+  display: grid; grid-template-columns: 130px 1fr;
+  gap: var(--space-4); align-items: baseline;
+  padding: 13px 0;
+  border-top: 1px solid var(--pv-line);
+}
 .pview__row dt {
   font-size: var(--fs-micro); font-weight: 500;
   letter-spacing: 0.18em; text-transform: uppercase; color: var(--pv-mute);
@@ -158,16 +173,10 @@
 
 /* 크레딧 — 전용 풀폭 섹션 + 자동 다단 그리드(양이 늘어나도 열로 알아서 정리) */
 .pview__credits {
-  padding: var(--space-7) var(--page-pad-x) var(--space-2);
+  padding: var(--space-7) var(--page-pad-x) var(--space-7);
   border-top: 1px solid var(--pv-line);
 }
 .pview__credits[hidden] { display: none; }
-.pview__credits-label {
-  font-size: var(--fs-micro); font-weight: 500;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--pv-mute);
-  margin-bottom: var(--space-4);
-}
 .pview__credits-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -189,7 +198,11 @@
 }
 
 /* 케이스 스터디 갤러리 — 원본 비율 메이슨리(컬럼 패킹) */
-.pview__more { padding: var(--space-7) var(--page-pad-x) var(--space-8); }
+.pview__more {
+  padding: var(--space-7) var(--page-pad-x) var(--space-8);
+  border-top: 1px solid var(--pv-line);
+}
+.pview__more:has(.pview__gallery:empty) { display: none; }   /* 추가 미디어 없으면 섹션째 숨김 */
 .pview__gallery { columns: 2; column-gap: var(--grid-gap); }
 .pview__gallery:empty { display: none; }
 .pv-media {
@@ -206,9 +219,20 @@
   border: 1px dashed var(--pv-line); border-radius: var(--radius-card);
   font-size: 13px; color: var(--pv-dim);
 }
-.pview__tags { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: var(--space-6); padding-top: var(--space-5); border-top: 1px solid var(--pv-line); }
+/* 역할 태그 — 타이틀 위 키커(매거진 헤드라인 위 키워드 줄). 모노톤 라인 알약. */
+.pview__tags {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: clamp(18px, 3vh, 30px);
+  position: relative; z-index: 2;
+}
 .pview__tags:empty { display: none; }
-.pview__tag { font-size: var(--fs-micro); font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pv-mute); }
+.pview__tag {
+  padding: 5px 13px 6px; border-radius: 999px;
+  border: 1px solid rgba(26,22,34,0.22);
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--pv-dim);
+}
 
 /* 이전/다음 */
 .pview__nav {
