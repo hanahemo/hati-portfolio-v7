@@ -208,26 +208,33 @@ export function initProjectModal(state) {
     if (location.hash.startsWith('#project/')) history.replaceState(null, '', location.pathname + location.search);
   }
 
+  // 어드민에서 비워둔 칸은 "" 가 아니라 마침표 한 개(".")로 저장돼 있는 경우가 많다.
+  // 글자도 숫자도 없는 값은 내용이 아니라 자리표시자로 보고 화면에서 뺀다.
+  function filled(value) {
+    const s = String(value ?? '').trim();
+    return /[\p{L}\p{N}]/u.test(s) ? s : '';
+  }
+
   function fill(project) {
     numEl.textContent = String(currentIdx + 1).padStart(2, '0');
     catEl.textContent = project.category;
     setTitle(project.title);
-    descEl.textContent = project.description || '';
+    descEl.textContent = filled(project.description);
 
-    // 상세 팩트 — role / contribution / result / credits
+    // 상세 팩트 — role / contribution / result / credits. 어드민에서 안 채운 칸은 줄째로 빠진다.
     const rows = [];
-    const role = String(project.role || '').trim(); if (role) rows.push(['Role', role]);
-    const contribution = String(project.contribution || '').trim(); if (contribution) rows.push(['Contribution', contribution]);
-    const result = String(project.result || '').trim(); if (result) rows.push(['Result', result]);
+    const role = filled(project.role); if (role) rows.push(['Role', role]);
+    const contribution = filled(project.contribution); if (contribution) rows.push(['Contribution', contribution]);
+    const result = filled(project.result); if (result) rows.push(['Result', result]);
     detailsEl.innerHTML = rows.map(([label, value]) => `<div class="pview__row"><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
 
     // 크레딧 — 전용 섹션에 자동 다단 그리드(auto-fill). 양이 늘어나도 열로 알아서 정리됨.
-    const credits = Array.isArray(project.credits) ? project.credits.filter(c => c && (c.role || c.name)) : [];
+    const credits = Array.isArray(project.credits) ? project.credits.filter(c => c && (filled(c.role) || filled(c.name))) : [];
     if (creditsGrid && creditsSection) {
       creditsGrid.innerHTML = credits.map(c => `
         <div class="pview__credit">
-          <dt>${escapeHtml(c.role || '—')}</dt>
-          <dd>${escapeHtml(c.name || '')}</dd>
+          <dt>${escapeHtml(filled(c.role) || '—')}</dt>
+          <dd>${escapeHtml(filled(c.name))}</dd>
         </div>`).join('');
       creditsSection.hidden = credits.length === 0;
     }
