@@ -153,22 +153,42 @@
   vertical-align: super; letter-spacing: 0;
   color: var(--color-text-mute); margin-left: 0.04em;
 }
-/* 직군 리엘 바 — 'Director of' 옆 키컬러 하이라이트, 단어가 스크롤(vid.t)에 따라 교체 */
+/* 직군 리엘 바 — 'Director of' 옆 헤어라인 프레임, 단어가 스크롤(vid.t)에 따라 교체.
+   프레임은 border 가 아니라 inset 섀도로 그린다 — border 는 박스에 2px 를 더해
+   measureDisc() 가 잰 --disc-w 와 어긋나고, 단어 끝이 overflow:hidden 에 잘린다. */
 .hero__disc {
   position: relative;
   display: inline-block; vertical-align: -0.2em;
   height: 1em; overflow: hidden;
-  border-radius: 0.11em;
-  background: var(--grad-key);
+  border-radius: 999px;              /* 알약 */
+  background: transparent;           /* 내부는 비운다 — 영상이 그대로 비쳐야 한다 */
+  /* 1px 링만으론 티가 안 나서 키컬러 글로우를 얹는다. 알약 곡선을 그대로 따르도록 box-shadow 로.
+     (::after 에 drop-shadow 를 걸면 마스크보다 필터가 먼저라 사각 halo 가 된다) */
+  box-shadow: 0 0 12px rgba(199,185,255,0.42), 0 0 30px rgba(255,196,220,0.22);
   width: var(--disc-w, 5em);
-  transition: width 0.55s var(--ease-signature);
+  /* width 트랜지션은 CSS 로 걸지 않는다 — 핀(fixed)+스크럽 아래에서 진행되지 않아 이전 폭에
+     얼어붙고 단어가 잘린다. 폭 모션은 hero.js 가 GSAP 으로 인라인 width 를 써서 만든다. */
+}
+/* 키컬러 그라데이션 헤어라인. box-shadow 는 그라데이션을 못 받고 border 는 박스에 2px 를 더한다
+   (→ --disc-w 와 어긋나 단어가 잘린다). 마스크로 1px 링만 남겨 레이아웃을 건드리지 않는다. */
+.hero__disc::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--grad-key);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
 }
 .hero__disc-word {
   position: absolute; top: 0; left: 0;
   height: 100%; display: flex; align-items: center;
-  padding: 0 0.4em 0.1em; white-space: nowrap;  /* 좌우 여백 + 하단 여백(디센더가 위로 올라와 바닥에 안 닿게) */
-  color: #17130a; font-weight: 700; font-size: 0.8em; line-height: 1; letter-spacing: -0.02em;  /* 디센더(g,p,y)까지 바 안에 들어오도록 살짝 축소 */
-  text-shadow: none;                            /* 그림자 제거 — 밝은 바 위 다크텍스트라 불필요 */
+  padding: 0 0.72em 0.1em; white-space: nowrap;  /* 알약 곡선에 글자가 물리지 않을 만큼의 좌우 여백 + 하단 여백(디센더가 바닥에 안 닿게) */
+  color: var(--color-text); font-weight: 600; font-size: 0.8em; line-height: 1; letter-spacing: -0.02em;  /* 디센더(g,p,y)까지 바 안에 들어오도록 살짝 축소 */
+  text-shadow: 0 1px 3px rgba(0,0,0,0.62), 0 2px 16px rgba(0,0,0,0.45);  /* 바 내부가 비어 있어 가독성은 섀도가 전담한다 */
   opacity: 0; transform: translateY(1.15em);
   transition: opacity 0.32s var(--ease-signature), transform 0.5s var(--ease-signature);
 }
