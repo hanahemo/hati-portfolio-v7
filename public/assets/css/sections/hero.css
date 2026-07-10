@@ -155,6 +155,9 @@
 /* 정적 폴백(모바일/모션최소화) — 리엘 JS 미실행 시 기본 단어 하나만 자연스럽게 */
 .hero__disc:has(.hero__disc-word:only-child) { width: auto; }
 .hero__disc-word:only-child { position: static; opacity: 1; transform: none; }
+/* 'Director of [바]' 줄바꿈 — 모든 화면에서 'Director of'는 1줄, [바]는 다음 줄로 2줄 고정.
+   단어 길이가 바뀌어도 줄바꿈이 안 튀고, 넓은 화면에서 폰트가 커도 한 줄이 넘치지 않음. */
+.hero__role-lead { display: block; }
 
 .hero__meta {
   display: flex; align-items: baseline; gap: var(--space-6);
