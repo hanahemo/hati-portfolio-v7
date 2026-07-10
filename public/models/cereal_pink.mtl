@@ -1,0 +1,8 @@
+# Cereal Material
+newmtl cereal_pink_mat
+Ka 0.2730 0.0990 0.1320
+Kd 0.9100 0.3300 0.4400
+Ks 0.1000 0.1000 0.1000
+Ns 15.0
+d 1.0
+illum 2

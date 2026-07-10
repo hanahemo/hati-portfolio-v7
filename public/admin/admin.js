@@ -547,6 +547,7 @@ $('#reelColorSort')?.addEventListener('click', detectAllColors);
 const settingsForm = $('#settingsForm');
 function renderSettings() {
   const s = state.settings || {};
+  settingsForm.defaultTheme.value = s.defaultTheme === 'cereal' ? 'cereal' : 'studio';
   settingsForm.heroTitle.value = s.heroTitle || '';
   settingsForm.heroSubtitle.value = s.heroSubtitle || '';
   settingsForm.heroVideo.value = s.heroVideo || '';
@@ -569,6 +570,7 @@ settingsForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(settingsForm);
   const payload = {
+    defaultTheme: fd.get('defaultTheme') === 'cereal' ? 'cereal' : 'studio',
     heroTitle: fd.get('heroTitle'),
     heroSubtitle: fd.get('heroSubtitle'),
     heroVideo: String(fd.get('heroVideo') || '').trim(),

@@ -23,7 +23,7 @@ const ALLOWED_SETTINGS = new Set([
   'contactEmail', 'contactInstagram', 'contactPhone',
   'philosophy', 'curtainMain', 'curtainSub', 'curtainAuthor',
   'clientLogos', 'featuredProjectIds',
-  'keyColorA', 'keyColorB', 'est', 'reelAnchorHue'
+  'keyColorA', 'keyColorB', 'est', 'reelAnchorHue', 'defaultTheme'
 ]);
 const ALLOWED_EXT = new Set([
   '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif',

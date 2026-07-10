@@ -1,0 +1,5697 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HATI — Portfolio</title>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }}
+  </script>
+  <!-- Lenis removed: too heavy with existing rAF loops -->
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --key-1: #FF5722;
+  --key-2: #7C3AED;
+  --key-grad: linear-gradient(135deg, #FF5722, #7C3AED);
+  --key-grad-h: linear-gradient(90deg, #FF5722, #7C3AED);
+  --bg: #FFFAF2;
+  --card: rgba(255,255,255,0.75);
+  --card-border: rgba(255,87,34,0.12);
+  --radius: 16px;
+  --radius-sm: 8px;
+  --radius-xs: 4px;
+  --gap: 16px;
+  --gutter: 20px;
+  --coral: #FF5722;
+  --teal: #7C3AED;
+  --cream: #FFFAF2;
+  --warm-white: rgba(255,140,0,0.05);
+  --accent-1: #FF5722;
+  --accent-2: #7C3AED;
+  --text-primary: rgba(45,27,0,0.87);
+  --text-secondary: rgba(45,27,0,0.5);
+  --text-muted: rgba(45,27,0,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { overflow-x: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  font-weight: 400;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle dark grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+/* Dark vignette */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(255,140,0,0.08) 100%);
+}
+
+/* Glass inner glow on cards */
+.bento-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+}
+
+a { color: inherit; text-decoration: none; }
+
+::selection { background: rgba(255,87,34,0.25); color: #2D1B00; }
+
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: #FFFAF2; }
+::-webkit-scrollbar-thumb { background: rgba(255,87,34,0.4); border-radius: 10px; }
+
+/* ── Preview Banner ── */
+/* ── Sticky Header Bar ── */
+.sticky-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10001;
+  padding: 1.2rem 2rem;
+  background: none;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.4s cubic-bezier(0.16,1,0.3,1), transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+
+.sticky-bar.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.sticky-bar-text {
+  cursor: pointer;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: center;
+}
+.sticky-bar-text img, .sticky-bar-text canvas {
+  height: 78px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 10px rgba(255,87,34,0.45));
+}
+
+.sticky-bar-text:hover {
+  opacity: 0.7;
+}
+
+/* ── Mobile: Hati logo centered at top (same reveal behavior, just repositioned) ── */
+@media (max-width: 768px) {
+  .sticky-bar {
+    left: 50%;
+    transform: translate(-50%, -20px);
+    padding: 0.9rem 0;
+  }
+  .sticky-bar.visible {
+    transform: translate(-50%, 0);
+  }
+  .sticky-bar-text img, .sticky-bar-text canvas {
+    height: 44px;
+    filter: drop-shadow(0 2px 6px rgba(255,87,34,0.35));
+  }
+}
+
+.preview-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10000;
+  background: var(--coral);
+  color: #fff;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.preview-banner a { color: #fff; text-decoration: underline; font-weight: 600; }
+
+/* ── Hero ── */
+.hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: hidden;
+  padding-top: 0;
+}
+
+.hero-bg-video {
+  position: absolute;
+  inset: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  object-fit: cover;
+  filter: brightness(0.95) saturate(1.1);
+  pointer-events: none;
+  z-index: 0;
+  display: none;
+}
+.hero-bg-video.active { display: block; }
+
+.hero-bg-image {
+  position: absolute;
+  inset: -20px;
+  background-size: cover;
+  background-position: center;
+  background-color: #FFFAF2;
+  filter: brightness(0.95) saturate(1.1);
+  z-index: 0;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: none;
+  z-index: 1;
+}
+
+100% { background-position: 0 200px; }
+}
+50% { top: 100%; opacity: 1; }
+}
+
+/* Subtle text glow */
+@keyframes neonBreathe {
+  0%, 100% {
+    text-shadow: none;
+  }
+  50% {
+    text-shadow: 0 0 40px rgba(255,107,53,0.15);
+  }
+}
+
+.hero-content {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  text-align: left;
+}
+
+.hero-title.sticky {
+  position: fixed;
+  top: 12px;
+  left: 0;
+  right: 0;
+  z-index: 10001;
+  margin-bottom: 0;
+  cursor: pointer;
+  opacity: 1 !important;
+  color: var(--coral);
+  text-shadow: 0 2px 10px rgba(155,93,229,0.2);
+  filter: none !important;
+}
+
+.hero-title.sticky .letter {
+  opacity: 1 !important;
+  color: var(--coral);
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Letter-by-letter animation */
+.hero-title {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: block;
+  animation: none;
+  filter: none;
+  transition: opacity 0.3s;
+  will-change: opacity;
+  z-index: 1;
+}
+/* Halftone / game canvas fills hero */
+.hero-halftone-wrap {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  cursor: none;
+}
+.hero-title::before, .hero-title::after { display: none; }
+
+/* Hero logo image */
+.hero-logo-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+.hero-logo-img {
+  display: block;
+  width: clamp(320px, 68vw, 860px);
+  max-height: 70vh;
+  height: auto;
+  object-fit: contain;
+  object-position: left top;
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.hero-logo-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 8px;
+  mix-blend-mode: normal;
+  background: transparent;
+}
+@media (max-width: 768px) {
+  .hero-logo-img { width: clamp(200px, 72vw, 320px); }
+}
+
+.hero-halftone-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Hero subtitle keywords */
+.hero-keyword {
+  display: inline-block;
+  cursor: default;
+  transition: color 0.3s, text-shadow 0.3s, transform 0.3s;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: #ffffff;
+  font-weight: 600;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.hero-keyword:hover {
+  color: var(--coral);
+  text-shadow: 0 0 15px rgba(255,107,53,0.4);
+  transform: scale(1.05);
+}
+
+.hero-keyword-sep {
+  color: rgba(255,255,255,0.7);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+}
+
+100% {
+    opacity: 0;
+    transform: translateX(calc(60vw + 200px)) translateY(-30px);
+  }
+}
+
+60% {
+    opacity: 1;
+    transform: translate(var(--tx), var(--ty)) scale(1) rotate(var(--rot));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0.5) rotate(var(--rot));
+  }
+}
+
+@keyframes letterReveal {
+  0% { opacity: 0; transform: translateY(100%) rotateX(-80deg); }
+  100% { opacity: 1; transform: translateY(0) rotateX(0); }
+}
+
+.hero-line {
+  width: 60px;
+  height: 3px;
+  background: var(--coral);
+  position: absolute;
+  bottom: 148px;
+  left: 5vw;
+  transform: scaleX(0);
+  margin: 0;
+}
+
+.hero-animate .hero-line {
+  animation: lineIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1s forwards;
+}
+
+@keyframes lineIn {
+  to { transform: scaleX(1); }
+}
+
+.hero-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(0.6rem, 1vw, 0.8rem);
+  font-weight: 400;
+  letter-spacing: clamp(0.15rem, 0.4vw, 0.3rem);
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+  opacity: 0;
+  transform: translateY(15px);
+  position: absolute;
+  bottom: 160px;
+  left: 5vw;
+  right: 5vw;
+}
+
+.hero-animate .hero-subtitle {
+  animation: fadeUp 0.8s ease 1.2s forwards;
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hero-scroll {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10001;
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+
+.hero-scroll.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+  animation: scrollNavIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+@keyframes scrollNavIn {
+  0% { opacity: 0; transform: translateX(-50%) translateY(60px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes holoTint {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-scroll-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  border-radius: 22px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  font-family: 'Space Grotesk', sans-serif;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  /* glassmorphism base */
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(255,107,53,0.2);
+  box-shadow:
+    0 2px 12px rgba(255,107,53,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+}
+/* very subtle holographic tint overlay */
+.hero-scroll-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    rgba(160,200,255,0.08) 0%,
+    rgba(200,160,255,0.06) 33%,
+    rgba(255,160,210,0.06) 66%,
+    rgba(160,240,210,0.08) 100%
+  );
+  background-size: 300% 300%;
+  animation: holoTint 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hero-scroll-main {
+  padding: 0 1.8rem;
+  color: rgba(45,27,0,0.7);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12rem;
+  text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+.hero-scroll-main:hover {
+  background: rgba(255,255,255,0.85);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,107,53,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.hero-scroll-theme {
+  width: 44px;
+  font-size: 1.1rem;
+  position: relative; z-index: 1;
+  line-height: 1;
+}
+.hero-scroll-theme:hover {
+  background: rgba(255,255,255,0.85);
+  transform: translateY(-2px) rotate(15deg);
+  box-shadow: 0 6px 20px rgba(255,107,53,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.hero-scroll-top {
+  width: 44px;
+  color: rgba(45,27,0,0.7);
+  font-size: 1rem;
+  position: relative; z-index: 1;
+}
+.hero-scroll-top:hover {
+  background: rgba(255,255,255,0.85);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255,107,53,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* ── Client Logos ── */
+.clients-section {
+  padding: 5rem 0 4rem;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+}
+
+.clients-label {
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+.clients-label::before,
+.clients-label::after {
+  content: '';
+  flex: 1;
+  max-width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(45,27,0,0.15), transparent);
+}
+
+.clients-marquee-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+}
+
+.clients-marquee {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  animation: marquee-scroll 25s linear infinite;
+  animation-play-state: running;
+  will-change: transform;
+  transform: translateZ(0);
+  width: max-content;
+}
+
+.clients-marquee:hover {
+  animation-play-state: paused;
+}
+
+.clients-marquee img {
+  height: 56px;
+  opacity: 0.7;
+  filter: grayscale(1) brightness(0.2) contrast(1);
+  transition: opacity 0.4s, filter 0.4s;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.clients-marquee img[alt="Pledis Entertainment"] { height: 44px; }
+.clients-marquee img[alt="GC 녹십자웰빙"] { height: 48px; }
+.clients-marquee img[alt="Earnestree"] { height: 40px; }
+.clients-marquee img[alt="PAN Entertainment"] { height: 44px; }
+
+.clients-marquee img:hover {
+  opacity: 1;
+  filter: grayscale(0) brightness(1) contrast(1);
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 768px) {
+  .clients-marquee img { height: 44px; }
+  .clients-marquee { gap: 3rem; }
+}
+
+/* ── Bento Grid ── */
+.bento-section {
+  padding: 0 var(--gap) var(--gap);
+  position: relative;
+  z-index: 2;
+  background: rgba(124, 58, 237, 0.04);
+  border-radius: 0;
+}
+
+/* removed doodle bg — clean Lusion aesthetic */
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 1fr 1fr auto;
+  gap: var(--gap);
+  min-height: calc(100vh - var(--gap) * 2);
+}
+
+/* Card base */
+.bento-card {
+  background: rgba(255,255,255,0.75);
+  border: 2px solid rgba(255,87,34,0.15);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s, border-color 0.4s;
+  opacity: 0;
+  transform: translateY(40px) scale(0.98);
+  filter: saturate(0);
+  box-shadow: 0 8px 32px rgba(255,107,53,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.bento-card.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: none;
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.6s, box-shadow 0.4s, border-color 0.4s;
+}
+
+.bento-card:hover {
+  border-color: rgba(255,87,34,0.4);
+  box-shadow: 0 12px 40px rgba(255,87,34,0.12), 0 0 20px rgba(255,87,34,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+  transform: translateY(-4px);
+}
+
+.bento-card.visible:hover {
+  transform: translateY(-4px);
+}
+
+/* Custom "View" cursor circle - PC */
+.cat-card .card-view-cursor {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(255,107,53,0.85);
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 8;
+  mix-blend-mode: normal;
+}
+.cat-card:hover .card-view-cursor {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Mobile tap hint */
+.card-tap-hint {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.06rem;
+  color: rgba(255,255,255,0.9);
+  z-index: 6;
+  background: rgba(45,27,0,0.4);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 12px;
+  animation: tapPulse 2.5s ease-in-out infinite;
+}
+@keyframes tapPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+@media (max-width: 768px) {
+  .card-tap-hint { display: block; }
+  .card-view-cursor { display: none !important; }
+}
+
+/* Grid spans */
+.card-video    { grid-column: 1 / 3; grid-row: 1 / 3; }
+.card-graphic  { grid-column: 3 / 5; grid-row: 1 / 2; }
+.card-brand    { grid-column: 3 / 5; grid-row: 2 / 3; }
+.card-photo    { grid-column: 1 / 3; grid-row: 3 / 5; }
+.card-contact  { grid-column: 3 / 4; grid-row: 3 / 4; }
+.card-tagline  { grid-column: 4 / 5; grid-row: 3 / 4; }
+.card-cta      { grid-column: 3 / 5; grid-row: 4 / 5; }
+
+/* ── Category Card ── */
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.cat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.15) 50%, transparent 100%);
+  transition: opacity 0.5s;
+}
+
+.cat-card:hover::before {
+  opacity: 0.85;
+}
+
+.cat-card-inner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 100%);
+  padding: 3rem 1.2rem 1rem;
+  transform: translateY(60%);
+  transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
+}
+.bento-card:hover .cat-card-inner {
+  transform: translateY(0);
+}
+
+.cat-card-number {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.1rem;
+  color: var(--teal);
+  margin-bottom: 0.2rem;
+}
+
+.cat-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.1rem, 2.2vw, 1.6rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #fff;
+  margin-bottom: 0.2rem;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.cat-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 3px 0;
+}
+.cat-card-tag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.05rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.25);
+  backdrop-filter: blur(4px);
+  color: rgba(255,255,255,0.95);
+  border: 1px solid rgba(255,255,255,0.35);
+  text-transform: uppercase;
+}
+
+.cat-card-count {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.1rem;
+  color: rgba(255,255,255,0.65);
+  text-transform: uppercase;
+}
+
+/* Nav arrows (prev/next) */
+.cat-card-nav {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
+  height: 40px;
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.35s, transform 0.3s, background 0.3s;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid rgba(255,107,53,0.15);
+  box-shadow: 0 4px 16px rgba(255,107,53,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.bento-card:hover .cat-card-nav { opacity: 1; }
+.cat-card-nav.nav-prev { left: 8px; }
+.cat-card-nav.nav-next { right: 8px; }
+.cat-card-nav:hover {
+  background: rgba(255,255,255,0.8);
+  transform: scale(1.1);
+}
+
+.cat-card-nav svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--coral);
+  stroke-width: 2.5;
+  fill: none;
+  filter: none;
+  transition: stroke 0.3s, transform 0.3s;
+}
+.cat-card-nav:hover svg {
+  stroke: #fff;
+  transform: scale(1.1);
+}
+
+/* Project indicator dots */
+.cat-card-dots {
+  position: absolute;
+  bottom: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.cat-card-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  transition: all 0.3s;
+}
+.cat-card-dot.active {
+  background: var(--coral);
+  box-shadow: 0 0 6px rgba(255,107,53,0.5);
+}
+
+/* Project title overlay (bottom-left) */
+.cat-card-project-title,
+.cat-card-tags,
+.cat-card-count {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s, transform 0.35s;
+}
+.bento-card:hover .cat-card-project-title,
+.bento-card:hover .cat-card-tags,
+.bento-card:hover .cat-card-count {
+  opacity: 1;
+  transform: translateY(0);
+}
+.bento-card:hover .cat-card-project-title { transition-delay: 0.05s; }
+.bento-card:hover .cat-card-tags { transition-delay: 0.1s; }
+.bento-card:hover .cat-card-count { transition-delay: 0.15s; }
+
+.cat-card-project-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.1rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+  transition: opacity 0.3s;
+}
+
+/* Thumbnail crossfade */
+.cat-card-thumb {
+  opacity: 1;
+  transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.8s;
+}
+.cat-card-thumb.hidden { opacity: 0; pointer-events: none; }
+
+/* Category thumbnail image */
+img.cat-card-thumb,
+div.cat-card-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+img.cat-card-thumb {
+  object-fit: cover;
+  filter: saturate(0.75) sepia(0.1) contrast(0.95);
+}
+
+.bento-card:hover .cat-card-thumb:not(.hidden) {
+  transform: scale(1.1);
+  filter: saturate(1) sepia(0) contrast(1.05) brightness(1.05);
+}
+
+/* Video play overlay */
+div.cat-card-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cat-card-play {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--coral);
+  border: 3px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1rem;
+  padding-left: 3px;
+  transition: all 0.4s;
+  z-index: 2;
+  box-shadow: 0 4px 20px rgba(255,107,53,0.4);
+}
+.bento-card:hover .cat-card-play {
+  background: var(--teal);
+  border-color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 4px 25px rgba(155,93,229,0.3);
+}
+
+/* ── Brand Card (replaces About in bento) ── */
+.brand-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.75) !important;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  box-shadow: 0 8px 32px rgba(255,107,53,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.brand-card-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.35;
+  transition: opacity 0.6s;
+}
+.brand-card-img, .brand-card-logo canvas {
+  height: clamp(80px, 12vw, 140px);
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 12px rgba(255,107,53,0.15));
+}
+
+.bento-card:hover .brand-card-logo {
+  opacity: 0.6;
+}
+
+.brand-card-sub {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+  color: rgba(45,27,0,0.35);
+}
+
+/* ── About Section — Lusion editorial layout ── */
+.about-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10rem clamp(1.5rem, 4vw, 4rem) 6rem;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(255,87,34,0.03) 0%, rgba(124,58,237,0.03) 100%);
+}
+
+.about-intro {
+  margin-bottom: 5rem;
+  opacity: 0;
+  transform: translateY(30px);
+  filter: saturate(0);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 1.2s cubic-bezier(0.16,1,0.3,1);
+}
+.about-intro.visible { opacity: 1; transform: translateY(0); filter: none; transition: opacity 0.7s, transform 0.8s, filter 0.6s; }
+
+.about-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.25rem;
+  text-transform: uppercase;
+  color: var(--accent-1);
+  opacity: 0.5;
+  margin-bottom: 1.5rem;
+}
+
+.about-headline {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+  max-width: 700px;
+}
+.about-headline em {
+  font-style: normal;
+  color: var(--accent-1);
+}
+
+.about-main {
+  display: grid;
+  grid-template-columns: 0.4fr 1fr;
+  gap: 4rem;
+  align-items: start;
+  margin-bottom: 5rem;
+}
+
+.about-left {
+  position: sticky;
+  top: 100px;
+  align-self: start;
+}
+
+.about-image-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--card);
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+  filter: saturate(0);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 1.2s cubic-bezier(0.16,1,0.3,1);
+}
+.about-image-wrap.visible { opacity: 1; transform: translateY(0); filter: none; transition: opacity 0.7s, transform 0.8s, filter 0.6s; }
+
+.about-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.85);
+  transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.about-image-wrap:hover img {
+  transform: scale(1.05);
+}
+
+.about-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.about-gallery-item {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(255,107,53,0.1);
+  transition: transform 0.3s, border-color 0.3s;
+}
+.about-gallery-item:hover {
+  transform: scale(1.05);
+  border-color: rgba(255,107,53,0.25);
+}
+
+.about-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  opacity: 0;
+  transform: translateY(30px);
+  filter: saturate(0);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1) 0.15s, transform 0.8s cubic-bezier(0.16,1,0.3,1) 0.15s, filter 1.2s cubic-bezier(0.16,1,0.3,1) 0.15s;
+}
+.about-right.visible { opacity: 1; transform: translateY(0); filter: none; transition: opacity 0.7s, transform 0.8s, filter 0.6s; }
+
+.about-name {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+  line-height: 1.2;
+}
+
+.about-name-sub {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--accent-2);
+  margin-bottom: 2.5rem;
+  letter-spacing: 0.02rem;
+}
+
+.about-text {
+  font-size: 0.95rem;
+  line-height: 2;
+  color: var(--text-secondary);
+  margin-bottom: 3rem;
+  white-space: pre-line;
+}
+
+.about-contact-row {
+  display: flex;
+  gap: 0;
+  flex-direction: column;
+}
+
+.about-contact-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(45,27,0,0.08);
+  transition: border-color 0.3s;
+}
+.about-contact-item:first-child {
+  border-top: 1px solid rgba(45,27,0,0.08);
+}
+.about-contact-item:hover {
+  border-color: rgba(255,107,53,0.3);
+}
+
+.about-contact-item-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.15rem;
+  text-transform: uppercase;
+  color: rgba(45,27,0,0.35);
+}
+
+.about-contact-item-value {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+
+a.about-contact-item-value:hover {
+  color: var(--text-primary);
+}
+
+/* About body wrapper — for legacy compatibility */
+.about-body {
+  display: contents;
+}
+
+/* ── Contact Card ── */
+.contact-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.8rem;
+  gap: 0;
+  cursor: default;
+  background: rgba(255,255,255,0.75) !important;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  box-shadow: 0 8px 32px rgba(255,107,53,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.contact-card-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.15rem;
+  text-transform: uppercase;
+  color: var(--coral);
+  opacity: 0.6;
+  margin-bottom: 1.2rem;
+}
+
+.contact-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(45,27,0,0.08);
+  transition: border-color 0.3s;
+}
+
+.contact-card-row:first-of-type {
+  border-top: 1px solid rgba(45,27,0,0.08);
+}
+
+.contact-card-row:hover {
+  border-color: var(--coral);
+}
+
+.contact-card-row-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.12rem;
+  text-transform: uppercase;
+  color: rgba(45,27,0,0.3);
+}
+
+.contact-card-row-value {
+  font-size: 0.72rem;
+  color: rgba(45,27,0,0.5);
+  transition: color 0.3s;
+}
+
+a.contact-card-row-value:hover {
+  color: var(--coral);
+}
+
+/* ── Tagline Card ── */
+.tagline-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  cursor: default;
+  background: rgba(255,255,255,0.75) !important;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  box-shadow: 0 8px 32px rgba(255,107,53,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.tagline-card-text {
+  font-family: 'Syne', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: clamp(1rem, 1.6vw, 1.4rem);
+  line-height: 1.6;
+  text-align: center;
+  color: var(--coral);
+  -webkit-text-fill-color: initial;
+}
+
+/* ── CTA Card ── */
+.cta-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem;
+  cursor: default;
+  background: rgba(255,255,255,0.75) !important;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  box-shadow: 0 8px 32px rgba(255,107,53,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.cta-stat {
+  text-align: center;
+}
+
+.cta-stat-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 400;
+  color: #FF5722;
+  -webkit-text-fill-color: initial;
+}
+
+.cta-stat-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  color: rgba(45,27,0,0.3);
+  margin-top: 0.3rem;
+}
+
+.cta-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(45,27,0,0.08);
+}
+
+/* ── Footer — Lusion-style ── */
+.footer {
+  padding: 6rem clamp(1.5rem, 4vw, 4rem) 3rem;
+  background: rgba(45,27,0,0.95);
+  border-top: 1px solid rgba(45,27,0,0.08);
+  color: rgba(255,255,255,0.87);
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 4rem;
+  margin-bottom: 5rem;
+}
+.footer-brand {
+  flex-shrink: 0;
+}
+.footer-brand-name {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  color: rgba(255,255,255,0.87);
+  line-height: 1;
+  margin-bottom: 0.8rem;
+}
+.footer-brand-tagline {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.6;
+  max-width: 280px;
+}
+.footer-columns {
+  display: flex;
+  gap: 4rem;
+}
+.footer-col-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 1.2rem;
+}
+.footer-col-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.footer-link {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.footer-link:hover { color: rgba(255,255,255,0.9); }
+.footer-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+.footer-copy {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.35);
+  letter-spacing: 0.03rem;
+}
+.footer-built {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,245,235,0.95);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.modal-overlay.active { display: flex; animation: fadeIn 0.4s ease; }
+
+.modal {
+  width: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  overflow-y: auto;
+  padding: 0;
+  animation: modalSlideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,107,53,0.3) transparent;
+}
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-thumb { background: rgba(255,107,53,0.3); border-radius: 4px; }
+
+.modal-close {
+  position: fixed;
+  top: 1.5rem; right: 1.5rem;
+  background: rgba(255,245,235,0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,107,53,0.3);
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(45,27,0,0.7);
+  font-size: 1.4rem;
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(255,107,53,0.15);
+}
+.modal-close:hover { background: var(--coral); transform: rotate(90deg) scale(1.1); }
+
+/* Project prev/next nav */
+.modal-proj-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,245,235,0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,107,53,0.2);
+  color: rgba(45,27,0,0.7);
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(255,107,53,0.1);
+}
+.modal-proj-nav:hover {
+  background: var(--teal);
+  transform: translateY(-50%) scale(1.1);
+}
+.modal-proj-prev { left: 1rem; }
+.modal-proj-next { right: 1rem; }
+.modal-proj-nav.hidden { display: none; }
+
+/* Cinematic Hero */
+.modal-hero {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #FFF0E0;
+}
+.modal-hero-media {
+  width: 100%;
+  position: relative;
+}
+.modal-hero-media img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 75vh;
+  object-fit: contain;
+  margin: 0 auto;
+  background: #FFF0E0;
+}
+.modal-hero-media iframe,
+.modal-hero-media video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: none;
+  display: block;
+}
+.modal-hero-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+.modal-hero-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  z-index: 2;
+  padding: 2rem 3rem;
+  pointer-events: none;
+}
+.modal-hero-info .modal-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 0.8rem;
+}
+.modal-hero-info .modal-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+  font-weight: 600;
+  color: rgba(45,27,0,0.87);
+  margin-bottom: 1rem;
+  text-shadow: 0 2px 20px rgba(255,245,235,0.4);
+  letter-spacing: -0.02em;
+}
+.modal-hero-info .modal-tags { margin-bottom: 0; }
+
+/* Detail Toggle Button */
+.modal-detail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem 2rem;
+  background: #FFF0E0;
+  cursor: pointer;
+  border-top: 1px solid rgba(255,107,53,0.1);
+  transition: background 0.3s;
+}
+.modal-detail-toggle:hover { background: rgba(255,107,53,0.06); }
+.modal-detail-toggle-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  color: var(--coral);
+}
+.modal-detail-toggle-icon {
+  font-size: 0.6rem;
+  color: var(--coral);
+  transition: transform 0.3s;
+}
+.modal-detail-toggle.open .modal-detail-toggle-icon { transform: rotate(180deg); }
+/* Info Section */
+.modal-info-section {
+  padding: 2.5rem 3rem;
+  background: #FFF0E0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.16,1,0.3,1), padding 0.5s, opacity 0.3s;
+}
+.modal-info-section.collapsed {
+  max-height: 0 !important;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+}
+.modal-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.modal-detail-card {
+  padding: 1.2rem 1.4rem;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  box-shadow: 0 2px 16px rgba(255,107,53,0.06);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.modal-detail-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255,107,53,0.1);
+}
+.modal-detail-card.full-width {
+  grid-column: 1 / -1;
+}
+.modal-detail-icon {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+.modal-detail-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--teal);
+  stroke-width: 1.8;
+  fill: none;
+}
+.modal-detail-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12rem;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 0.4rem;
+}
+.modal-detail-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgba(45,27,0,0.5);
+  line-height: 1.7;
+  white-space: pre-line;
+}
+.modal-credits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+.modal-credit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(45,27,0,0.08);
+}
+.modal-credit-row:last-child { border-bottom: none; }
+.modal-credit-role {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(45,27,0,0.4);
+  min-width: 80px;
+  letter-spacing: 0.03rem;
+}
+.modal-credit-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgba(45,27,0,0.6);
+}
+@media (max-width: 600px) {
+  .modal-detail-grid { grid-template-columns: 1fr; }
+}
+.modal-desc {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: rgba(45,27,0,0.5);
+  line-height: 2;
+  max-width: 700px;
+  white-space: pre-line;
+}
+
+/* Masonry Gallery */
+.modal-gallery {
+  position: relative;
+  background: #FFF0E0;
+  padding: 4px;
+}
+.modal-gallery-item {
+  position: absolute;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.4s;
+}
+.modal-gallery-item:hover { z-index: 2; }
+.modal-gallery-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.16,1,0.3,1);
+}
+.modal-gallery-item:hover img { transform: scale(1.03); }
+.modal-gallery-item.gallery-video {
+  /* full width handled by JS masonry */
+}
+.modal-gallery-item iframe,
+.modal-gallery-item video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: none;
+  display: block;
+}
+
+/* Fullscreen image viewer */
+.modal-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(45,27,0,0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+.modal-fullscreen.active { display: flex; }
+.modal-fullscreen img {
+  max-width: 95vw;
+  max-height: 95vh;
+  object-fit: contain;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalSlideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Text Reveal — Frozen thaw ── */
+.text-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  filter: saturate(0);
+}
+.text-reveal.text-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  filter: none;
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.6s;
+}
+
+/* ── Pixel block reveal (canvas mask) ── */
+.pixel-revealing {
+  image-rendering: pixelated !important;
+  -webkit-mask-size: 100% 100% !important;
+  mask-size: 100% 100% !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+}
+
+/* ── Custom Cursor ── */
+.custom-cursor {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 99999;
+  pointer-events: none;
+  mix-blend-mode: difference;
+}
+.cursor-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent-1);
+  position: absolute;
+  top: -2px; left: -2px;
+  transition: transform 0.15s, opacity 0.2s;
+}
+.cursor-ring {
+  width: 48px; height: 48px;
+  border: 1px solid rgba(255,107,53,0.4);
+  border-radius: 50%;
+  position: absolute;
+  top: -24px; left: -24px;
+  mix-blend-mode: exclusion;
+  transition: width 0.35s cubic-bezier(0.16,1,0.3,1), height 0.35s cubic-bezier(0.16,1,0.3,1), top 0.35s, left 0.35s, border-color 0.3s, background 0.3s, transform 0.35s cubic-bezier(0.16,1,0.3,1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cursor-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.custom-cursor.hovering .cursor-dot { transform: scale(0); }
+.custom-cursor.hovering .cursor-ring {
+  width: 70px; height: 70px;
+  top: -35px; left: -35px;
+  background: rgba(255,107,53,0.1);
+  border-color: rgba(255,107,53,0.6);
+}
+.custom-cursor.hovering .cursor-label { opacity: 1; }
+.custom-cursor.clicking .cursor-ring { transform: scale(0.85); }
+
+/* ── Section Navigation Dots ── */
+.section-nav {
+  position: fixed;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.section-nav.visible { opacity: 1; }
+.section-nav-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--coral);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+.section-nav-dot:hover {
+  transform: scale(1.3);
+  border-color: var(--coral);
+}
+.section-nav-dot.active {
+  background: #FF5722;
+  border-color: #FF5722;
+  box-shadow: 0 0 8px rgba(255,87,34,0.5);
+}
+.section-nav-dot::after {
+  content: attr(data-label);
+  position: absolute;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+  color: var(--coral);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.section-nav-dot:hover::after { opacity: 1; }
+
+/* ── 3D Carousel Showcase ── */
+.hscroll-section {
+  padding: 1.5rem 0 0;
+  overflow: visible;
+  position: relative;
+}
+.hscroll-label {
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2rem;
+  text-transform: uppercase;
+  color: rgba(45,27,0,0.15);
+  margin-bottom: 0.5rem;
+}
+.carousel-viewport {
+  width: 100%;
+  height: 420px;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+}
+.carousel-scene {
+  width: 320px;
+  height: 440px;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.hscroll-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  margin-left: -160px;
+  width: 320px;
+  height: 440px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,107,53,0.1);
+  overflow: visible;
+  cursor: pointer;
+  transition: border-color 0.5s, box-shadow 0.5s, opacity 0.4s;
+  box-shadow: 0 8px 32px rgba(255,107,53,0.1);
+}
+.hscroll-card.active-card {
+  border-color: rgba(155,93,229,0.6);
+  box-shadow: 0 20px 80px rgba(155,93,229,0.15), 0 0 60px rgba(255,107,53,0.2), 0 0 120px rgba(155,93,229,0.1), inset 0 0 30px rgba(155,93,229,0.05);
+  z-index: 10 !important;
+}
+.hscroll-card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform: scaleX(-1);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+.hscroll-card.active-card .hscroll-card-inner {
+  transform: scaleX(-1) scale(1.12) translateY(-18px);
+}
+.hscroll-card-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.85) brightness(0.9);
+  transition: filter 0.5s;
+}
+.hscroll-card.active-card .hscroll-card-bg { filter: saturate(1.2) brightness(1.1) contrast(1.05); }
+/* Particle overlay canvas — sits on top of entire section, never clipped */
+.carousel-particles-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  overflow: visible;
+}
+/* Legacy per-card canvas hidden */
+.hscroll-card-particles { display: none; }
+.hscroll-card-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+}
+.hscroll-card-info {
+  position: absolute;
+  bottom: 1.2rem; left: 1.2rem; right: 1.2rem;
+  z-index: 2;
+}
+.hscroll-card-cat {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.15rem;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 0.4rem;
+}
+.hscroll-card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.4;
+}
+
+/* ── WebGL Background ── */
+#webglBg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+#cerealFloat {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Marquee Text Divider ── */
+.marquee-text-section {
+  padding: 2rem 0;
+  overflow: hidden;
+  position: relative;
+}
+.marquee-text-wrap {
+  display: flex;
+  animation: marqueeText 20s linear infinite;
+  animation-play-state: running;
+  will-change: transform;
+  transform: translateZ(0);
+  width: max-content;
+}
+.marquee-text-wrap:hover { animation-play-state: paused; }
+.marquee-text {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(255,87,34,0.25);
+  white-space: nowrap;
+  padding: 0 0.2em;
+  transition: -webkit-text-stroke-color 0.3s, color 0.3s;
+}
+.marquee-text:hover { -webkit-text-stroke-color: #FF5722; color: rgba(255,87,34,0.08); }
+@keyframes marqueeText {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Filter Tabs ── */
+.filter-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem var(--gap) 1.5rem;
+  flex-wrap: wrap;
+}
+.filter-tab {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  padding: 0.5rem 1.2rem;
+  border: 2px solid rgba(255,87,34,0.3);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(12px);
+  color: rgba(45,27,0,0.6);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.filter-tab:hover { background: rgba(255,87,34,0.1); border-color: rgba(255,87,34,0.4); color: var(--accent-1); }
+.filter-tab.active {
+  background: #FF5722;
+  border-color: #FF5722;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(255,87,34,0.3);
+}
+.bento-grid.filtered {
+  grid-template-columns: repeat(3, 1fr) !important;
+  grid-template-rows: auto !important;
+  min-height: auto !important;
+}
+.bento-grid.filtered .bento-card {
+  grid-column: span 1 !important;
+  grid-row: span 1 !important;
+  min-height: 300px !important;
+}
+.filtered-card-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.85);
+  transition: transform 0.5s, filter 0.4s;
+}
+.bento-card:hover .filtered-card-bg { transform: scale(1.05); filter: saturate(1); }
+.filtered-card-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+  z-index: 1;
+}
+.filtered-card-info {
+  position: absolute; bottom: 1rem; left: 1rem; right: 1rem;
+  z-index: 2;
+}
+.filtered-card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.4rem;
+}
+.filtered-card-tags {
+  display: flex; gap: 0.3rem; flex-wrap: wrap;
+}
+.filtered-card-tag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.45rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.85);
+}
+
+/* ── Tools Section (Orbital) ── */
+/* ── Tools & Skills — Lusion-style Grid ── */
+.tools-section {
+  padding: 8rem 0 6rem;
+  position: relative;
+  overflow: hidden;
+}
+.tools-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 4vw, 4rem);
+  margin-bottom: 4rem;
+}
+.tools-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.25rem;
+  text-transform: uppercase;
+  color: var(--accent-1);
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+.tools-headline {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+.tools-desc {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  max-width: 480px;
+}
+.tools-categories {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 4vw, 4rem);
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+.tools-cat-btn {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.06rem;
+  text-transform: uppercase;
+  padding: 0.55rem 1.4rem;
+  border: 1px solid rgba(255,107,53,0.12);
+  border-radius: 100px;
+  background: rgba(255,255,255,0.5);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.tools-cat-btn:hover { border-color: rgba(255,107,53,0.3); color: var(--text-primary); }
+.tools-cat-btn.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg);
+}
+.tools-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 4vw, 4rem);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+}
+.tool-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,87,34,0.12);
+  cursor: default;
+  transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  filter: saturate(0);
+}
+.tool-item.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: none;
+  transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1), filter 0.4s, background 0.4s, border-color 0.4s;
+}
+.tool-item:hover {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(124,58,237,0.3);
+  transform: translateY(-4px);
+}
+.tool-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255,107,53,0.06);
+  font-size: 1.5rem;
+  line-height: 1;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+.tool-item:hover .tool-icon {
+  transform: scale(1.1);
+  background: rgba(255,107,53,0.1);
+}
+.tool-icon img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: var(--radius-xs);
+}
+.tool-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.2;
+  transition: color 0.3s;
+}
+.tool-item:hover .tool-name {
+  color: var(--text-primary);
+}
+/* Skill level indicator */
+.tool-level-badge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.05rem;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  opacity: 0.6;
+}
+.tool-level-상 .tool-level-badge { background: rgba(255,107,53,0.12); color: var(--accent-1); }
+.tool-level-중 .tool-level-badge { background: rgba(155,93,229,0.08); color: var(--accent-2); }
+.tool-level-하 .tool-level-badge { background: rgba(45,27,0,0.05); color: rgba(45,27,0,0.3); }
+.tool-level-하 { opacity: 0.5; }
+@media (max-width: 768px) {
+  .tools-section { padding: 5rem 0 4rem; }
+  .tools-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  .tool-item { padding: 1rem 0.6rem; }
+  .tool-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+  .tool-icon img { width: 26px; height: 26px; }
+  .tool-name { font-size: 0.6rem; }
+  .tools-headline { margin-bottom: 0.8rem; }
+}
+
+/* ── Full-Bleed Image Divider ── */
+.image-divider {
+  position: relative;
+  width: 100%;
+  height: 40vh;
+  min-height: 250px;
+  overflow: hidden;
+  z-index: 2;
+}
+.image-divider-bg {
+  position: absolute;
+  inset: -40%;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(1.05) saturate(0.9);
+  will-change: transform;
+}
+.image-divider-overlay {
+  position: absolute; inset: 0;
+  background: none;
+  z-index: 1;
+}
+.image-divider-text {
+  position: absolute;
+  bottom: 50%; left: 50%;
+  transform: translate(-50%, 50%);
+  z-index: 2;
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  color: rgba(255,255,255,0.8);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+/* ── Modal Cinematic Transition ── */
+@keyframes modalExpand {
+  0% { clip-path: circle(0% at var(--ox) var(--oy)); }
+  100% { clip-path: circle(150% at var(--ox) var(--oy)); }
+}
+@keyframes modalCollapse {
+  0% { clip-path: circle(150% at var(--ox) var(--oy)); }
+  100% { clip-path: circle(0% at var(--ox) var(--oy)); }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .modal-gallery { /* 2 cols handled by JS */ }
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+    min-height: auto;
+  }
+  .card-video   { grid-column: span 2; grid-row: span 1; min-height: 350px; }
+  .card-graphic { grid-column: span 2; grid-row: auto; }
+  .card-brand   { grid-column: span 2; grid-row: auto; }
+  .card-photo   { grid-column: span 2; grid-row: span 1; min-height: 350px; }
+  .card-contact { grid-column: span 1; grid-row: auto; }
+  .card-tagline { grid-column: span 1; grid-row: auto; }
+  .card-cta     { grid-column: span 2; grid-row: auto; }
+  .about-main { grid-template-columns: 0.4fr 1fr; gap: 3rem; }
+  .bento-grid.filtered { grid-template-columns: repeat(2, 1fr) !important; }
+  .carousel-viewport { height: 420px; }
+  .hscroll-card { width: 280px; height: 400px; }
+}
+
+@media (max-width: 768px) {
+  :root { --gap: 8px; }
+  .bento-grid { grid-template-columns: 1fr; }
+  .card-video, .card-graphic, .card-photo, .card-brand,
+  .card-contact, .card-tagline, .card-cta { grid-column: span 1; grid-row: span 1; min-height: 280px; }
+  .card-contact, .card-tagline, .card-brand { min-height: auto; }
+  .cat-card-inner { transform: translateY(0); }
+  .cat-card-project-title, .cat-card-tags, .cat-card-count { opacity: 1; transform: translateY(0); }
+  .custom-cursor { display: none !important; }
+  .section-nav { display: none !important; }
+  /* dark mode toggle is now in scroll nav */
+  .bento-grid.filtered { grid-template-columns: 1fr !important; }
+  .bento-grid.filtered .bento-card { min-height: 250px !important; }
+  /* Mobile: smaller 3D carousel */
+  .section-line-wrap { height: 300px; }
+  .hscroll-section { padding: 1rem 0 0; }
+  .marquee-text-section { padding: 0.5rem 0; }
+  .bento-section { padding-top: 0; }
+  .hscroll-label { margin-bottom: 0.5rem; }
+  .carousel-viewport { height: 300px; perspective: 600px; }
+  .carousel-scene { width: 180px; height: 260px; }
+  .hscroll-card { width: 180px; height: 260px; margin-left: -90px; }
+  .hscroll-card-cat { font-size: 0.4rem; }
+  .hscroll-card-title { font-size: 0.7rem; }
+  .hscroll-card-info { bottom: 0.8rem; left: 0.8rem; right: 0.8rem; }
+  .image-divider { height: 30vh; min-height: 200px; }
+  .about-left { position: relative !important; top: auto !important; }
+  .hero-title { font-size: clamp(4rem, 16vw, 8rem); }
+  .hero-subtitle { font-size: 0.5rem; letter-spacing: 0.08rem; text-align: center; padding: 0 1rem; }
+  .hero-subtitle span { display: inline; }
+  .about-section { padding: 5rem 1.5rem 4rem; }
+  .about-main { grid-template-columns: 1fr; gap: 2.5rem; }
+  .about-left { position: relative !important; top: auto !important; display: flex; flex-direction: column; align-items: center; }
+  .about-image-wrap { width: 140px; }
+  .about-gallery { grid-template-columns: repeat(5, 1fr); width: 100%; }
+  .about-right { text-align: center; }
+  .about-text { max-width: 100%; }
+  .about-contact-row { width: 100%; }
+  .about-contact-item { justify-content: space-between; }
+  .hero-section, .hero-overlay { max-width: 100vw; }
+  .clients-section { max-width: 100vw; overflow: hidden; }
+  .footer-top { flex-direction: column; gap: 2.5rem; }
+  .footer-columns { gap: 3rem; }
+  .footer-bottom { flex-direction: column; gap: 0.5rem; text-align: center; }
+
+  /* Modal → cinematic on mobile */
+  .modal-proj-nav { width: 36px; height: 36px; font-size: 1.2rem; }
+  .modal-proj-prev { left: 0.5rem; }
+  .modal-proj-next { right: 0.5rem; }
+  .modal {
+    padding: 0;
+    width: 100%;
+    max-height: 100vh;
+  }
+  .modal-hero-info { padding: 1.2rem; }
+  .modal-hero-info .modal-title { font-size: 1.3rem; }
+  .modal-info-section { padding: 1.2rem; }
+  .modal-gallery {
+    padding: 2px;
+  }
+  .modal-gallery-item iframe,
+  .modal-gallery-item video {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 40vw;
+    aspect-ratio: 16/9;
+  }
+}
+
+/* ── Intro Curtain ── */
+.intro-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: #FFFAF2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.intro-curtain.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.intro-curtain-main {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.1rem, 2.2vw, 1.7rem);
+  color: rgba(45,27,0,0.85);
+  text-align: center;
+  line-height: 1.8;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: curtainTextIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+}
+.intro-curtain-line {
+  width: 40px;
+  height: 2px;
+  background: var(--accent-1);
+  opacity: 0;
+  transform: scaleX(0);
+  animation: curtainLineIn 0.6s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
+}
+.intro-curtain-sub {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+  font-weight: 400;
+  letter-spacing: 0.12rem;
+  color: rgba(45,27,0,0.4);
+  text-align: center;
+  opacity: 0;
+  animation: curtainTextIn 0.7s ease 0.8s forwards;
+}
+.intro-curtain-author {
+  position: absolute;
+  bottom: 3.5rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2rem;
+  color: var(--teal);
+  opacity: 0;
+  animation: curtainTextIn 0.6s ease 1s forwards;
+}
+/* Preloader counter */
+.intro-loader {
+  position: absolute;
+  bottom: 6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+.intro-loader-bar {
+  width: 120px;
+  height: 1px;
+  background: rgba(45,27,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+.intro-loader-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  transition: width 0.15s linear;
+}
+.intro-loader-num {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15rem;
+  color: rgba(45,27,0,0.3);
+  font-variant-numeric: tabular-nums;
+}
+@keyframes curtainTextIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes curtainLineIn {
+  to { opacity: 1; transform: scaleX(1); }
+}
+
+/* ── CTA Section ── */
+.cta-section {
+  padding: 8rem 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  background: linear-gradient(135deg, #FF5722 0%, #7C3AED 100%);
+}
+.cta-headline {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+.cta-headline em {
+  font-style: italic;
+  color: rgba(255,255,255,0.9);
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: #fff;
+  background-clip: unset;
+}
+.cta-headline em .kinetic-word {
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: #fff;
+  background-clip: unset;
+}
+.cta-sub {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.8);
+  max-width: 500px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+}
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 2.5rem;
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 100px;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.08rem;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  text-decoration: none;
+}
+.cta-btn:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.7);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+}
+.cta-btn svg {
+  width: 18px; height: 18px;
+  stroke: currentColor; stroke-width: 2;
+  fill: none; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform 0.3s;
+}
+.cta-btn:hover svg { transform: translateX(4px); }
+
+/* ── FLIP Modal Transition ── */
+@keyframes modalExpand {
+  from { clip-path: circle(0% at var(--ox, 50%) var(--oy, 50%)); }
+  to { clip-path: circle(150% at var(--ox, 50%) var(--oy, 50%)); }
+}
+@keyframes modalCollapse {
+  from { clip-path: circle(150% at var(--ox, 50%) var(--oy, 50%)); opacity: 1; }
+  to { clip-path: circle(0% at var(--ox, 50%) var(--oy, 50%)); opacity: 0; }
+}
+.modal-overlay.active {
+  display: flex;
+  animation: none; /* override old fadeIn — now uses clip-path via JS */
+}
+
+/* ── Kinetic Typography ── */
+.kinetic-line {
+  display: block;
+  overflow: hidden;
+}
+.kinetic-line .kinetic-word {
+  display: inline-block;
+  transform: translateY(110%);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kinetic-line.revealed .kinetic-word {
+  transform: translateY(0);
+}
+
+/* ── Creative Philosophy ── */
+.about-philosophy {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(45,27,0,0.08);
+}
+.about-philosophy-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.25rem;
+  text-transform: uppercase;
+  color: var(--accent-1);
+  opacity: 0.5;
+  margin-bottom: 2rem;
+}
+.philosophy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+.philosophy-card {
+  padding: 2rem;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,87,34,0.08);
+  border-left: 4px solid var(--accent-1);
+  transition: all 0.4s;
+}
+.philosophy-card:nth-child(1) { border-left-color: #FF5722; }
+.philosophy-card:nth-child(2) { border-left-color: #7C3AED; }
+.philosophy-card:nth-child(3) { border-left-color: #F15BB5; }
+.philosophy-card:hover {
+  background: rgba(255,255,255,0.85);
+  border-color: rgba(255,87,34,0.2);
+  transform: translateY(-4px);
+}
+.philosophy-icon {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+.philosophy-card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
+}
+.philosophy-card p {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+@media (max-width: 768px) {
+  .philosophy-grid { grid-template-columns: 1fr; }
+  .cta-section { padding: 5rem 1.5rem; }
+}
+
+/* ── Scroll Progress Bar ── */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--coral), var(--teal));
+  z-index: 10000;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* ── About Parallax ── */
+.about-image-wrap {
+  transition: transform 0.3s ease-out;
+}
+
+/* ── Scroll-linked SVG line drawing ── */
+.scroll-line {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+.scroll-line path {
+  fill: none;
+  stroke: rgba(255,107,53,0.12);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-dasharray: var(--line-len, 1000);
+  stroke-dashoffset: var(--line-len, 1000);
+  transition: stroke-dashoffset 0s;
+}
+
+/* ── Word-by-word scroll reveal ── */
+.word-reveal {
+  overflow: hidden;
+}
+.word-reveal .word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1);
+  margin-right: 0.25em;
+}
+.word-reveal .word.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Stagger delays via CSS custom property */
+.word-reveal .word { transition-delay: calc(var(--i, 0) * 0.04s); }
+
+/* ── Character-by-character for headlines ── */
+.char-reveal .char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(60%) rotateX(-40deg);
+  transition: opacity 0.4s cubic-bezier(0.16,1,0.3,1), transform 0.5s cubic-bezier(0.16,1,0.3,1);
+  transition-delay: calc(var(--i, 0) * 0.025s);
+}
+.char-reveal .char.revealed {
+  opacity: 1;
+  transform: translateY(0) rotateX(0);
+}
+.char-reveal .char-space {
+  display: inline;
+  width: 0.3em;
+}
+
+/* ── Section divider lines (scroll-animated, 3D depth) ── */
+.section-line-group {
+  position: relative;
+  width: 100%;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.section-line-wrap {
+  position: absolute;
+  left: -5%;
+  width: 110%;
+  height: 500px;
+  overflow: visible;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+.section-line-wrap[data-depth="front"] { z-index: 1; }
+.section-line-wrap[data-depth="back"] { z-index: 0; }
+.section-line-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.section-line-svg path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: var(--line-len);
+  stroke-dashoffset: var(--line-len);
+}
+.section-line-svg .line-front {
+  stroke: url(#lineGradFront);
+  stroke-width: 5;
+  filter: none;
+}
+.section-line-svg .line-mid {
+  stroke: url(#lineGrad);
+  stroke-width: 3;
+  opacity: 0.5;
+  filter: none;
+}
+.section-line-svg .line-back {
+  stroke: url(#lineGradBack);
+  stroke-width: 2;
+  opacity: 0.25;
+  filter: none;
+}
+  </style>
+</head>
+<body>
+<!-- SVG Frozen/Crystallize Filter + Line Gradient -->
+<svg style="position:absolute;width:0;height:0" aria-hidden="true">
+  <defs>
+    <filter id="frozen" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(255,150,50,0.03)"/>
+      <stop offset="15%" stop-color="rgba(255,150,50,0.15)"/>
+      <stop offset="50%" stop-color="rgba(180,130,255,0.12)"/>
+      <stop offset="85%" stop-color="rgba(255,150,50,0.15)"/>
+      <stop offset="100%" stop-color="rgba(255,150,50,0.03)"/>
+    </linearGradient>
+    <linearGradient id="lineGradFront" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(180,130,255,0.03)"/>
+      <stop offset="20%" stop-color="rgba(180,130,255,0.2)"/>
+      <stop offset="50%" stop-color="rgba(255,150,80,0.25)"/>
+      <stop offset="80%" stop-color="rgba(180,130,255,0.2)"/>
+      <stop offset="100%" stop-color="rgba(180,130,255,0.03)"/>
+    </linearGradient>
+    <linearGradient id="lineGradBack" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(255,150,50,0)"/>
+      <stop offset="30%" stop-color="rgba(255,150,50,0.08)"/>
+      <stop offset="70%" stop-color="rgba(255,150,50,0.08)"/>
+      <stop offset="100%" stop-color="rgba(255,150,50,0)"/>
+    </linearGradient>
+  </defs>
+</svg>
+<script>window.scrollTo(0,0);if('scrollRestoration' in history) history.scrollRestoration='manual';</script>
+  <!-- Custom Cursor -->
+  <div class="custom-cursor" id="customCursor">
+    <div class="cursor-dot"></div>
+    <div class="cursor-ring"><span class="cursor-label"></span></div>
+  </div>
+
+  <!-- Dark Mode Toggle moved to scroll nav -->
+
+  <!-- Section Navigation Dots -->
+  <nav class="section-nav" id="sectionNav">
+    <div class="section-nav-dot active" data-section="hero" data-label="Hero"></div>
+    <div class="section-nav-dot" data-section="clientsSection" data-label="Clients"></div>
+    <div class="section-nav-dot" data-section="bentoSection" data-label="Projects"></div>
+    <div class="section-nav-dot" data-section="aboutSection" data-label="About"></div>
+    <div class="section-nav-dot" data-section="footerSection" data-label="Footer"></div>
+  </nav>
+
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Sticky Bar -->
+  <div class="sticky-bar" id="stickyBar">
+    <span class="sticky-bar-text" onclick="window.scrollTo({top:0,behavior:'smooth'})"><img src="/images/hati.png" alt="Hati"></span>
+  </div>
+
+  <!-- SVG Filters -->
+  <svg style="position:absolute;width:0;height:0;">
+    <defs>
+      <filter id="vintageText">
+        <feTurbulence type="turbulence" baseFrequency="0.02 0.04" numOctaves="3" seed="3" result="turb"/>
+        <feDisplacementMap in="SourceGraphic" in2="turb" scale="2.5" result="distorted"/>
+        <feGaussianBlur in="distorted" stdDeviation="0.8" result="blurred"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="10" result="grain"/>
+        <feColorMatrix in="grain" type="saturate" values="0" result="grainBW"/>
+        <feBlend in="blurred" in2="grainBW" mode="overlay" result="final"/>
+        <feComposite in="final" in2="SourceGraphic" operator="in"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Intro Curtain -->
+  <div class="intro-curtain" id="introCurtain">
+    <div class="intro-curtain-main" id="curtainMain">This is a Private Portfolio Room</div>
+    <div class="intro-curtain-line"></div>
+    <div class="intro-curtain-sub" id="curtainSub">관람 중에는 정숙해 주시기 바랍니다</div>
+    <div class="intro-curtain-author" id="curtainAuthor">Hati</div>
+    <div class="intro-loader">
+      <div class="intro-loader-bar"><div class="intro-loader-fill" id="loaderFill"></div></div>
+      <div class="intro-loader-num" id="loaderNum">0%</div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="hero-bg-image" id="heroBg"></div>
+    <video class="hero-bg-video" id="heroVideo" autoplay muted loop playsinline preload="auto"></video>
+    <div class="hero-overlay"></div>
+    <div class="hero-scanlines"></div>
+    <div class="hero-content">
+      <h1 class="hero-title" id="heroTitle"></h1>
+      <div class="hero-line"></div>
+      <p class="hero-subtitle" id="heroSubtitle">Director of Photography, Graphics & Video</p>
+    </div>
+    <div class="hero-scroll">
+      <button class="hero-scroll-btn hero-scroll-main" id="scrollNavBtn">Scroll</button>
+      <button class="hero-scroll-btn hero-scroll-theme" id="themeToggleBtn" onclick="toggleTheme()" title="새 사이트로 전환" aria-label="새 사이트(스튜디오)로 전환">🍬</button>
+      <button class="hero-scroll-btn hero-scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+    </div>
+  </section>
+
+  <!-- Client Logos -->
+  <section class="clients-section" id="clientsSection">
+    <div class="clients-label">Trusted Clients</div>
+    <div class="clients-marquee-wrap">
+      <div class="clients-marquee" id="clientsMarquee"></div>
+    </div>
+  </section>
+
+  <!-- 3D Carousel Showcase -->
+  <section class="hscroll-section" style="position:relative;">
+    <div class="hscroll-label">Featured Projects</div>
+    <div class="carousel-viewport">
+      <div class="carousel-scene" id="hscrollTrack"></div>
+    </div>
+    <canvas class="carousel-particles-overlay" id="carouselParticlesOverlay"></canvas>
+  </section>
+
+  <!-- Marquee Text Divider -->
+  <section class="marquee-text-section">
+    <div class="marquee-text-wrap" id="marqueeTextWrap"></div>
+  </section>
+
+  <!-- WebGL Background (fixed, behind all content) -->
+  <canvas id="webglBg"></canvas>
+
+  <!-- Floating Cereal 3D Objects -->
+  <canvas id="cerealFloat"></canvas>
+
+  <!-- Scroll-animated line dividers (3D layered — spans marquee → bento) -->
+  <div class="section-line-group">
+    <!-- Thin line near cards (back layer) -->
+    <div class="section-line-wrap" data-scroll-line data-depth="back" style="top:-200px; height:800px;">
+      <svg class="section-line-svg" viewBox="0 0 1000 800" preserveAspectRatio="none">
+        <path class="line-back" d="M-100,600 C50,550 150,200 350,250 C550,300 500,650 700,600 C900,550 950,200 1100,300"/>
+      </svg>
+    </div>
+    <!-- Thicker lines through marquee text area (front layer) -->
+    <div class="section-line-wrap" data-scroll-line data-depth="front" style="top:-250px; height:800px;">
+      <svg class="section-line-svg" viewBox="0 0 1000 800" preserveAspectRatio="none">
+        <path class="line-front" d="M-80,700 C80,700 120,100 300,100 C480,100 420,650 600,450 C780,250 800,700 950,600 C1000,560 1050,350 1100,250"/>
+        <path class="line-mid" d="M-50,200 C100,150 200,550 400,500 C600,450 550,100 750,200 C950,300 1000,650 1100,550"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Bento Grid -->
+  <section class="bento-section" id="bentoSection">
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-filter="all">All</button>
+      <button class="filter-tab" data-filter="video">Video</button>
+      <button class="filter-tab" data-filter="graphic">Graphics</button>
+      <button class="filter-tab" data-filter="photo">Photography</button>
+    </div>
+    <div class="bento-grid" id="bentoGrid">
+      <!-- Cards are rendered by JS -->
+    </div>
+  </section>
+
+  <!-- Full-Bleed Image Divider -->
+  <div class="image-divider" id="imageDivider1">
+    <div class="image-divider-bg" id="dividerBg1"></div>
+    <div class="image-divider-overlay"></div>
+  </div>
+
+  <!-- Scroll-animated line dividers (3D layered — spans image-divider → about → tools) -->
+  <div class="section-line-group">
+    <!-- Thin lines near image area (back layer) -->
+    <div class="section-line-wrap" data-scroll-line data-depth="back" style="top:-200px; height:1800px;">
+      <svg class="section-line-svg" viewBox="0 0 1000 1800" preserveAspectRatio="none">
+        <path class="line-back" d="M-100,100 C100,50 200,300 350,250 C500,200 450,500 600,600 C750,700 700,900 800,1050 C900,1200 850,1400 950,1600 C1000,1700 1050,1750 1100,1700"/>
+      </svg>
+    </div>
+    <!-- Thick lines through text areas (front layer) -->
+    <div class="section-line-wrap" data-scroll-line data-depth="front" style="top:-300px; height:1800px;">
+      <svg class="section-line-svg" viewBox="0 0 1000 1800" preserveAspectRatio="none">
+        <path class="line-front" d="M-80,50 C50,50 100,350 280,400 C460,450 400,150 550,200 C700,250 650,600 500,750 C350,900 400,1100 600,1200 C800,1300 750,1500 900,1600 C980,1660 1050,1700 1100,1650"/>
+        <path class="line-mid" d="M1100,150 C950,200 800,450 650,500 C500,550 550,300 400,350 C250,400 300,700 450,850 C600,1000 550,1200 400,1350 C250,1500 300,1650 150,1750 C50,1800 -50,1780 -100,1700"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- About Section (Sticky Photo) -->
+  <section class="about-section" id="aboutSection">
+    <div class="about-intro" id="aboutIntro">
+      <div class="about-label">About</div>
+      <h2 class="about-headline">Visual storytelling<br>with <em>purpose</em></h2>
+    </div>
+    <div class="about-main">
+      <div class="about-left">
+        <div class="about-image-wrap" id="aboutImage"></div>
+        <div class="about-gallery" id="aboutGallery"></div>
+      </div>
+      <div class="about-right" id="aboutBody">
+        <h3 class="about-name">박성건</h3>
+        <p class="about-name-sub">Hati</p>
+        <p class="about-text" id="aboutText"></p>
+        <div class="about-contact-row" id="aboutContact"></div>
+        <div class="about-philosophy">
+          <div class="about-philosophy-title">Creative Process</div>
+          <div class="philosophy-grid" id="philosophyGrid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <!-- Tools / Skills Section -->
+  <section class="tools-section" id="toolsSection">
+    <div class="tools-header">
+      <div class="tools-label">Tools & Skills</div>
+      <h2 class="tools-headline kinetic-text">Crafted with<br>the right tools</h2>
+      <p class="tools-desc">From design and video production to generative AI — a curated stack for creating compelling visual experiences.</p>
+    </div>
+    <div class="tools-categories" id="toolsCategories"></div>
+    <div class="tools-grid" id="toolsGrid"></div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section" id="ctaSection">
+    <h2 class="cta-headline kinetic-text">Let's create<br><em>together</em></h2>
+    <p class="cta-sub">새로운 프로젝트, 콜라보레이션, 또는 단순한 인사도 환영합니다.</p>
+    <a href="#" class="cta-btn" id="ctaEmailBtn">
+      Get in Touch
+      <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </section>
+
+  <footer class="footer" id="footerSection" style="position:relative;overflow:hidden">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-brand-name"><img src="/images/hati.png" alt="Hati" style="height:96px;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3))"></div>
+          <p class="footer-brand-tagline">Visual creative direction, photography, graphics & generative AI.</p>
+        </div>
+        <div class="footer-columns">
+          <div class="footer-col">
+            <div class="footer-col-title">Social</div>
+            <div class="footer-col-links">
+              <a href="#" class="footer-link" id="footerInsta">Instagram</a>
+              <a href="#" class="footer-link" id="footerVimeo">Vimeo</a>
+            </div>
+          </div>
+          <div class="footer-col">
+            <div class="footer-col-title">Contact</div>
+            <div class="footer-col-links">
+              <a href="#" class="footer-link" id="footerEmail">Email</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span class="footer-copy">&copy; 2024 Hati. All rights reserved.</span>
+        <span class="footer-built">Built with care</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <button class="modal-proj-nav modal-proj-prev" id="modalProjPrev" onclick="navProject(-1)">&#8249;</button>
+    <button class="modal-proj-nav modal-proj-next" id="modalProjNext" onclick="navProject(1)">&#8250;</button>
+    <div class="modal">
+      <div class="modal-hero" id="modalHero">
+        <div class="modal-hero-media" id="modalHeroMedia"></div>
+        <div class="modal-hero-overlay"></div>
+        <div class="modal-hero-info">
+          <div class="modal-label">Project</div>
+          <h2 class="modal-title" id="modalTitle"></h2>
+          <div class="modal-tags" id="modalTags"></div>
+        </div>
+      </div>
+      <div class="modal-detail-toggle" id="modalDetailToggle" onclick="toggleModalDetails()">
+        <span class="modal-detail-toggle-text">프로젝트 상세정보</span>
+        <span class="modal-detail-toggle-icon">▼</span>
+      </div>
+      <div class="modal-info-section" style="display:none;">
+        <div class="modal-detail-grid" id="modalDetailGrid"></div>
+      </div>
+      <div class="modal-gallery" id="modalMedia"></div>
+    </div>
+  </div>
+  <div class="modal-fullscreen" id="modalFullscreen" onclick="this.classList.remove('active')">
+    <img id="modalFullImg" src="" alt="">
+  </div>
+
+
+<script>
+
+// ── Custom Cursor ──
+(function initCustomCursor() {
+  const cursor = document.getElementById('customCursor');
+  if (!cursor || window.innerWidth < 768) { if(cursor) cursor.style.display='none'; return; }
+  let mx = 0, my = 0, cx = 0, cy = 0;
+  document.body.style.cursor = 'none';
+  const label = cursor.querySelector('.cursor-label');
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  document.addEventListener('mousedown', () => cursor.classList.add('clicking'));
+  document.addEventListener('mouseup', () => cursor.classList.remove('clicking'));
+  const interactiveSelectors = 'a, button, .bento-card.cat-card, .cat-card-nav, .hscroll-card, .filter-tab, .section-nav-dot, .modal-close, .modal-proj-nav, .footer-link, .about-gallery-item';
+  const magneticSelectors = '.filter-tab, .tools-cat-btn, button, a';
+  const ring = cursor.querySelector('.cursor-ring');
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest(interactiveSelectors);
+    if (el) {
+      cursor.classList.add('hovering');
+      if (el.matches('.bento-card.cat-card, .hscroll-card')) label.textContent = 'View';
+      else if (el.matches('a, .footer-link')) label.textContent = 'Go';
+      else label.textContent = '';
+    }
+    const magEl = e.target.closest(magneticSelectors);
+    if (magEl && ring) {
+      ring.style.transform = 'scale(1.6)';
+    }
+  });
+  document.addEventListener('mouseout', e => {
+    const el = e.target.closest(interactiveSelectors);
+    if (el) cursor.classList.remove('hovering');
+    const magEl = e.target.closest(magneticSelectors);
+    if (magEl && ring) {
+      ring.style.transform = '';
+    }
+  });
+  (function loop() {
+    cx += (mx - cx) * 0.15;
+    cy += (my - cy) * 0.15;
+    cursor.style.transform = `translate(${cx}px, ${cy}px)`;
+    requestAnimationFrame(loop);
+  })();
+})();
+
+// ── Section Navigation Dots ──
+(function initSectionNav() {
+  const nav = document.getElementById('sectionNav');
+  const dots = nav.querySelectorAll('.section-nav-dot');
+  const sectionIds = ['hero', 'clientsSection', 'bentoSection', 'aboutSection', 'footerSection'];
+  // Show/hide nav based on scroll
+  let navVisible = false;
+  window.addEventListener('scroll', () => {
+    const show = window.scrollY > 300;
+    if (show !== navVisible) { navVisible = show; nav.classList.toggle('visible', show); }
+  }, { passive: true });
+  // Track active section
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        dots.forEach(d => d.classList.toggle('active', d.dataset.section === entry.target.id));
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-10% 0px -10% 0px' });
+  // Observe after DOM ready
+  setTimeout(() => {
+    sectionIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  }, 100);
+  // Click handlers
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const target = document.getElementById(dot.dataset.section);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+})();
+
+// ── Helpers ──
+function isYoutubeUrl(url) {
+  return /(?:youtube\.com\/(?:watch|embed|shorts)|youtu\.be\/)/.test(url || '');
+}
+function getYoutubeId(url) {
+  if (!url) return '';
+  let m = url.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : '';
+}
+function getYoutubeEmbed(url) {
+  const id = getYoutubeId(url);
+  return id ? `https://www.youtube.com/embed/${id}` : url;
+}
+function getYoutubeThumb(url) {
+  const id = getYoutubeId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+}
+function convertDriveUrl(url) {
+  if (!url) return '';
+  if (isYoutubeUrl(url)) return getYoutubeThumb(url);
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1200` : url;
+}
+function getDriveVideoEmbed(url) {
+  if (!url) return '';
+  if (isYoutubeUrl(url)) return getYoutubeEmbed(url);
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? `https://drive.google.com/file/d/${m[1]}/preview` : url;
+}
+function getDriveVideoDirect(url) {
+  if (!url) return '';
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? `https://drive.google.com/uc?export=download&id=${m[1]}` : url;
+}
+
+// ── Hero Galaga Mini-Game (cereal theme) ──
+// Easy mode: auto-fire, no enemy bullets, no lives. HATI letters = cereal ring enemies.
+function renderHeroBigTitle(titleEl) {
+  const text = (settingsData.heroTitle || 'HATI').toUpperCase();
+  const wrap = document.createElement('div');
+  wrap.id = 'heroLogoWrap';
+  wrap.className = 'hero-halftone-wrap';
+  const canvas = document.createElement('canvas');
+  canvas.id = 'heroHalftoneCanvas';
+  wrap.appendChild(canvas);
+  titleEl.innerHTML = '';
+  titleEl.appendChild(wrap);
+
+  // Hide subtitle/line — drawn on canvas
+  const sub = document.querySelector('.hero-subtitle');
+  const line = document.querySelector('.hero-line');
+  if (sub) sub.style.display = 'none';
+  if (line) line.style.display = 'none';
+
+  // ── Colors ──
+  const CORAL = '#FF6B35';
+  const TEAL  = '#9B5DE5';
+  const PINK  = '#F15BB5';
+  const YELLOW = '#FEE440';
+  const CEREAL_COLORS = [CORAL, TEAL, PINK, YELLOW];
+
+  // ── Game state ──
+  let enemies = [];      // alive halftone dots → cereal ring enemies
+  let debris = [];       // exploded cereal crumbs
+  let bullets = [];      // player projectiles (milk drops)
+  let player = { x: 0, tx: 0, y: 0, w: 44, h: 18 };
+  let state  = 'playing'; // playing | win
+  let score  = 0;
+  let lastFire = 0;
+  const FIRE_COOLDOWN = 260; // ms
+  let animId = null;
+  let W = 0, H = 0, dpr = 1;
+  let enemyZoneH = 0;
+  let startedFiring = false; // becomes true after intro curtain finishes
+
+  // Milk-bubble background
+  let stars = [];
+  function buildStars() {
+    stars = [];
+    const count = Math.round(W * H / 3000);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 2.0 + 0.5,
+        twinkle: Math.random() * Math.PI * 2,
+        speed: 0.2 + Math.random() * 0.8
+      });
+    }
+  }
+
+  // ── Build enemies from HATI halftone (same as before, tagged for sway) ──
+  function buildEnemies() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.offsetWidth  || window.innerWidth;
+    H = window.innerHeight;
+    canvas.width  = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+
+    enemyZoneH = H * 0.52;
+    const shipY = H * 0.88;
+    player.w = Math.min(54, W * 0.05);
+    player.h = Math.min(22, W * 0.02);
+    player.x = W / 2;
+    player.tx = W / 2;
+    player.y = shipY;
+
+    const isMobileHero = W <= 768;
+    const off = document.createElement('canvas').getContext('2d');
+    const fs0 = enemyZoneH * 0.92;
+    off.font = `400 ${fs0}px 'Bebas Neue', Impact, sans-serif`;
+    const tw = off.measureText(text).width;
+    const sc = Math.min(1, (W * 0.98) / tw);
+    const fs = fs0 * sc;
+    const textX = isMobileHero ? W * 0.015 : W / 2;
+
+    const tmp = document.createElement('canvas');
+    tmp.width  = Math.round(W * dpr);
+    tmp.height = Math.round(enemyZoneH * dpr);
+    const tctx = tmp.getContext('2d');
+    tctx.scale(dpr, dpr);
+    tctx.font = `400 ${fs}px 'Bebas Neue', Impact, sans-serif`;
+    tctx.textAlign = isMobileHero ? 'left' : 'center';
+    tctx.textBaseline = 'middle';
+    tctx.fillStyle = '#fff';
+    tctx.fillText(text, textX, enemyZoneH / 2);
+    const px = tctx.getImageData(0, 0, tmp.width, tmp.height).data;
+
+    const grid = Math.max(10, Math.round(W / 70));
+    enemies = [];
+    for (let gy = 0; gy * grid < enemyZoneH + grid; gy++) {
+      for (let gx = 0; gx * grid < W + grid; gx++) {
+        const cx = (gx + 0.5) * grid;
+        const cy = (gy + 0.5) * grid;
+        const spx = Math.round(cx * dpr);
+        const spy = Math.round(cy * dpr);
+        if (spx >= tmp.width || spy >= tmp.height) continue;
+        const i = (spy * tmp.width + spx) * 4;
+        const alpha = px[i + 3] / 255;
+        if (alpha < 0.04) continue;
+        const r = (grid / 2) * Math.pow(alpha, 0.55) * 0.95;
+        if (r < 1.2) continue;
+        enemies.push({
+          ox: cx, oy: cy,        // original anchor (for sway)
+          x: cx, y: cy,
+          r, alive: true,
+          colorIdx: Math.floor(Math.random() * 4),
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    debris = [];
+    bullets = [];
+    state = 'playing';
+    score = 0;
+    buildStars();
+  }
+
+  // ── Fire a bullet ──
+  function fire(now) {
+    if (!startedFiring) return;
+    if (state !== 'playing') return;
+    if (now - lastFire < FIRE_COOLDOWN) return;
+    lastFire = now;
+    const spd = Math.max(W, H) * 0.012;
+    // Dual bullets from ship edges
+    bullets.push({ x: player.x - player.w * 0.35, y: player.y - player.h / 2, vy: -spd });
+    bullets.push({ x: player.x + player.w * 0.35, y: player.y - player.h / 2, vy: -spd });
+  }
+  // Hook for intro-curtain — flip the flag so auto-fire kicks in
+  window.__breakoutLaunch = () => { startedFiring = true; };
+
+  // ── Main loop ──
+  function tick() {
+    animId = requestAnimationFrame(tick);
+    if (window.scrollY > window.innerHeight * 1.2) return;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    const now = performance.now();
+    const _t = now * 0.001;
+
+    // Player smoothly tracks pointer
+    player.x += (player.tx - player.x) * 0.2;
+    const pw = player.w / 2;
+    player.x = Math.max(pw, Math.min(W - pw, player.x));
+
+    // Auto-fire
+    fire(now);
+
+    // Update bullets
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      const b = bullets[i];
+      b.y += b.vy;
+      if (b.y < -20) { bullets.splice(i, 1); continue; }
+      // Collision with enemies
+      for (let j = 0; j < enemies.length; j++) {
+        const e = enemies[j];
+        if (!e.alive) continue;
+        const dx = b.x - e.x, dy = b.y - e.y;
+        const hitR = e.r + 3;
+        if (dx * dx + dy * dy < hitR * hitR) {
+          e.alive = false;
+          score++;
+          // Cereal crumb burst
+          for (let p = 0; p < 4; p++) {
+            const ang = Math.random() * Math.PI * 2;
+            const spd = 1.5 + Math.random() * 4;
+            debris.push({
+              x: e.x, y: e.y, r: e.r * (0.5 + Math.random() * 0.6),
+              vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd - Math.random() * 3,
+              op: 0.8 + Math.random() * 0.2,
+              colorIdx: Math.floor(Math.random() * 4)
+            });
+          }
+          bullets.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    // Enemy gentle sway (formation breathes)
+    const swayX = Math.sin(_t * 0.6) * 8;
+    const swayY = Math.sin(_t * 0.8) * 3;
+    for (const e of enemies) {
+      e.x = e.ox + swayX + Math.sin(_t * 1.2 + e.phase) * 1.4;
+      e.y = e.oy + swayY;
+    }
+
+    // Debris physics
+    for (let i = debris.length - 1; i >= 0; i--) {
+      const d = debris[i];
+      d.x += d.vx; d.y += d.vy; d.vy += 0.12; d.op -= 0.018;
+      if (d.op <= 0) debris.splice(i, 1);
+    }
+
+    // Check win → rebuild
+    if (state === 'playing' && enemies.length > 0 && enemies.every(e => !e.alive)) {
+      state = 'win';
+      setTimeout(() => buildEnemies(), 1800);
+    }
+
+    // ── Draw milk bubbles ──
+    for (const s of stars) {
+      const floatY = s.y + Math.sin(_t * s.speed + s.twinkle) * 1.5;
+      ctx.globalAlpha = 0.4 + 0.15 * Math.sin(_t * s.speed + s.twinkle);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath();
+      ctx.arc(s.x, floatY, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // ── Draw enemies (cereal rings / donuts) ──
+    for (const e of enemies) {
+      if (!e.alive) continue;
+      const outerR = e.r;
+      const innerR = e.r * 0.42;
+      ctx.fillStyle = CEREAL_COLORS[e.colorIdx];
+      ctx.globalAlpha = 0.92;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, outerR, 0, Math.PI * 2);
+      ctx.arc(e.x, e.y, innerR, 0, Math.PI * 2, true);
+      ctx.fill('evenodd');
+      // Inner hole rim highlight
+      ctx.globalAlpha = 0.4;
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.lineWidth = Math.max(0.5, e.r * 0.08);
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, innerR + e.r * 0.06, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // ── Draw debris (cereal crumbs) ──
+    for (const d of debris) {
+      ctx.globalAlpha = Math.max(0, d.op);
+      ctx.fillStyle = CEREAL_COLORS[d.colorIdx || 0];
+      const sz = d.r * 0.7;
+      ctx.beginPath();
+      ctx.roundRect(d.x - sz, d.y - sz, sz * 2, sz * 2, sz * 0.3);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // ── Draw bullets (milk drops) ──
+    ctx.fillStyle = '#FFFAF0';
+    ctx.shadowColor = 'rgba(255,200,150,0.6)';
+    ctx.shadowBlur = 10;
+    for (const b of bullets) {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    // ── Draw player (little cereal bowl / spoon ship) ──
+    // Base: rounded trapezoid bowl
+    ctx.fillStyle = YELLOW;
+    ctx.beginPath();
+    ctx.roundRect(player.x - player.w / 2, player.y - player.h / 2, player.w, player.h, player.h / 2);
+    ctx.fill();
+    // Shine line
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.roundRect(player.x - player.w * 0.3, player.y - 1, player.w * 0.6, 2, 1);
+    ctx.fill();
+    // Small "nozzle" on top center
+    ctx.fillStyle = CORAL;
+    ctx.beginPath();
+    ctx.roundRect(player.x - 3, player.y - player.h / 2 - 5, 6, 6, 1.5);
+    ctx.fill();
+
+    // ── Score ──
+    ctx.fillStyle = 'rgba(45,27,0,0.4)';
+    ctx.font = '500 13px Space Grotesk, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(score, W - 14, H - 10);
+
+    // ── Subtitle ──
+    const subtitleText = settingsData.heroSubtitle || 'Director of Photography, Graphics & Video';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.letterSpacing = '0.12em';
+    const maxSubW = W * 0.88;
+    let subFs = Math.max(10, W * 0.012);
+    ctx.font = `500 ${subFs}px Space Grotesk, sans-serif`;
+    while (ctx.measureText(subtitleText.toUpperCase()).width > maxSubW && subFs > 6) {
+      subFs -= 0.5;
+      ctx.font = `500 ${subFs}px Space Grotesk, sans-serif`;
+    }
+    ctx.textAlign = 'center';
+    ctx.fillText(subtitleText.toUpperCase(), W / 2, enemyZoneH + 28);
+    ctx.letterSpacing = '0';
+
+    // ── Win flash ──
+    if (state === 'win') {
+      ctx.fillStyle = YELLOW;
+      ctx.shadowColor = 'rgba(254,228,64,0.6)'; ctx.shadowBlur = 40;
+      ctx.font = `400 ${Math.min(90, W * 0.08)}px 'Bebas Neue', Impact, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('CLEAR!', W / 2, H / 2);
+      ctx.shadowBlur = 0;
+      for (let i = 0; i < 8; i++) {
+        const a = (_t * 0.5 + i * Math.PI / 4);
+        const dist = 60 + Math.sin(_t * 2 + i) * 20;
+        const sx = W / 2 + Math.cos(a) * dist;
+        const sy = H / 2 + Math.sin(a) * dist;
+        ctx.globalAlpha = 0.4 + 0.3 * Math.sin(_t * 3 + i);
+        ctx.fillStyle = CEREAL_COLORS[i % 4];
+        ctx.beginPath();
+        ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  }
+
+  function init() {
+    if (animId) cancelAnimationFrame(animId);
+    buildEnemies();
+    tick();
+  }
+
+  // ── Input: pointer moves the ship ──
+  canvas.addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    player.tx = e.clientX - r.left;
+  });
+  let _touchStartX = 0, _touchStartY = 0, _touchDir = null;
+  canvas.addEventListener('touchstart', e => {
+    _touchStartX = e.touches[0].clientX;
+    _touchStartY = e.touches[0].clientY;
+    _touchDir = null;
+  }, { passive: true });
+  canvas.addEventListener('touchmove', e => {
+    const dx = e.touches[0].clientX - _touchStartX;
+    const dy = e.touches[0].clientY - _touchStartY;
+    if (!_touchDir && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      _touchDir = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v';
+    }
+    if (_touchDir === 'h') {
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect();
+      player.tx = e.touches[0].clientX - r.left;
+    }
+  }, { passive: false });
+  // Click = start firing immediately (skip intro wait)
+  canvas.addEventListener('click', () => { startedFiring = true; });
+  canvas.addEventListener('touchend', e => {
+    const dx = Math.abs(e.changedTouches[0].clientX - _touchStartX);
+    const dy = Math.abs(e.changedTouches[0].clientY - _touchStartY);
+    if (dx < 10 && dy < 10) startedFiring = true;
+  });
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(init);
+  } else {
+    setTimeout(init, 400);
+  }
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(init, 200);
+  });
+}
+
+// ── Data ──
+let portfolioData = { projects: [] };
+let settingsData = {};
+
+async function loadData() {
+  try {
+    const [pRes, sRes] = await Promise.all([
+      fetch('/api/portfolio'),
+      fetch('/api/settings')
+    ]);
+    if (!pRes.ok || !sRes.ok) return;
+    portfolioData = await pRes.json();
+    settingsData = await sRes.json();
+    renderCurtain();
+    renderHero();
+    renderBento();
+    renderAbout();
+    renderClientLogos();
+    renderFooter();
+    renderHorizontalShowcase();
+    renderMarqueeText();
+    initFilterTabs();
+    initImageDividers();
+    renderTools();
+    initReveal();
+    setTimeout(initTextAnimations, 100);
+  } catch(e) { console.error(e); }
+}
+
+function renderCurtain() {
+  const main = document.getElementById('curtainMain');
+  const sub = document.getElementById('curtainSub');
+  const author = document.getElementById('curtainAuthor');
+  if (settingsData.curtainMain && main) main.textContent = settingsData.curtainMain;
+  if (settingsData.curtainSub && sub) sub.textContent = settingsData.curtainSub;
+  if (settingsData.curtainAuthor && author) author.textContent = settingsData.curtainAuthor;
+}
+
+function renderClientLogos() {
+  const marquee = document.getElementById('clientsMarquee');
+  const logos = settingsData.clientLogos || [];
+  if (logos.length === 0) {
+    const section = document.querySelector('.clients-section');
+    if (section) section.style.display = 'none';
+    return;
+  }
+  marquee.innerHTML = '';
+  for (let s = 0; s < 3; s++) {
+    logos.forEach(logo => {
+      const img = document.createElement('img');
+      img.src = logo.url;
+      img.alt = logo.name;
+      marquee.appendChild(img);
+    });
+  }
+}
+
+// ── Hero ──
+function renderHero() {
+  const bg = document.getElementById('heroBg');
+  const video = document.getElementById('heroVideo');
+  const titleEl = document.getElementById('heroTitle');
+  const subEl = document.getElementById('heroSubtitle');
+
+  // Cereal theme override
+  settingsData.heroBackground = '/uploads/hero_cereal_v2.mp4?v=' + Date.now();
+  settingsData.heroBackgroundType = 'video';
+
+  if (settingsData.heroBackground) {
+    const url = settingsData.heroBackground;
+    if (settingsData.heroBackgroundType === 'video') {
+      const videoSrc = url.startsWith('/') ? url : getDriveVideoDirect(url);
+      video.src = videoSrc;
+      video.classList.add('active');
+      // Poster fallback: use uploaded hero image or video thumbnail
+      // Random poster from photo category projects
+      const photoProjects = (portfolioData.projects || []).filter(p => p.category === 'photo' && p.media && p.media.length > 0);
+      const randomPhoto = photoProjects.length > 0 ? photoProjects[Math.floor(Math.random() * photoProjects.length)] : null;
+      const randomImg = randomPhoto ? randomPhoto.media.find(m => m.type !== 'video') : null;
+      const posterUrl = randomImg ? convertDriveUrl(randomImg.url) : '/uploads/hero-video.png';
+      bg.style.backgroundImage = `url(${posterUrl})`;
+      video.play().then(() => {
+        bg.style.display = 'none'; // Video playing, hide poster
+      }).catch(() => {
+        // Autoplay blocked (iOS thermal/low power), show poster
+        video.classList.remove('active');
+        bg.style.display = '';
+        // Retry every 3s in case autoplay unblocks
+        const retryInterval = setInterval(() => {
+          video.play().then(() => {
+            video.classList.add('active');
+            bg.style.display = 'none';
+            clearInterval(retryInterval);
+          }).catch(() => {});
+        }, 3000);
+        // Stop retrying after 30s
+        setTimeout(() => clearInterval(retryInterval), 30000);
+      });
+    } else {
+      bg.style.backgroundImage = `url(${convertDriveUrl(url)})`;
+    }
+  }
+
+  // Hero logo: custom image → halftone canvas fallback
+  const rawLogoUrl = settingsData.heroLogo || '';
+  if (rawLogoUrl) {
+    const heroLogoUrl = rawLogoUrl.startsWith('https://drive.google.com')
+      ? (() => { const m = rawLogoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/); return m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : rawLogoUrl; })()
+      : rawLogoUrl;
+    titleEl.innerHTML = `
+      <div id="heroLogoWrap" class="hero-logo-wrap">
+        <img src="${heroLogoUrl}" alt="Hati" class="hero-logo-img" draggable="false">
+        <div class="hero-logo-shine" id="heroLogoShine"></div>
+      </div>`;
+  } else {
+    renderHeroBigTitle(titleEl);
+  }
+
+  if (settingsData.heroSubtitle) {
+    subEl.innerHTML = '';
+    const parts = settingsData.heroSubtitle.split(',').map(s => s.trim());
+    parts.forEach((part, i) => {
+      const span = document.createElement('span');
+      span.className = 'hero-keyword';
+      span.textContent = part;
+      subEl.appendChild(span);
+      if (i < parts.length - 1) {
+        const sep = document.createElement('span');
+        sep.className = 'hero-keyword-sep';
+        sep.textContent = ' · ';
+        subEl.appendChild(sep);
+      }
+    });
+  }
+}
+
+// ── Bento Grid ──
+function renderBento() {
+  const grid = document.getElementById('bentoGrid');
+  grid.innerHTML = '';
+  grid.classList.remove('filtered');
+
+  const categories = [
+    { key: 'video', label: 'Video', num: '01', cls: 'card-video' },
+    { key: 'graphic', label: 'Graphics', num: '02', cls: 'card-graphic' },
+    { key: 'photo', label: 'Photography', num: '03', cls: 'card-photo' },
+  ];
+
+  // 1) Video card (large)
+  grid.appendChild(makeCategoryCard(categories[0], 0));
+
+  // 2) Graphic card
+  grid.appendChild(makeCategoryCard(categories[1], 1));
+
+  // 3) Brand card (HATI logo)
+  grid.appendChild(makeBrandCard(2));
+
+  // 4) Photo card (large)
+  grid.appendChild(makeCategoryCard(categories[2], 3));
+
+  // 5) Contact card
+  grid.appendChild(makeContactCard(4));
+
+  // 6) Tagline card
+  grid.appendChild(makeTaglineCard(5));
+
+  // 7) CTA / stats card
+  grid.appendChild(makeCtaCard(6));
+}
+
+function makeCategoryCard(cat, delay) {
+  const projects = portfolioData.projects.filter(p => p.category === cat.key).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const card = document.createElement('div');
+  card.className = `bento-card ${cat.cls} cat-card`;
+  card.style.transitionDelay = `${delay * 0.08}s`;
+
+  let currentIdx = 0;
+
+  // Build all thumbnails (stacked, only first visible)
+  let thumbsHtml = '';
+  projects.forEach((proj, i) => {
+    if (proj.media && proj.media.length > 0) {
+      const m = proj.media[0];
+      const hiddenCls = i > 0 ? ' hidden' : '';
+      if (m.type === 'video') {
+        // Video: use Google Drive thumbnail (works for most videos)
+        const vidMatch = m.url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        const vidThumb = vidMatch ? `https://drive.google.com/thumbnail?id=${vidMatch[1]}&sz=w800` : '';
+        thumbsHtml += `<div class="cat-card-thumb thumb-${i}${hiddenCls}" data-idx="${i}" style="background:url('${vidThumb}') center/cover no-repeat, #FFF0E0;">
+          <div class="cat-card-play">▶</div>
+        </div>`;
+      } else {
+        thumbsHtml += `<img class="cat-card-thumb thumb-${i}${hiddenCls}" src="${convertDriveUrl(m.url)}" alt="${proj.title}" loading="lazy" data-idx="${i}">`;
+      }
+    }
+  });
+
+  // Dots
+  let dotsHtml = '';
+  if (projects.length > 1) {
+    dotsHtml = '<div class="cat-card-dots">';
+    projects.forEach((_, i) => {
+      dotsHtml += `<div class="cat-card-dot${i === 0 ? ' active' : ''}" data-idx="${i}"></div>`;
+    });
+    dotsHtml += '</div>';
+  }
+
+  // Arrows (SVG chevrons)
+  const arrowPrev = `<div class="cat-card-nav nav-prev" data-dir="-1">
+    <svg viewBox="0 0 24 24"><polyline points="15 6 9 12 15 18"/></svg>
+  </div>`;
+  const arrowNext = `<div class="cat-card-nav nav-next" data-dir="1">
+    <svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>
+  </div>`;
+
+  const projectTitle = projects.length > 0 ? projects[0].title : '';
+  const projectTags = projects.length > 0 && projects[0].tags ? projects[0].tags : [];
+
+  function renderCardTags(tags) {
+    if (!tags || tags.length === 0) return '';
+    return '<div class="cat-card-tags">' + tags.map(t => `<span class="cat-card-tag">${t}</span>`).join('') + '</div>';
+  }
+
+  card.innerHTML = `
+    ${thumbsHtml}
+    ${projects.length > 1 ? arrowPrev + arrowNext : ''}
+    ${dotsHtml}
+    <div class="card-view-cursor">View</div>
+    <div class="card-tap-hint">tap to explore →</div>
+    <div class="cat-card-inner">
+      <div class="cat-card-number">${cat.num}</div>
+      <div class="cat-card-title">${cat.label}</div>
+      <div class="cat-card-project-title">${projectTitle}</div>
+      ${renderCardTags(projectTags)}
+      <div class="cat-card-count">${projects.length} project${projects.length !== 1 ? 's' : ''}</div>
+    </div>
+  `;
+
+  // View cursor follows mouse
+  const viewCursor = card.querySelector('.card-view-cursor');
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - 35;
+    const y = e.clientY - rect.top - 35;
+    viewCursor.style.left = x + 'px';
+    viewCursor.style.top = y + 'px';
+  });
+  card.style.cursor = 'none';
+
+  // Slide transition function
+  function goTo(dir) {
+    const thumbs = card.querySelectorAll('.cat-card-thumb');
+    const dots = card.querySelectorAll('.cat-card-dot');
+    const titleEl = card.querySelector('.cat-card-project-title');
+    if (projects.length <= 1) return;
+
+    if (thumbs[currentIdx]) thumbs[currentIdx].classList.add('hidden');
+    if (dots[currentIdx]) dots[currentIdx].classList.remove('active');
+
+    currentIdx = (currentIdx + dir + projects.length) % projects.length;
+
+    if (thumbs[currentIdx]) thumbs[currentIdx].classList.remove('hidden');
+    if (dots[currentIdx]) dots[currentIdx].classList.add('active');
+    if (titleEl) titleEl.textContent = projects[currentIdx].title;
+    const tagsEl = card.querySelector('.cat-card-tags');
+    if (tagsEl) {
+      const newTags = projects[currentIdx].tags || [];
+      tagsEl.innerHTML = newTags.map(t => `<span class="cat-card-tag">${t}</span>`).join('');
+    }
+  }
+
+  // Arrow click handlers
+  card.querySelectorAll('.cat-card-nav').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      goTo(parseInt(btn.dataset.dir));
+    });
+  });
+
+  // Scroll wheel on card → switch project
+  let wheelCooldown = false;
+  card.addEventListener('wheel', (e) => {
+    if (projects.length <= 1) return;
+    if (wheelCooldown) return;
+    // Use deltaX (horizontal) or deltaY (vertical) — whichever is larger
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) < 10) return;
+    e.preventDefault();
+    goTo(delta > 0 ? 1 : -1);
+    wheelCooldown = true;
+    setTimeout(() => { wheelCooldown = false; }, 400);
+  }, { passive: false });
+
+  // Touch swipe on card → switch project (mobile)
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let isSwiping = false;
+  card.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = false;
+  }, { passive: true });
+  card.addEventListener('touchmove', (e) => {
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 20) {
+      isSwiping = true;
+    }
+  }, { passive: true });
+  card.addEventListener('touchend', (e) => {
+    if (!isSwiping || projects.length <= 1) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) {
+      goTo(dx < 0 ? 1 : -1);
+    }
+  });
+
+  // Click card body → open modal for current project
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.cat-card-nav')) return;
+    if (isSwiping) { isSwiping = false; return; }
+    if (projects.length > 0) openModal(projects[currentIdx], card);
+  });
+
+  return card;
+}
+
+function makeBrandCard(delay) {
+  const card = document.createElement('div');
+  card.className = 'bento-card card-brand brand-card';
+  card.style.transitionDelay = `${delay * 0.08}s`;
+  card.innerHTML = `
+    <div class="brand-card-logo"><img src="/images/hati_B.png" alt="Hati" class="brand-card-img"></div>
+    <div class="brand-card-sub">Creative Studio</div>
+  `;
+  // hati_W.png is already white-on-transparent, no removeBlackBg needed
+  return card;
+}
+
+function renderFooter() {
+  const insta = document.getElementById('footerInsta');
+  const vimeo = document.getElementById('footerVimeo');
+  const email = document.getElementById('footerEmail');
+  if (insta && settingsData.contactInstagram) { insta.href = settingsData.contactInstagram; insta.target = '_blank'; }
+  if (vimeo && settingsData.contactVimeo) { vimeo.href = settingsData.contactVimeo; vimeo.target = '_blank'; }
+  else if (vimeo) { vimeo.style.display = 'none'; if (vimeo.nextElementSibling) vimeo.nextElementSibling.style.display = 'none'; }
+  if (email && settingsData.contactEmail) { email.href = 'mailto:' + settingsData.contactEmail; }
+}
+
+function renderAbout() {
+  // Cereal theme override — profile photo
+  settingsData.aboutImage = '/images/IMG_7171.JPG';
+
+  // Image
+  const imgWrap = document.getElementById('aboutImage');
+  if (settingsData.aboutImage) {
+    imgWrap.innerHTML = `<img src="${convertDriveUrl(settingsData.aboutImage)}" alt="Profile">`;
+  } else {
+    imgWrap.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(45,27,0,0.08);font-size:0.5rem;letter-spacing:0.15rem;text-transform:uppercase;background:#FFF0E0;">Photo</div>';
+  }
+
+  // Activity gallery
+  const galleryEl = document.getElementById('aboutGallery');
+  const galleryPhotos = settingsData.aboutGallery || [];
+  galleryEl.innerHTML = galleryPhotos.map(url =>
+    `<div class="about-gallery-item"><img src="${url.startsWith('/') ? url : convertDriveUrl(url)}" alt="Activity"></div>`
+  ).join('');
+
+  // Bio
+  const textEl = document.getElementById('aboutText');
+  textEl.textContent = settingsData.aboutText || '';
+
+  // Philosophy cards
+  const philoGrid = document.getElementById('philosophyGrid');
+  const defaultCards = [
+    { title: 'Fan First', desc: '아티스트의 첫 번째 팬이 되어, 내 심장이 먼저 뛰게 만드는 것부터 시작합니다.' },
+    { title: 'Purpose Driven', desc: '예쁜 것은 스쳐가지만, 이유가 있는 것은 남습니다. 모든 비주얼에 의미를 담습니다.' },
+    { title: 'Obsessive Detail', desc: '콘텐츠에 생명력을 불어넣는 그 한 순간을 위해 오늘도 집착합니다.' }
+  ];
+  const philoCards = settingsData.philosophyCards || defaultCards;
+  philoGrid.innerHTML = philoCards.filter(c => c.title).map((c, i) => `
+    <div class="philosophy-card">
+      <div class="philosophy-icon">0${i + 1}</div>
+      <h4>${c.title}</h4>
+      <p>${c.desc}</p>
+    </div>
+  `).join('');
+
+  // Contact
+  const contactEl = document.getElementById('aboutContact');
+  let contactHtml = '';
+
+  if (settingsData.contactPhone) {
+    contactHtml += `<div class="about-contact-item">
+      <span class="about-contact-item-label">Phone</span>
+      <a href="tel:${settingsData.contactPhone.replace(/-/g,'')}" class="about-contact-item-value">${settingsData.contactPhone}</a>
+    </div>`;
+  }
+  if (settingsData.contactEmail) {
+    contactHtml += `<div class="about-contact-item">
+      <span class="about-contact-item-label">Email</span>
+      <a href="mailto:${settingsData.contactEmail}" class="about-contact-item-value">${settingsData.contactEmail}</a>
+    </div>`;
+  }
+  if (settingsData.contactInstagram) {
+    const handle = settingsData.contactInstagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '');
+    contactHtml += `<div class="about-contact-item">
+      <span class="about-contact-item-label">Instagram</span>
+      <a href="${settingsData.contactInstagram}" target="_blank" rel="noopener" class="about-contact-item-value">${handle}</a>
+    </div>`;
+  }
+
+  contactEl.innerHTML = contactHtml;
+}
+
+function makeContactCard(delay) {
+  const card = document.createElement('div');
+  card.className = 'bento-card card-contact contact-card';
+  card.style.transitionDelay = `${delay * 0.08}s`;
+
+  let rows = '<div class="contact-card-label">Contact</div>';
+
+  if (settingsData.contactPhone) {
+    rows += `<div class="contact-card-row">
+      <span class="contact-card-row-label">Phone</span>
+      <a href="tel:${settingsData.contactPhone.replace(/-/g,'')}" class="contact-card-row-value">${settingsData.contactPhone}</a>
+    </div>`;
+  }
+  if (settingsData.contactEmail) {
+    rows += `<div class="contact-card-row">
+      <span class="contact-card-row-label">Email</span>
+      <a href="mailto:${settingsData.contactEmail}" class="contact-card-row-value">${settingsData.contactEmail}</a>
+    </div>`;
+  }
+  if (settingsData.contactInstagram) {
+    const handle = settingsData.contactInstagram.replace(/https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '');
+    rows += `<div class="contact-card-row">
+      <span class="contact-card-row-label">Instagram</span>
+      <a href="${settingsData.contactInstagram}" target="_blank" rel="noopener" class="contact-card-row-value">${handle}</a>
+    </div>`;
+  }
+
+  card.innerHTML = rows;
+  return card;
+}
+
+function makeTaglineCard(delay) {
+  const card = document.createElement('div');
+  card.className = 'bento-card card-tagline tagline-card';
+  card.style.transitionDelay = `${delay * 0.08}s`;
+  const text = settingsData.philosophy || 'Director of\nPhotography,\nGraphics & Video';
+  card.innerHTML = `<div class="tagline-card-text">${text.replace(/\n/g, '<br>')}</div>`;
+  return card;
+}
+
+function makeCtaCard(delay) {
+  const card = document.createElement('div');
+  card.className = 'bento-card card-cta cta-card';
+  card.style.transitionDelay = `${delay * 0.08}s`;
+
+  const total = portfolioData.projects.length;
+  const cats = new Set(portfolioData.projects.map(p => p.category)).size;
+
+  card.innerHTML = `
+    <div class="cta-stat">
+      <div class="cta-stat-number">${total}</div>
+      <div class="cta-stat-label">Projects</div>
+    </div>
+    <div class="cta-divider"></div>
+    <div class="cta-stat">
+      <div class="cta-stat-number">${cats}</div>
+      <div class="cta-stat-label">Categories</div>
+    </div>
+    <div class="cta-divider"></div>
+    <div class="cta-stat">
+      <div class="cta-stat-number">&infin;</div>
+      <div class="cta-stat-label">Creativity</div>
+    </div>
+  `;
+
+  return card;
+}
+
+// ── Modal ──
+let allProjectsList = [];
+let currentProjectIdx = -1;
+let currentModalCategory = '';
+
+function navProject(dir) {
+  if (allProjectsList.length === 0) return;
+  currentProjectIdx = (currentProjectIdx + dir + allProjectsList.length) % allProjectsList.length;
+  openModal(allProjectsList[currentProjectIdx]);
+}
+
+function layoutMasonry(container) {
+  const gap = 4;
+  const cols = window.innerWidth <= 768 ? 2 : 3;
+  const items = [...container.children];
+  if (!items.length) return;
+
+  // Wait for all images to load, then position
+  const images = container.querySelectorAll('img');
+  let loaded = 0;
+  const total = images.length;
+
+  function doLayout() {
+    const containerW = container.clientWidth - gap * 2; // minus padding
+    const colW = (containerW - gap * (cols - 1)) / cols;
+    const colHeights = new Array(cols).fill(0);
+
+    items.forEach((item, i) => {
+      const isVideo = item.classList.contains('gallery-video');
+      if (isVideo) {
+        // Full width for videos
+        item.style.position = 'absolute';
+        item.style.left = '0px';
+        item.style.top = Math.max(...colHeights) + 'px';
+        item.style.width = containerW + 'px';
+        const h = item.offsetHeight || containerW * 9 / 16;
+        const topVal = Math.max(...colHeights) + gap;
+        item.style.top = topVal + 'px';
+        colHeights.fill(topVal + h + gap);
+      } else {
+        // Find shortest column (left-to-right order)
+        const minH = Math.min(...colHeights);
+        const col = colHeights.indexOf(minH);
+        item.style.position = 'absolute';
+        item.style.width = colW + 'px';
+        item.style.left = (col * (colW + gap)) + 'px';
+        item.style.top = colHeights[col] + 'px';
+        colHeights[col] += item.offsetHeight + gap;
+      }
+    });
+
+    container.style.height = Math.max(...colHeights) + 'px';
+  }
+
+  if (total === 0) {
+    requestAnimationFrame(doLayout);
+  } else {
+    const check = () => { loaded++; if (loaded >= total) requestAnimationFrame(doLayout); };
+    images.forEach(img => {
+      if (img.complete) check();
+      else { img.onload = check; img.onerror = check; }
+    });
+    // Fallback timeout
+    setTimeout(doLayout, 2000);
+  }
+}
+
+function openModal(project, sourceEl) {
+  const modal = document.getElementById('modal');
+  // Cinematic clip-path transition
+  if (sourceEl) {
+    const rect = sourceEl.getBoundingClientRect();
+    const ox = ((rect.left + rect.width/2) / window.innerWidth * 100) + '%';
+    const oy = ((rect.top + rect.height/2) / window.innerHeight * 100) + '%';
+    modal.style.setProperty('--ox', ox);
+    modal.style.setProperty('--oy', oy);
+  } else {
+    modal.style.setProperty('--ox', '50%');
+    modal.style.setProperty('--oy', '50%');
+  }
+  modal.style.animation = 'modalExpand 0.7s cubic-bezier(0.16,1,0.3,1) forwards';
+  document.getElementById('modalTitle').textContent = project.title;
+  const TAG_COLORS_FRONT = {
+    'MV': '#e85564', '온드미디어': '#4fb8b2', '브랜드필름': '#baaaf0',
+    '사진': '#ffb74d', '이벤트': '#81c784', '굿즈': '#ff8a80', '앨범': '#64b5f6',
+    '그래픽디자인': '#f48fb1', 'AI': '#9c27b0', '미술': '#795548', '기획': '#ff9800'
+  };
+  const tagsEl = document.getElementById('modalTags');
+  tagsEl.innerHTML = (project.tags || []).map(t => {
+    const c = TAG_COLORS_FRONT[t] || '#fff';
+    return `<span style="display:inline-block;font-size:0.65rem;padding:0.2rem 0.6rem;border-radius:14px;background:${c}33;color:#fff;border:1px solid ${c}66;margin-right:0.3rem;margin-bottom:0.3rem;font-weight:500;letter-spacing:0.03rem;backdrop-filter:blur(4px);">${t}</span>`;
+  }).join('');
+  // Detail cards
+  const detailGrid = document.getElementById('modalDetailGrid');
+  const details = [
+    { icon: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>', label: '내용', value: project.description, fullWidth: true },
+    { icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>', label: '성과', value: project.result, fullWidth: true },
+    { icon: '<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', label: '역할', value: project.role, fullWidth: false },
+    { icon: '<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>', label: '기여도', value: project.contribution, fullWidth: false },
+  ].filter(d => d.value && d.value.trim());
+
+  const credits = project.credits || [];
+  const creditsHtml = credits.length > 0 ? `
+    <div class="modal-detail-card full-width">
+      <div class="modal-detail-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div class="modal-detail-label">크레딧</div>
+      <div class="modal-credits-list">
+        ${credits.map(c => `<div class="modal-credit-row"><span class="modal-credit-role">${c.role}</span><span class="modal-credit-name">${c.name}</span></div>`).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  if (details.length > 0 || credits.length > 0) {
+    detailGrid.innerHTML = details.map(d => `
+      <div class="modal-detail-card${d.fullWidth ? ' full-width' : ''}">
+        <div class="modal-detail-icon">${d.icon}</div>
+        <div class="modal-detail-label">${d.label}</div>
+        <div class="modal-detail-value">${d.value}</div>
+      </div>
+    `).join('') + creditsHtml;
+    detailGrid.style.display = 'grid';
+  } else {
+    detailGrid.style.display = 'none';
+  }
+
+  // Hero: video category → first video as hero; others → first media as hero
+  const heroMedia = document.getElementById('modalHeroMedia');
+  heroMedia.innerHTML = '';
+  const media = project.media || [];
+  const isVideoCategory = project.category === 'video';
+
+  const heroItem = isVideoCategory ? (media.find(m => m.type === 'video') || media[0]) : media[0];
+
+  if (heroItem) {
+    if (heroItem.type === 'video') {
+      heroMedia.innerHTML = `<iframe src="${getDriveVideoEmbed(heroItem.url)}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    } else {
+      heroMedia.innerHTML = `<img src="${convertDriveUrl(heroItem.url)}" alt="${project.title}" style="object-fit:cover;">`;
+    }
+  }
+
+  // Gallery: video category excludes hero; photo/graphic includes all
+  const mc = document.getElementById('modalMedia');
+  mc.innerHTML = '';
+
+  // On mobile video hero: show first image as hero, put video in gallery
+  const isMobile = window.innerWidth <= 768;
+  let galleryMedia;
+  if (isVideoCategory && isMobile && heroItem && heroItem.type === 'video') {
+    const firstImage = media.find(m => m.type !== 'video');
+    if (firstImage) {
+      heroMedia.innerHTML = `<img src="${convertDriveUrl(firstImage.url)}" alt="${project.title}" style="object-fit:cover;">`;
+    }
+    galleryMedia = media;
+  } else {
+    galleryMedia = isVideoCategory ? media.filter(m => m !== heroItem) : media;
+  }
+
+  if (galleryMedia.length > 0) {
+    const videos = galleryMedia.filter(m => m.type === 'video');
+    const images = galleryMedia.filter(m => m.type !== 'video');
+    [...videos, ...images].forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'modal-gallery-item' + (m.type === 'video' ? ' gallery-video' : '');
+      if (m.type === 'video') {
+        item.innerHTML = `<iframe src="${getDriveVideoEmbed(m.url)}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      } else {
+        const img = document.createElement('img');
+        img.src = convertDriveUrl(m.url);
+        img.alt = project.title;
+        img.onclick = () => {
+          document.getElementById('modalFullImg').src = img.src;
+          document.getElementById('modalFullscreen').classList.add('active');
+        };
+        item.appendChild(img);
+      }
+      mc.appendChild(item);
+    });
+  }
+
+  // Masonry layout (left-to-right reading order)
+  if (galleryMedia.length > 0) {
+    layoutMasonry(mc);
+  }
+
+  // Hide gallery if empty
+  mc.style.display = galleryMedia.length > 0 ? '' : 'none';
+
+  // Toggle button + info section: hide by default, show toggle only if details exist
+  const infoSection = document.querySelector('.modal-info-section');
+  const detailToggle = document.getElementById('modalDetailToggle');
+  if (infoSection && detailToggle) {
+    const hasAnyDetail = details.length > 0 || credits.length > 0;
+    infoSection.style.display = 'none';
+    detailToggle.classList.remove('open');
+    detailToggle.style.display = hasAnyDetail ? 'flex' : 'none';
+  }
+
+  // Filter project list to same category
+  if (currentModalCategory !== project.category) {
+    currentModalCategory = project.category;
+    allProjectsList = (portfolioData.projects || []).filter(p => p.category === project.category);
+  }
+  currentProjectIdx = allProjectsList.findIndex(p => p.id === project.id);
+
+  // Show/hide nav buttons
+  const prevBtn = document.getElementById('modalProjPrev');
+  const nextBtn = document.getElementById('modalProjNext');
+  prevBtn.classList.toggle('hidden', allProjectsList.length <= 1);
+  nextBtn.classList.toggle('hidden', allProjectsList.length <= 1);
+
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  document.querySelector('.modal').scrollTop = 0;
+}
+
+function closeModal() {
+  const modal = document.getElementById('modal');
+  modal.style.animation = 'modalCollapse 0.5s cubic-bezier(0.16,1,0.3,1) forwards';
+  modal.addEventListener('animationend', function handler() {
+    modal.removeEventListener('animationend', handler);
+    modal.classList.remove('active');
+    modal.style.animation = '';
+    document.body.style.overflow = '';
+    document.getElementById('modalMedia').innerHTML = '';
+    document.getElementById('modalHeroMedia').innerHTML = '';
+    currentModalCategory = '';
+    allProjectsList = [];
+    currentProjectIdx = -1;
+  });
+}
+
+// ── Hero scroll depth ──
+(function() {
+  const hero = document.querySelector('.hero');
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    if (!hero) return;
+    const heroH = hero.offsetHeight;
+    // PNG logo: parallax (lags behind = positive translateY, stays within hero via overflow:hidden)
+    const logoWrap = document.getElementById('heroLogoWrap');
+    if (logoWrap && logoWrap.classList.contains('hero-logo-wrap')) {
+      logoWrap.style.transform = `translateY(${scrollY * 0.38}px)`;
+    }
+    // Game canvas: fade out as hero scrolls off, disable pointer-events when gone
+    if (logoWrap && logoWrap.classList.contains('hero-halftone-wrap')) {
+      const fade = Math.max(0, 1 - scrollY / (heroH * 0.5));
+      logoWrap.style.opacity = fade;
+      logoWrap.style.transform = '';
+      logoWrap.style.pointerEvents = fade > 0.05 ? 'auto' : 'none';
+    }
+  }, { passive: true });
+})();
+
+// ── Scroll Nav: jump to next section (with incremental scroll for long sections) ──
+(function(){
+  const btn = document.getElementById('scrollNavBtn');
+  if (!btn) return;
+  const sectionSelectors = ['.hscroll-section','.bento-section','.about-section','.tools-section','.footer'];
+  btn.addEventListener('click', () => {
+    const scrollY = window.scrollY;
+    const viewH = window.innerHeight;
+
+    // Check if we're inside a long section with more content below
+    for (const sel of sectionSelectors) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      const elTop = el.getBoundingClientRect().top + scrollY;
+      const elBottom = elTop + el.offsetHeight;
+      // Are we currently inside this section?
+      if (scrollY >= elTop - 60 && scrollY < elBottom - viewH * 0.5) {
+        // Is there still significant content below viewport?
+        const remaining = elBottom - (scrollY + viewH);
+        if (remaining > viewH * 0.35) {
+          window.scrollTo({ top: scrollY + viewH * 0.82, behavior: 'smooth' });
+          return;
+        }
+      }
+    }
+
+    // Otherwise jump to the next section
+    for (const sel of sectionSelectors) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      let top;
+      if (sel === '.tools-section') {
+        // Show section from the top — label, heading, tabs, and grid all visible
+        top = el.getBoundingClientRect().top + scrollY - 20;
+      } else if (sel === '.about-section') {
+        // Show from the about-intro (headline) rather than empty padding
+        const intro = el.querySelector('.about-intro');
+        top = (intro || el).getBoundingClientRect().top + scrollY - 30;
+      } else if (sel === '.hscroll-section') {
+        // Show clients + carousel + marquee text together — center the range
+        const clients = document.getElementById('clientsSection');
+        const marquee = document.querySelector('.marquee-text-section');
+        if (clients && marquee) {
+          const rangeTop = clients.getBoundingClientRect().top + scrollY;
+          const rangeBottom = marquee.getBoundingClientRect().top + scrollY + marquee.offsetHeight;
+          const rangeH = rangeBottom - rangeTop;
+          top = rangeTop - Math.max(0, (viewH - rangeH) / 2);
+        } else if (clients) {
+          top = clients.getBoundingClientRect().top + scrollY - 10;
+        } else {
+          top = el.getBoundingClientRect().top + scrollY - 20;
+        }
+      } else {
+        top = el.getBoundingClientRect().top + scrollY - 20;
+      }
+      if (top > scrollY + 10) {
+        window.scrollTo({ top, behavior: 'smooth' });
+        return;
+      }
+    }
+  });
+})();
+
+function toggleModalDetails() {
+  const infoSection = document.querySelector('.modal-info-section');
+  const toggle = document.getElementById('modalDetailToggle');
+  if (!infoSection) return;
+  const isOpen = toggle.classList.contains('open');
+  if (isOpen) {
+    infoSection.style.display = 'none';
+    toggle.classList.remove('open');
+  } else {
+    infoSection.style.display = 'block';
+    toggle.classList.add('open');
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── Horizontal Scroll Showcase ──
+function renderHorizontalShowcase() {
+  const track = document.getElementById('hscrollTrack');
+  if (!track) return;
+  const allProjects = (portfolioData.projects || []).filter(p => p.media && p.media.length > 0);
+  const featuredIds = settingsData.featuredProjectIds || [];
+  let featured;
+  if (featuredIds.length > 0) {
+    featured = featuredIds.map(id => allProjects.find(p => p.id === id)).filter(Boolean);
+  } else {
+    featured = allProjects.slice(0, 8);
+  }
+  if (featured.length === 0) { track.closest('.hscroll-section').style.display = 'none'; return; }
+  const n = featured.length;
+  const angleStep = 360 / n;
+  // Calculate radius so cards don't overlap (based on card width + gap)
+  // Responsive gap: tight on mobile, wider on desktop
+  // ── Carousel spacing: mobile/tablet (tight feed) vs PC (original) ──
+  // Card width matches CSS (see breakpoints @ 768, 1024).
+  const w = window.innerWidth;
+  const isMobile = w <= 768;
+  const isTablet = w > 768 && w <= 1024;
+  let cardW, gap;
+  if (isMobile)      { cardW = 180; gap = 5;  }
+  else if (isTablet) { cardW = 280; gap = 5;  }
+  else               { cardW = 320; gap = 50; }
+  const radius = Math.round((cardW + gap) / (2 * Math.tan(Math.PI / n)));
+  track.innerHTML = '';
+  const cardEls = [];
+  featured.forEach((proj, i) => {
+    const img = proj.media.find(m => m.type === 'image') || proj.media[0];
+    const bgUrl = img ? convertDriveUrl(img.url) : '';
+    const card = document.createElement('div');
+    card.className = 'hscroll-card';
+    card.dataset.projectId = proj.id;
+    card.dataset.angle = angleStep * i;
+    card.innerHTML = `<div class="hscroll-card-inner">
+      <div class="hscroll-card-bg" style="background-image:url('${bgUrl}')"></div>
+      <div class="hscroll-card-overlay"></div>
+      <div class="hscroll-card-info">
+        <div class="hscroll-card-cat">${proj.category}</div>
+        <div class="hscroll-card-title">${proj.title}</div>
+      </div>
+    </div>`;
+
+    card.addEventListener('click', () => {
+      const p = allProjects.find(x => x.id == proj.id);
+      if (p) openModal(p, card);
+    });
+    track.appendChild(card);
+    cardEls.push(card);
+  });
+
+  // ── Comet-trail particle system (breakout game style, overlay canvas) ──
+  const overlayCanvas = document.getElementById('carouselParticlesOverlay');
+  const overlayCtx = overlayCanvas ? overlayCanvas.getContext('2d') : null;
+  const sectionEl = overlayCanvas ? overlayCanvas.closest('.hscroll-section') : null;
+  const cardParticles = new Map(); // card -> particles[]
+
+  function resizeOverlay() {
+    if (!overlayCanvas || !sectionEl) return;
+    const r = sectionEl.getBoundingClientRect();
+    overlayCanvas.width = r.width * (window.devicePixelRatio > 1 ? 2 : 1);
+    overlayCanvas.height = r.height * (window.devicePixelRatio > 1 ? 2 : 1);
+    overlayCanvas.style.width = r.width + 'px';
+    overlayCanvas.style.height = r.height + 'px';
+    if (window.devicePixelRatio > 1) overlayCtx.scale(2, 2);
+  }
+  resizeOverlay();
+  window.addEventListener('resize', resizeOverlay);
+
+  // Breakout game hues: violet(270), cyan(190), magenta(300), white
+  const nebulaHues = [24, 270, 330, 50, 0];
+
+  function makeParticle(cardRect, secRect) {
+    const cx = cardRect.left - secRect.left + cardRect.width / 2;
+    const cy = cardRect.top - secRect.top + cardRect.height / 2;
+    const hw = cardRect.width / 2 + 30;
+    const hh = cardRect.height / 2 + 30;
+    // Spawn around card perimeter
+    const side = Math.random();
+    let x, y;
+    if (side < 0.25) { x = cx - hw + Math.random() * hw * 2; y = cy - hh; }
+    else if (side < 0.5) { x = cx - hw + Math.random() * hw * 2; y = cy + hh; }
+    else if (side < 0.75) { x = cx - hw; y = cy - hh + Math.random() * hh * 2; }
+    else { x = cx + hw; y = cy - hh + Math.random() * hh * 2; }
+    const hue = nebulaHues[Math.floor(Math.random() * nebulaHues.length)];
+    const isWhite = hue === 0;
+    return {
+      x, y,
+      vx: (Math.random() - 0.5) * 1.8,
+      vy: -Math.random() * 1.2 - 0.3,
+      size: Math.random() * 3.5 + 1.5,
+      hue,
+      sat: isWhite ? 0 : 70 + Math.random() * 30,
+      light: isWhite ? 95 : 65 + Math.random() * 20,
+      life: 1,
+      decay: 0.004 + Math.random() * 0.008,
+      trail: [], // comet trail positions
+      trailMax: 8 + Math.floor(Math.random() * 8)
+    };
+  }
+
+  function spawnCardParticles(card) {
+    if (!sectionEl) return;
+    const secRect = sectionEl.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const particles = [];
+    const count = isMobile ? 20 : 40;
+    for (let i = 0; i < count; i++) {
+      particles.push(makeParticle(cardRect, secRect));
+    }
+    cardParticles.set(card, particles);
+  }
+
+  function updateCardParticles() {
+    if (!overlayCtx || !sectionEl) { requestAnimationFrame(updateCardParticles); return; }
+    const secRect = sectionEl.getBoundingClientRect();
+    // Skip rendering when section is off-screen
+    if (secRect.bottom < -100 || secRect.top > window.innerHeight + 100) {
+      requestAnimationFrame(updateCardParticles); return;
+    }
+    const dpr = window.devicePixelRatio > 1 ? 2 : 1;
+    const w = overlayCanvas.width / dpr, h = overlayCanvas.height / dpr;
+    overlayCtx.save();
+    overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    overlayCtx.clearRect(0, 0, w, h);
+
+    cardParticles.forEach((particles, card) => {
+      const isActive = card.classList.contains('active-card');
+      if (!isActive) {
+        let allDead = true;
+        particles.forEach(p => { p.life -= 0.025; if (p.life > 0) allDead = false; });
+        if (allDead) { cardParticles.delete(card); return; }
+      }
+      const cardRect = card.getBoundingClientRect();
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        // Store trail
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > p.trailMax) p.trail.shift();
+        // Physics
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy -= 0.005; // slight upward drift
+        p.life -= p.decay;
+
+        if (p.life <= 0) {
+          if (isActive) {
+            const np = makeParticle(cardRect, secRect);
+            particles[i] = np;
+          } else {
+            particles.splice(i, 1);
+          }
+          continue;
+        }
+
+        const alpha = Math.min(1, p.life * 1.5);
+
+        // Draw comet trail
+        if (p.trail.length > 1) {
+          for (let t = 0; t < p.trail.length - 1; t++) {
+            const tp = p.trail[t];
+            const trailAlpha = (t / p.trail.length) * alpha * 0.4;
+            const trailSize = p.size * p.life * (t / p.trail.length) * 0.7;
+            if (trailSize < 0.3) continue;
+            overlayCtx.beginPath();
+            overlayCtx.arc(tp.x, tp.y, trailSize, 0, Math.PI * 2);
+            overlayCtx.fillStyle = `hsla(${p.hue},${p.sat}%,${p.light}%,${trailAlpha})`;
+            overlayCtx.fill();
+          }
+        }
+
+        // Glow (simple circle, no radial gradient for perf)
+        const glowR = p.size * p.life * 3;
+        overlayCtx.beginPath();
+        overlayCtx.arc(p.x, p.y, glowR, 0, Math.PI * 2);
+        overlayCtx.fillStyle = `hsla(${p.hue},${p.sat}%,${p.light}%,${alpha * 0.1})`;
+        overlayCtx.fill();
+
+        // Core bright dot
+        overlayCtx.beginPath();
+        overlayCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        overlayCtx.fillStyle = `hsla(${p.hue},${p.sat}%,${Math.min(100, p.light + 20)}%,${alpha})`;
+        overlayCtx.fill();
+      }
+    });
+
+    overlayCtx.restore();
+    requestAnimationFrame(updateCardParticles);
+  }
+  updateCardParticles();
+
+  // ── Carousel rotation + active card detection ──
+  let rotation = 0;
+  let paused = false;
+  let activeCard = null;
+
+  function setActiveCard(card) {
+    if (activeCard === card) return;
+    if (activeCard) activeCard.classList.remove('active-card');
+    activeCard = card;
+    if (card) {
+      card.classList.add('active-card');
+      if (!cardParticles.has(card)) spawnCardParticles(card);
+    }
+  }
+
+  // Desktop: hover
+  if (!isMobile) {
+    cardEls.forEach(card => {
+      card.addEventListener('mouseenter', () => { paused = true; setActiveCard(card); });
+      card.addEventListener('mouseleave', () => { paused = false; setActiveCard(null); });
+    });
+  }
+
+  // Mobile: swipe to rotate
+  if (isMobile) {
+    let touchStartX = 0, touchStartRot = 0, isDragging = false;
+    const viewport = track.closest('.carousel-viewport');
+    viewport.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      paused = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartRot = rotation;
+    }, { passive: true });
+    viewport.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      rotation = touchStartRot + dx * 0.3; // Sensitivity
+    }, { passive: true });
+    viewport.addEventListener('touchend', () => {
+      isDragging = false;
+      // Resume auto-rotation after 2s
+      setTimeout(() => { if (!isDragging) paused = false; }, 2000);
+    }, { passive: true });
+  }
+
+  function animateCarousel() {
+    // Skip when off-screen
+    const vpRect = track.closest('.carousel-viewport')?.getBoundingClientRect();
+    if (vpRect && (vpRect.bottom < -50 || vpRect.top > window.innerHeight + 50)) {
+      requestAnimationFrame(animateCarousel); return;
+    }
+    if (!paused) rotation -= 0.15;
+    track.style.transform = `rotateY(${rotation}deg)`;
+    let closestCard = null, closestDist = Infinity;
+    cardEls.forEach(card => {
+      const baseAngle = parseFloat(card.dataset.angle);
+      let eff = (baseAngle + rotation) % 360;
+      if (eff < 0) eff += 360;
+      const distFromBack = Math.abs(eff - 180);
+      if (distFromBack < 90) {
+        const visibility = 1 - (distFromBack / 90) * 0.3;
+        card.style.opacity = visibility;
+        card.style.pointerEvents = 'auto';
+        card.style.visibility = 'visible';
+        if (distFromBack < closestDist) { closestDist = distFromBack; closestCard = card; }
+      } else {
+        card.style.opacity = 0;
+        card.style.pointerEvents = 'none';
+        card.style.visibility = 'hidden';
+      }
+      card.style.transform = `rotateY(${baseAngle}deg) translateZ(${radius}px)`;
+    });
+    // Mobile: auto-activate center card
+    if (isMobile && closestCard && closestDist < 20) {
+      setActiveCard(closestCard);
+    } else if (isMobile && closestDist >= 20) {
+      setActiveCard(null);
+    }
+    requestAnimationFrame(animateCarousel);
+  }
+  animateCarousel();
+}
+
+// ── Marquee Text Divider ──
+function renderMarqueeText() {
+  const wrap = document.getElementById('marqueeTextWrap');
+  if (!wrap) return;
+  const text = 'Photography \u00B7 Video \u00B7 Design \u00B7 AI \u00B7 ';
+  wrap.innerHTML = Array(6).fill(`<span class="marquee-text">${text}</span>`).join('');
+}
+
+// ── iOS Safari: force-restart CSS animations on visibility/focus ──
+(function() {
+  function restartMarquees() {
+    ['.clients-marquee', '.marquee-text-wrap'].forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        el.style.animationPlayState = 'paused';
+        void el.offsetWidth; // force reflow
+        el.style.animationPlayState = 'running';
+      });
+    });
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') restartMarquees();
+  });
+  // Also restart on first user interaction (iOS needs this)
+  document.addEventListener('touchstart', restartMarquees, { once: true, passive: true });
+  window.addEventListener('focus', restartMarquees);
+})();
+
+// ── Three.js WebGL Particle Background ──
+// Loaded as ES module at end of body
+
+// ── Filter Tabs ──
+let currentFilter = 'all';
+function initFilterTabs() {
+  const tabs = document.querySelectorAll('.filter-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const filter = tab.dataset.filter;
+      currentFilter = filter;
+      if (filter === 'all') {
+        renderBento();
+      } else {
+        renderFilteredBento(filter);
+      }
+      initReveal();
+    });
+  });
+}
+
+function renderFilteredBento(category) {
+  const grid = document.getElementById('bentoGrid');
+  grid.innerHTML = '';
+  grid.classList.add('filtered');
+  const projects = (portfolioData.projects || []).filter(p => p.category === category).sort((a,b) => (a.order||0) - (b.order||0));
+  projects.forEach((proj, i) => {
+    const card = document.createElement('div');
+    card.className = 'bento-card';
+    card.style.transitionDelay = `${i * 0.05}s`;
+    card.style.cursor = 'pointer';
+    const img = proj.media && proj.media.find(m => m.type === 'image') || (proj.media && proj.media[0]);
+    const bgUrl = img ? convertDriveUrl(img.url) : '';
+    const tags = (proj.tags || []).slice(0, 3).map(t => `<span class="filtered-card-tag">${t}</span>`).join('');
+    card.innerHTML = `
+      <div class="filtered-card-bg" style="background-image:url('${bgUrl}')"></div>
+      <div class="filtered-card-overlay"></div>
+      <div class="filtered-card-info">
+        <div class="filtered-card-title">${proj.title}</div>
+        <div class="filtered-card-tags">${tags}</div>
+      </div>`;
+    card.addEventListener('click', () => openModal(proj, card));
+    grid.appendChild(card);
+  });
+}
+
+// ── Image Divider ──
+// ── Tools / Skills Orbital ──
+function renderTools() {
+  const cats = document.getElementById('toolsCategories');
+  const grid = document.getElementById('toolsGrid');
+  if (!cats || !grid) return;
+
+  // Data from settings or fallback
+  const toolsData = settingsData.tools || {
+    'Design': [
+      { icon: '🎨', name: 'Photoshop' },
+      { icon: '✏️', name: 'Illustrator' },
+      { icon: '🎬', name: 'Premiere' },
+      { icon: '💫', name: 'After Effects' },
+      { icon: '📷', name: 'Lightroom' },
+      { icon: '🖼️', name: 'Figma' },
+      { icon: '🎯', name: 'InDesign' },
+      { icon: '📐', name: 'Cinema 4D' }
+    ],
+    'AI': [
+      { icon: '🤖', name: 'Claude' },
+      { icon: '🎭', name: 'Midjourney' },
+      { icon: '🎥', name: 'Kling' },
+      { icon: '✨', name: 'HiX Field' },
+      { icon: '🌊', name: 'Runway' },
+      { icon: '🖌️', name: 'DALL-E' }
+    ],
+    'Camera': [
+      { icon: '📹', name: 'FX3' },
+      { icon: '🎞️', name: 'FX6' },
+      { icon: '📸', name: 'A7R5' },
+      { icon: '🔭', name: 'A1' },
+      { icon: '🚁', name: 'DJI Mavic' }
+    ],
+    'Sound': [
+      { icon: '🎵', name: 'Logic Pro' },
+      { icon: '🎤', name: 'Suno' },
+      { icon: '🗣️', name: 'ElevenLabs' },
+      { icon: '🎧', name: 'Audition' }
+    ]
+  };
+
+  const catOrder = ['Design', 'AI', 'Camera', 'Sound'];
+  const catNames = [...catOrder.filter(c => toolsData[c]), ...Object.keys(toolsData).filter(c => !catOrder.includes(c))];
+  let activeCat = catNames[0];
+
+  // Render category buttons
+  cats.innerHTML = catNames.map((name, i) =>
+    `<button class="tools-cat-btn${i === 0 ? ' active' : ''}" data-cat="${name}">${name}</button>`
+  ).join('');
+
+  function showCategory(catName) {
+    activeCat = catName;
+    cats.querySelectorAll('.tools-cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === catName));
+
+    const tools = toolsData[catName] || [];
+
+    grid.innerHTML = '';
+    tools.forEach((tool, i) => {
+      const el = document.createElement('div');
+      const lvl = tool.level || '중';
+      el.className = `tool-item tool-level-${lvl}`;
+      const isUrl = tool.icon && (tool.icon.startsWith('/') || tool.icon.startsWith('http'));
+      const iconHtml = isUrl
+        ? `<img src="${tool.icon.includes('drive.google.com') ? convertDriveUrl(tool.icon) : tool.icon}" alt="${tool.name}">`
+        : tool.icon;
+      el.innerHTML = `<div class="tool-icon">${iconHtml}</div><span class="tool-name">${tool.name}</span><span class="tool-level-badge">${lvl}</span>`;
+      grid.appendChild(el);
+
+      // Staggered pixel dissolve entrance
+      setTimeout(() => { el.classList.add('show'); pixelDissolve(el, 500); }, i * 60 + 50);
+    });
+  }
+
+  showCategory(activeCat);
+
+  cats.addEventListener('click', e => {
+    const btn = e.target.closest('.tools-cat-btn');
+    if (btn) showCategory(btn.dataset.cat);
+  });
+}
+
+function initImageDividers() {
+  const bg = document.getElementById('dividerBg1');
+  if (!bg) return;
+  const projects = (portfolioData.projects || []).filter(p => p.media && p.media.some(m => m.type === 'image'));
+  if (projects.length === 0) { bg.closest('.image-divider').style.display = 'none'; return; }
+  const pick = projects[Math.floor(Math.random() * projects.length)];
+  const img = pick.media.find(m => m.type === 'image');
+  if (img) bg.style.backgroundImage = `url('${convertDriveUrl(img.url)}')`;
+  // Parallax
+  const divider = bg.closest('.image-divider');
+  window.addEventListener('scroll', () => {
+    const rect = divider.getBoundingClientRect();
+    const vh = window.innerHeight;
+    if (rect.top < vh && rect.bottom > 0) {
+      const progress = (vh - rect.top) / (vh + rect.height);
+      bg.style.transform = `translateY(${(progress - 0.5) * 180}px) scale(1.05)`;
+    }
+  }, { passive: true });
+}
+
+// ── Pixel Dissolve Reveal ──
+function pixelDissolve(el, totalDuration) {
+  const cols = 10, rows = 8;
+  const canvas = document.createElement('canvas');
+  canvas.width = cols;
+  canvas.height = rows;
+  const ctx = canvas.getContext('2d');
+
+  // Start fully transparent (card invisible, WebGL bg shows through)
+  ctx.clearRect(0, 0, cols, rows);
+
+  // Show card immediately but masked
+  el.style.opacity = '1';
+  el.style.transform = getComputedStyle(el).transform === 'none' ? '' : 'translateY(0) scale(1)';
+  el.classList.add('pixel-revealing');
+  el.style.webkitMaskImage = `url(${canvas.toDataURL()})`;
+  el.style.maskImage = `url(${canvas.toDataURL()})`;
+
+  // Build pixel list and shuffle
+  const pixels = [];
+  for (let y = 0; y < rows; y++)
+    for (let x = 0; x < cols; x++)
+      pixels.push({ x, y });
+  pixels.sort(() => Math.random() - 0.5);
+
+  // Reveal in waves
+  const waves = 5;
+  const perWave = Math.ceil(pixels.length / waves);
+  const waveDelay = totalDuration / waves;
+
+  for (let w = 0; w < waves; w++) {
+    setTimeout(() => {
+      ctx.fillStyle = '#fff';
+      const start = w * perWave;
+      const end = Math.min(start + perWave, pixels.length);
+      for (let i = start; i < end; i++) {
+        ctx.fillRect(pixels[i].x, pixels[i].y, 1, 1);
+      }
+      const url = canvas.toDataURL();
+      el.style.webkitMaskImage = `url(${url})`;
+      el.style.maskImage = `url(${url})`;
+    }, w * waveDelay);
+  }
+
+  // Clean up — remove mask entirely
+  setTimeout(() => {
+    el.style.webkitMaskImage = '';
+    el.style.maskImage = '';
+    el.classList.remove('pixel-revealing');
+  }, totalDuration + 100);
+}
+
+function initReveal() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        pixelDissolve(entry.target, 800);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
+
+  document.querySelectorAll('.bento-card').forEach(el => observer.observe(el));
+
+  // About section — simple fade reveal, no pixel dissolve
+  const aboutObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('visible'); aboutObserver.unobserve(entry.target); }
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' });
+  document.querySelectorAll('.about-intro, .about-image-wrap, .about-right').forEach(el => aboutObserver.observe(el));
+}
+
+// ── Scroll Parallax ──
+(function initParallax() {
+  const hero = document.querySelector('.hero');
+  let ticking = false;
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const heroH = hero.offsetHeight;
+
+        // Hero: fade out on scroll, show sticky bar
+        const heroTitle = document.getElementById('heroTitle');
+        const heroSubtitle = document.querySelector('.hero-subtitle');
+        const heroLine = document.querySelector('.hero-line');
+        const stickyBar = document.getElementById('stickyBar');
+
+        if (scrollY < heroH * 1.1) {
+          const progress = Math.min(scrollY / (heroH * 0.45), 1);
+          if (heroTitle) heroTitle.style.opacity = Math.max(0, 1 - progress * 1.4);
+          if (heroSubtitle) heroSubtitle.style.opacity = Math.max(0, 1 - progress * 2.2);
+          if (heroLine) heroLine.style.opacity = Math.max(0, 1 - progress * 2.5);
+        }
+
+        const footer = document.querySelector('.footer');
+        const footerVisible = footer && (footer.getBoundingClientRect().top < window.innerHeight * 0.8);
+
+        if (scrollY >= heroH * 0.45 && !footerVisible) {
+          stickyBar.classList.add('visible');
+        } else {
+          stickyBar.classList.remove('visible');
+          if (scrollY < heroH * 0.1 && heroTitle) heroTitle.style.opacity = '';
+        }
+
+        // Background parallax
+        if (scrollY < heroH * 1.2) {
+          const video = document.getElementById('heroVideo');
+          if (video && video.classList.contains('active')) {
+            video.style.transform = `translate3d(0, ${scrollY * 0.15}px, 0)`;
+          }
+          const bg = document.getElementById('heroBg');
+          if (bg) bg.style.transform = `translate3d(0, ${scrollY * 0.15}px, 0)`;
+        }
+
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+})();
+
+// Sticky bar is now controlled by parallax scroll handler above
+
+// ── Shrink & Stick Hero Title ──
+(function() {
+  const titleEl = document.getElementById('heroTitle');
+  const hero = document.getElementById('hero');
+  if (!titleEl || !hero) return;
+  // Game canvas check: renderHero() may inject canvas after this IIFE runs
+
+  const minSize = 28;
+  let isSticky = false;
+  // Get original size before any scroll happens
+  const cs = getComputedStyle(titleEl);
+  const originalSize = Math.max(parseFloat(cs.fontSize), 60);
+
+  window.addEventListener('scroll', () => {
+    // If game canvas was injected, disable sticky entirely
+    if (titleEl.querySelector('.hero-halftone-wrap')) {
+      titleEl.classList.remove('sticky');
+      return;
+    }
+    const scrollY = window.scrollY;
+    const triggerStart = 50;
+    const triggerEnd = hero.offsetHeight * 0.5;
+    const progress = Math.max(0, Math.min((scrollY - triggerStart) / (triggerEnd - triggerStart), 1));
+
+    const size = originalSize - (originalSize - minSize) * progress;
+    titleEl.style.fontSize = size + 'px';
+    titleEl.style.opacity = '1';
+
+    if (progress >= 0.95) {
+      if (!isSticky) {
+        titleEl.classList.add('sticky');
+        isSticky = true;
+      }
+    } else {
+      if (isSticky) {
+        titleEl.classList.remove('sticky');
+        isSticky = false;
+      }
+    }
+
+    if (progress > 0) {
+      const shadowSize = Math.max(1, 4 - 3 * progress);
+      titleEl.style.textShadow = `${shadowSize}px ${shadowSize}px 0 var(--coral)`;
+    } else {
+      titleEl.style.fontSize = '';
+      titleEl.style.textShadow = '';
+    }
+  }, { passive: true });
+
+  titleEl.addEventListener('click', () => {
+    if (isSticky) window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+
+
+// ── Intro Curtain with Preloader Counter ──
+(function() {
+  const curtain = document.getElementById('introCurtain');
+  if (!curtain) return;
+  document.body.style.overflow = 'hidden';
+  const fill = document.getElementById('loaderFill');
+  const num = document.getElementById('loaderNum');
+  let progress = 0;
+  const target = 100;
+  const duration = 2800; // ms to reach 100%
+  const startTime = performance.now();
+
+  function updateLoader(now) {
+    const elapsed = now - startTime;
+    progress = Math.min(target, Math.round((elapsed / duration) * target));
+    if (fill) fill.style.width = progress + '%';
+    if (num) num.textContent = progress + '%';
+    if (progress < target) {
+      requestAnimationFrame(updateLoader);
+    } else {
+      // Counter done → fade out curtain
+      setTimeout(() => {
+        curtain.classList.add('fade-out');
+        document.body.style.overflow = '';
+        document.querySelector('.hero')?.classList.add('hero-animate');
+        document.querySelector('.hero-scroll')?.classList.add('visible');
+        // Auto-start breakout game shortly after curtain starts fading
+        setTimeout(() => {
+          if (typeof window.__breakoutLaunch === 'function') {
+            window.__breakoutLaunch();
+          }
+        }, 800);
+      }, 300);
+    }
+  }
+  requestAnimationFrame(updateLoader);
+  curtain.addEventListener('transitionend', () => curtain.remove());
+})();
+
+// ── 3D Tilt Effect on Bento Cards ──
+function init3DTilt() {
+  document.querySelectorAll('.bento-card.cat-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      const rotateX = -y * 12;
+      const rotateY = x * 12;
+      card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      card.style.boxShadow = `${-x * 15}px ${-y * 15}px 30px rgba(224,90,90,0.25)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(800px) rotateX(0) rotateY(0) scale(1)';
+      card.style.boxShadow = '4px 4px 0 rgba(224,90,90,0.3)';
+    });
+  });
+}
+
+
+// ── Scroll text reveal animation ──
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('text-revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.about-name, .about-label, .about-text, .stat-num, .footer').forEach(el => {
+    el.classList.add('text-reveal');
+    observer.observe(el);
+  });
+}
+
+// ── Scroll-linked SVG line drawing (multi-path 3D) ──
+function initScrollLines() {
+  const lineWraps = document.querySelectorAll('[data-scroll-line]');
+  const allPaths = [];
+  lineWraps.forEach(wrap => {
+    const paths = wrap.querySelectorAll('path');
+    paths.forEach((path, i) => {
+      const len = path.getTotalLength();
+      path.style.setProperty('--line-len', len);
+      path.style.strokeDasharray = len;
+      path.style.strokeDashoffset = len;
+      allPaths.push({ path, len, wrap, delay: i * 0.08 });
+    });
+  });
+
+  let lineTicking = false;
+  function updateLines() {
+    const vh = window.innerHeight;
+    allPaths.forEach(({ path, len, wrap, delay }) => {
+      const rect = wrap.getBoundingClientRect();
+      const rawProgress = Math.max(0, Math.min(1, (vh - rect.top) / (vh + rect.height)));
+      const progress = Math.max(0, Math.min(1, (rawProgress - delay) / (1 - delay)));
+      const eased = progress < 0.5
+        ? 2 * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      path.style.strokeDashoffset = len * (1 - eased);
+    });
+    lineTicking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!lineTicking) { lineTicking = true; requestAnimationFrame(updateLines); }
+  }, { passive: true });
+  updateLines();
+}
+
+// ── Word-by-word and char-by-char scroll reveal ──
+function initTextAnimations() {
+  // Split headlines into chars
+  document.querySelectorAll('.about-headline, .tools-headline').forEach(el => {
+    if (el.classList.contains('char-reveal')) return;
+    el.classList.add('char-reveal');
+    const html = el.innerHTML;
+    // Process text nodes, preserve <em>/<br> tags
+    el.innerHTML = html.replace(/(<[^>]+>)|([^<]+)/g, (match, tag, text) => {
+      if (tag) return tag;
+      return text.split('').map((ch, i) => {
+        if (ch === ' ') return '<span class="char-space"> </span>';
+        if (ch === '\n') return '';
+        return `<span class="char" style="--i:${i}">${ch}</span>`;
+      }).join('');
+    });
+  });
+
+  // Split body text into words
+  document.querySelectorAll('.about-text, .tools-desc, .footer-brand-tagline').forEach(el => {
+    if (el.classList.contains('word-reveal')) return;
+    el.classList.add('word-reveal');
+    const text = el.textContent;
+    el.innerHTML = text.split(/(\s+)/).map((word, i) => {
+      if (/^\s+$/.test(word)) return ' ';
+      return `<span class="word" style="--i:${Math.floor(i/2)}">${word}</span>`;
+    }).join('');
+  });
+
+  // Observe char reveals
+  const charObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.char').forEach(ch => ch.classList.add('revealed'));
+        charObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.char-reveal').forEach(el => charObserver.observe(el));
+
+  // Observe word reveals
+  const wordObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.word').forEach(w => w.classList.add('revealed'));
+        wordObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.word-reveal').forEach(el => wordObserver.observe(el));
+}
+
+// ── Hero Mouse Parallax ──
+function initHeroParallax() {
+  if (window.innerWidth < 768) return;
+  const hero = document.querySelector('.hero-section');
+  if (!hero) return;
+  const title = document.querySelector('.hero-title');
+  const subtitle = document.querySelector('.hero-subtitle');
+  const scrollEl = document.querySelector('.scroll-indicator');
+
+  hero.addEventListener('mousemove', (e) => {
+    const rect = hero.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+    if (title) title.style.transform = `translateX(calc(-0.08em + ${x * 40}px)) translateY(${y * 25}px)`;
+    if (subtitle) subtitle.style.transform = `translateY(${y * 15}px) translateX(${x * 20}px)`;
+    if (scrollEl) scrollEl.style.transform = `translateX(${x * 12}px)`;
+  });
+
+  hero.addEventListener('mouseleave', () => {
+    if (title) title.style.transform = 'translateX(-0.08em)';
+    if (subtitle) subtitle.style.transform = '';
+    if (scrollEl) scrollEl.style.transform = '';
+  });
+}
+
+// ── Scroll Progress Bar ──
+function initScrollProgress() {
+  const bar = document.getElementById('scrollProgress');
+  if (!bar) return;
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = docHeight > 0 ? (scrollTop / docHeight * 100) + '%' : '0%';
+  }, { passive: true });
+}
+
+// ── About Section Parallax ──
+function initAboutParallax() {
+  const aboutImg = document.querySelector('.about-image-wrap');
+  const aboutSection = document.querySelector('.about-section');
+  if (!aboutImg || !aboutSection) return;
+  window.addEventListener('scroll', () => {
+    const rect = aboutSection.getBoundingClientRect();
+    const visible = rect.top < window.innerHeight && rect.bottom > 0;
+    if (visible) {
+      const progress = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+      const y = (progress - 0.5) * -40;
+      aboutImg.style.transform = `translateY(${y}px)`;
+    }
+  }, { passive: true });
+}
+
+// ── Remove black background from logo images ──
+function removeBlackBg(imgEl) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, c.width, c.height);
+    const d = data.data;
+    for (let i = 0; i < d.length; i += 4) {
+      // Calculate brightness
+      const brightness = (d[i] + d[i+1] + d[i+2]) / 3;
+      if (brightness < 40) {
+        // Make dark pixels transparent
+        d[i+3] = 0;
+      } else if (brightness < 80) {
+        // Fade semi-dark pixels
+        d[i+3] = Math.round((brightness - 40) / 40 * 255);
+      }
+    }
+    ctx.putImageData(data, 0, 0);
+    // Replace img with canvas
+    c.style.cssText = imgEl.style.cssText || '';
+    c.className = imgEl.className || '';
+    imgEl.parentNode.replaceChild(c, imgEl);
+  };
+  img.src = imgEl.src;
+}
+document.querySelectorAll('.sticky-bar-text img, .footer-brand-name img').forEach(removeBlackBg);
+
+// ── Lenis removed — too many concurrent rAF loops ──
+
+// ── Kinetic Typography ──
+function initKineticText() {
+  document.querySelectorAll('.kinetic-text').forEach(el => {
+    if (el.dataset.kinetic) return;
+    el.dataset.kinetic = '1';
+    // Wrap each line's words in spans (preserve HTML tags like <em>)
+    const html = el.innerHTML;
+    const lines = html.split(/<br\s*\/?>/i);
+    el.innerHTML = lines.map(line => {
+      // Split by HTML tags to preserve them, only wrap text nodes
+      const tokens = line.trim().split(/(<[^>]+>)/);
+      let wordIdx = 0;
+      const wrapped = tokens.map(token => {
+        if (/^<[^>]+>$/.test(token)) return token; // HTML tag — pass through
+        if (!token.trim()) return token;
+        // Split text into words
+        return token.split(/(\s+)/).map(w => {
+          if (/^\s+$/.test(w) || !w) return w;
+          return `<span class="kinetic-word" style="transition-delay:${wordIdx++ * 0.06}s">${w}</span>`;
+        }).join('');
+      }).join('');
+      return `<span class="kinetic-line">${wrapped}</span>`;
+    }).join('');
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.kinetic-line').forEach(line => line.classList.add('revealed'));
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.kinetic-text').forEach(el => observer.observe(el));
+}
+
+// ── CTA Email Link ──
+function initCTA() {
+  const btn = document.getElementById('ctaEmailBtn');
+  if (!btn) return;
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const aboutSection = document.getElementById('aboutSection');
+    if (aboutSection) aboutSection.scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+// ── Init ──
+loadData();
+setTimeout(() => {
+  init3DTilt();
+  initScrollReveal();
+  initHeroParallax();
+  initScrollProgress();
+  initAboutParallax();
+  initScrollLines();
+  initTextAnimations();
+  initKineticText();
+  initCTA();
+}, 500);
+
+// ── Theme Toggle ──
+function toggleTheme() {
+  // 시리얼 ↔ 새 사이트(studio) 전환. 서버가 쿠키(hati_theme=studio) 저장 후 studio 서빙.
+  window.location.href = '/studio';
+}
+</script>
+
+<!-- Three.js WebGL Background (ES Module) -->
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+// Delay WebGL init so initial scroll isn't blocked by heavy GPU setup
+setTimeout(() => {
+(function() {
+  const canvas = document.getElementById('webglBg');
+  if (!canvas) return;
+
+  const isMobile = window.innerWidth < 768;
+  const N = isMobile ? 200 : 800;
+
+  // Scene
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x08070a, 0.0008);
+
+  // Camera
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
+  camera.position.z = 400;
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0xFFF5EB, 1);
+
+  // Bloom disabled for cereal theme (bright bg, minimal effect, saves GPU)
+  let composer = null;
+
+  // Particles
+  const positions = new Float32Array(N * 3);
+  const colors = new Float32Array(N * 3);
+  const velocities = new Float32Array(N * 3);
+  const sizes = new Float32Array(N);
+
+  const violet = new THREE.Color(0xFF6B35);
+  const cyan = new THREE.Color(0x9B5DE5);
+  const white = new THREE.Color(0xF15BB5);
+
+  for (let i = 0; i < N; i++) {
+    const i3 = i * 3;
+    positions[i3]     = (Math.random() - 0.5) * 1200;
+    positions[i3 + 1] = (Math.random() - 0.5) * 800;
+    positions[i3 + 2] = (Math.random() - 0.5) * 600;
+
+    velocities[i3]     = (Math.random() - 0.5) * 0.2;
+    velocities[i3 + 1] = (Math.random() - 0.5) * 0.15;
+    velocities[i3 + 2] = (Math.random() - 0.5) * 0.1;
+
+    const t = Math.random();
+    const col = t < 0.4 ? violet : t < 0.7 ? cyan : white;
+    colors[i3]     = col.r;
+    colors[i3 + 1] = col.g;
+    colors[i3 + 2] = col.b;
+
+    sizes[i] = 1.5 + Math.random() * 3;
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  const mat = new THREE.PointsMaterial({
+    size: 2.5,
+    sizeAttenuation: true,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.NormalBlending,
+    depthWrite: false
+  });
+  const points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  // Connection lines (limited to nearby particles for performance)
+  const lineGeo = new THREE.BufferGeometry();
+  const maxLines = isMobile ? 100 : 300;
+  const linePositions = new Float32Array(maxLines * 6);
+  const lineColors = new Float32Array(maxLines * 6);
+  lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+  lineGeo.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
+  lineGeo.setDrawRange(0, 0);
+
+  const lineMat = new THREE.LineBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.12,
+    blending: THREE.NormalBlending,
+    depthWrite: false
+  });
+  const lines = new THREE.LineSegments(lineGeo, lineMat);
+  scene.add(lines);
+
+  // Mouse tracking
+  let mouseX = 0, mouseY = 0;
+  document.addEventListener('mousemove', e => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = -(e.clientY / window.innerHeight - 0.5) * 2;
+  }, { passive: true });
+
+  // Animation
+  let time = 0;
+  let visible = true;
+
+  function animate() {
+    if (!visible) { requestAnimationFrame(animate); return; }
+    time += 0.003;
+
+    const pos = geo.attributes.position.array;
+    let lineIdx = 0;
+
+    for (let i = 0; i < N; i++) {
+      const i3 = i * 3;
+      const x = pos[i3], y = pos[i3 + 1], z = pos[i3 + 2];
+
+      // Flow field
+      const fx = Math.sin(x * 0.003 + time) * Math.cos(z * 0.002 + time * 0.7);
+      const fy = Math.cos(y * 0.004 - time * 0.5) * Math.sin(x * 0.002 + time * 0.3);
+      const fz = Math.sin(y * 0.003 + z * 0.002 + time * 0.6);
+
+      velocities[i3]     += fx * 0.015;
+      velocities[i3 + 1] += fy * 0.015;
+      velocities[i3 + 2] += fz * 0.008;
+
+      // Damping
+      velocities[i3]     *= 0.96;
+      velocities[i3 + 1] *= 0.96;
+      velocities[i3 + 2] *= 0.96;
+
+      pos[i3]     += velocities[i3];
+      pos[i3 + 1] += velocities[i3 + 1];
+      pos[i3 + 2] += velocities[i3 + 2];
+
+      // Boundary wrap
+      if (pos[i3] > 600) pos[i3] -= 1200;
+      if (pos[i3] < -600) pos[i3] += 1200;
+      if (pos[i3 + 1] > 400) pos[i3 + 1] -= 800;
+      if (pos[i3 + 1] < -400) pos[i3 + 1] += 800;
+      if (pos[i3 + 2] > 300) pos[i3 + 2] -= 600;
+      if (pos[i3 + 2] < -300) pos[i3 + 2] += 600;
+
+      // Connection lines (sample subset for perf)
+      if (i % 3 === 0 && lineIdx < maxLines) {
+        for (let j = i + 3; j < N && j < i + 60; j += 3) {
+          const j3 = j * 3;
+          const dx = pos[i3] - pos[j3], dy = pos[i3+1] - pos[j3+1], dz = pos[i3+2] - pos[j3+2];
+          const d2 = dx*dx + dy*dy + dz*dz;
+          if (d2 < 3600 && lineIdx < maxLines) {
+            const li = lineIdx * 6;
+            linePositions[li] = pos[i3]; linePositions[li+1] = pos[i3+1]; linePositions[li+2] = pos[i3+2];
+            linePositions[li+3] = pos[j3]; linePositions[li+4] = pos[j3+1]; linePositions[li+5] = pos[j3+2];
+            const fade = 1 - d2 / 3600;
+            lineColors[li] = lineColors[li+3] = 0.77 * fade;
+            lineColors[li+1] = lineColors[li+4] = 0.71 * fade;
+            lineColors[li+2] = lineColors[li+5] = 0.99 * fade;
+            lineIdx++;
+          }
+        }
+      }
+    }
+
+    geo.attributes.position.needsUpdate = true;
+    lineGeo.attributes.position.needsUpdate = true;
+    lineGeo.attributes.color.needsUpdate = true;
+    lineGeo.setDrawRange(0, lineIdx * 2);
+
+    // Camera follows mouse subtly
+    camera.position.x += (mouseX * 60 - camera.position.x) * 0.02;
+    camera.position.y += (mouseY * 40 - camera.position.y) * 0.02;
+    camera.lookAt(scene.position);
+
+    // Slow rotation
+    points.rotation.y = time * 0.08;
+    lines.rotation.y = time * 0.08;
+
+    if (composer) composer.render(); else renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+
+  // Visibility optimization — pause when tab hidden OR scrolled past hero
+  document.addEventListener('visibilitychange', () => {
+    visible = document.visibilityState === 'visible' && window.scrollY < window.innerHeight * 1.5;
+  });
+  let scrollTick = false;
+  window.addEventListener('scroll', () => {
+    if (!scrollTick) {
+      scrollTick = true;
+      requestAnimationFrame(() => {
+        visible = document.visibilityState === 'visible' && window.scrollY < window.innerHeight * 1.5;
+        scrollTick = false;
+      });
+    }
+  }, { passive: true });
+
+  // Resize
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  animate();
+})();
+}, 1500); // Delay WebGL init 1.5s to let page become interactive first
+</script>
+
+<!-- Floating Cereal 3D Objects -->
+<script type="module">
+import * as THREE from 'three';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+
+setTimeout(() => {
+(function() {
+  const canvas = document.getElementById('cerealFloat');
+  if (!canvas) return;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+  camera.position.z = 30;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  dirLight.position.set(5, 10, 7);
+  scene.add(dirLight);
+  const fillLight = new THREE.DirectionalLight(0xffd9b3, 0.5);
+  fillLight.position.set(-6, -3, 4);
+  scene.add(fillLight);
+
+  // Vivid Froot-Loops-style colors
+  const COLORS = {
+    orange: 0xFF6B1F,
+    pink:   0xFF2D87,
+    purple: 0x8B3DFF,
+    yellow: 0xFFD60A,
+    red:    0xFF3B30,
+    green:  0x00C853,
+    blue:   0x00A3FF,
+    cyan:   0x00E5D1,
+  };
+
+  // Calculate visible world size at z=0 (camera z=30, fov=50)
+  const camZ = 30;
+  const vFov = (50 * Math.PI) / 180;
+  let visH = 2 * Math.tan(vFov / 2) * camZ; // ~28
+  let visW = visH * (window.innerWidth / window.innerHeight);
+  let sideX = visW / 2 - 2; // pad a bit so cereals stay on screen
+
+  // Cereal config:
+  //   yDoc    = normalized scroll position where cereal is roughly centered (0 = top of page, 1 = bottom)
+  //   parallax= speed relative to scroll (1 = moves with page, 0.5 = half speed = "far", 1.3 = faster = "near")
+  //   x       = horizontal world position (negative = left, positive = right)
+  //   z       = depth
+  const cereals = [
+    { file: 'cereal_orange', color: COLORS.orange, scaleBase: 0.55, x:  sideX * 0.75, yDoc: 0.05, z: -2, parallax: 0.9,  rotX: 0.005, rotY: 0.007, floatPhase: 0,   floatAmp: 0.6 },
+    { file: 'cereal_pink',   color: COLORS.pink,   scaleBase: 0.45, x: -sideX * 0.85, yDoc: 0.12, z: -5, parallax: 0.7,  rotX: 0.004, rotY: -0.006, floatPhase: 0.8, floatAmp: 0.8 },
+    { file: 'cereal_yellow', color: COLORS.yellow, scaleBase: 0.5,  x:  sideX * 0.6,  yDoc: 0.20, z: -3, parallax: 1.0,  rotX: -0.006, rotY: 0.005, floatPhase: 1.5, floatAmp: 0.5 },
+    { file: 'cereal_purple', color: COLORS.purple, scaleBase: 0.4,  x: -sideX * 0.7,  yDoc: 0.28, z:  0, parallax: 1.15, rotX: 0.003, rotY: -0.004, floatPhase: 2.2, floatAmp: 0.9 },
+    { file: 'cereal_orange', color: COLORS.red,    scaleBase: 0.35, x:  sideX * 0.9,  yDoc: 0.36, z: -7, parallax: 0.55, rotX: 0.005, rotY: 0.006, floatPhase: 0.4, floatAmp: 0.7 },
+    { file: 'cereal_pink',   color: COLORS.cyan,   scaleBase: 0.5,  x: -sideX * 0.55, yDoc: 0.44, z: -4, parallax: 0.85, rotX: -0.004, rotY: 0.005, floatPhase: 1.1, floatAmp: 1.0 },
+    { file: 'cereal_yellow', color: COLORS.green,  scaleBase: 0.4,  x:  sideX * 0.8,  yDoc: 0.52, z: -6, parallax: 0.75, rotX: 0.006, rotY: -0.005, floatPhase: 2.7, floatAmp: 0.6 },
+    { file: 'cereal_purple', color: COLORS.blue,   scaleBase: 0.45, x: -sideX * 0.65, yDoc: 0.60, z: -2, parallax: 1.05, rotX: 0.004, rotY: 0.004, floatPhase: 3.3, floatAmp: 0.8 },
+    { file: 'cereal_orange', color: COLORS.yellow, scaleBase: 0.35, x:  sideX * 0.5,  yDoc: 0.68, z: -9, parallax: 0.5,  rotX: -0.005, rotY: 0.003, floatPhase: 1.7, floatAmp: 0.9 },
+    { file: 'cereal_pink',   color: COLORS.pink,   scaleBase: 0.4,  x: -sideX * 0.9,  yDoc: 0.76, z: -5, parallax: 0.95, rotX: 0.005, rotY: 0.006, floatPhase: 2.4, floatAmp: 0.7 },
+    { file: 'cereal_yellow', color: COLORS.orange, scaleBase: 0.5,  x:  sideX * 0.7,  yDoc: 0.84, z: -3, parallax: 1.1,  rotX: 0.003, rotY: -0.005, floatPhase: 0.9, floatAmp: 0.6 },
+    { file: 'cereal_purple', color: COLORS.purple, scaleBase: 0.35, x: -sideX * 0.6,  yDoc: 0.92, z: -8, parallax: 0.8,  rotX: 0.004, rotY: 0.005, floatPhase: 3.0, floatAmp: 0.9 },
+  ];
+
+  const loadedObjects = [];
+  const objLoader = new OBJLoader();
+  // Cache loaded geometries to avoid re-loading the same file
+  const geoCache = {};
+
+  function applyMaterial(obj, color) {
+    const mat = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.55,
+      metalness: 0.1,
+      emissive: color,
+      emissiveIntensity: 0.15,
+      flatShading: false,
+    });
+    obj.traverse((child) => {
+      if (child.isMesh) {
+        child.material = mat;
+      }
+    });
+  }
+
+  function addCereal(obj, config) {
+    // Normalize scale by bounding box (base target size ~3 units)
+    const box = new THREE.Box3().setFromObject(obj);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const normalize = 3 / maxDim;
+    obj.scale.setScalar(normalize * config.scaleBase);
+
+    // Center geometry
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    obj.position.sub(center.multiplyScalar(normalize * config.scaleBase));
+
+    obj.rotation.x = Math.random() * Math.PI * 2;
+    obj.rotation.y = Math.random() * Math.PI * 2;
+    obj.rotation.z = Math.random() * Math.PI * 2;
+
+    applyMaterial(obj, config.color);
+    scene.add(obj);
+    loadedObjects.push({ mesh: obj, config });
+  }
+
+  cereals.forEach((config) => {
+    if (geoCache[config.file]) {
+      const clone = geoCache[config.file].clone();
+      addCereal(clone, config);
+    } else {
+      objLoader.load(`/models/${config.file}.obj`, (obj) => {
+        geoCache[config.file] = obj;
+        addCereal(obj.clone(), config);
+      });
+    }
+  });
+
+  // Scroll-tied position
+  let scrollY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    scrollY = window.scrollY;
+  }, { passive: true });
+
+  // Mouse parallax
+  let mouseX = 0, mouseY = 0;
+  window.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  }, { passive: true });
+
+  // Visibility check — only render when tab is visible
+  let isVisible = !document.hidden;
+  document.addEventListener('visibilitychange', () => {
+    isVisible = !document.hidden;
+  });
+
+  let tick = 0;
+  // Pixel → world conversion: how many world units correspond to one viewport pixel
+  let worldPerPx = visH / window.innerHeight;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (!isVisible || loadedObjects.length === 0) return;
+
+    tick += 0.016;
+    const docH = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+
+    loadedObjects.forEach((entry) => {
+      const { mesh, config } = entry;
+
+      // Horizontal: fixed world position with slight mouse parallax
+      mesh.position.x = config.x + mouseX * 0.4;
+
+      // Vertical: cereal's "home" is at scrollY == yDoc * docH.
+      // When scrollY < home, cereal is below viewport (negative y in three.js = down)
+      // and rises into view as the user scrolls down — classic parallax feel.
+      // parallax<1 → slower (feels far); >1 → faster (feels near).
+      const yHomePx = config.yDoc * docH;
+      const yWorld = (scrollY - yHomePx) * worldPerPx * config.parallax;
+      mesh.position.y = yWorld + Math.sin(tick + config.floatPhase) * config.floatAmp;
+
+      // Depth with subtle mouse-Y parallax
+      mesh.position.z = config.z + mouseY * 0.25;
+
+      // Gentle constant rotation
+      mesh.rotation.x += config.rotX;
+      mesh.rotation.y += config.rotY;
+    });
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    // Recompute viewport-derived values + reposition cereals horizontally
+    visW = visH * (window.innerWidth / window.innerHeight);
+    const prevSideX = sideX;
+    sideX = visW / 2 - 2;
+    worldPerPx = visH / window.innerHeight;
+    if (prevSideX > 0) {
+      const ratio = sideX / prevSideX;
+      loadedObjects.forEach(({ config }) => {
+        config.x *= ratio;
+      });
+    }
+  });
+})();
+}, 1800);
+</script>
+</body>
+</html>

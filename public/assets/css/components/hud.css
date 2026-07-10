@@ -44,6 +44,14 @@
 .hud__nav a:hover { color: #fff; }
 .hud__nav a:hover::after { right: 0; }
 
+/* 테마 전환 링크 — 섹션 링크와 구분되는 구분자 + 살짝 강조 */
+.hud__cereal { margin-left: var(--space-3); color: #fff; }
+.hud__cereal::before {
+  content: '';
+  display: inline-block; width: 5px; height: 5px; margin-right: var(--space-4);
+  border-radius: 50%; background: #fff; vertical-align: middle; opacity: 0.85;
+}
+
 @media (max-width: 767px) {
   .hud { padding: var(--space-4) var(--page-pad-x); }
   .hud__nav { gap: var(--space-4); }

@@ -76,5 +76,6 @@
     11,
     24
   ],
-  "reelAnchorHue": 46
+  "reelAnchorHue": 46,
+  "defaultTheme": "studio"
 }

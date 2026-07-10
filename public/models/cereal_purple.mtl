@@ -1,0 +1,8 @@
+# Cereal Material
+newmtl cereal_purple_mat
+Ka 0.1824 0.1341 0.2436
+Kd 0.6080 0.4470 0.8120
+Ks 0.1000 0.1000 0.1000
+Ns 15.0
+d 1.0
+illum 2

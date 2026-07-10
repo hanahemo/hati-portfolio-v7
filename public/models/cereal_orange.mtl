@@ -1,0 +1,8 @@
+# Cereal Material
+newmtl cereal_orange_mat
+Ka 0.2820 0.1647 0.0471
+Kd 0.9400 0.5490 0.1570
+Ks 0.1000 0.1000 0.1000
+Ns 15.0
+d 1.0
+illum 2
