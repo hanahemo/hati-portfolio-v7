@@ -53,13 +53,17 @@ function mediaThumbUrl(raw, w) {
   return raw;
 }
 
-// 썸네일 후보 체인 — 이미지 먼저, 그다음 영상 포스터(Drive/YouTube).
-// 첫 후보가 404 여도(지워진 업로드 등) 다음 후보로 넘어가므로 프레임이 비지 않는다.
+// 썸네일 후보 체인 — 첫 후보가 404 여도(지워진 업로드 등) 다음으로 넘어가 프레임이 비지 않는다.
+// 미디어를 전부 넣으면 data-alts 가 수십 개로 불어 HTML 만 수십 KB 커진다.
+// 첫 이미지 · 마지막 이미지 · 첫 영상 포스터 세 갈래면 실패 조합을 사실상 다 덮는다.
 function thumbCandidates(project, w = 600) {
   const media = Array.isArray(project.media) ? project.media : [];
   const isImg = m => (m.type || '').startsWith('image');
+  const imgs = media.filter(isImg);
+  const vids = media.filter(m => !isImg(m));
+  const picks = [imgs[0], imgs[imgs.length - 1], vids[0]].filter(Boolean);
   const urls = [];
-  for (const m of [...media.filter(isImg), ...media.filter(m => !isImg(m))]) {
+  for (const m of picks) {
     const u = mediaThumbUrl(m.url, w); if (u) urls.push(u);
     const alt = driveThumbFallback(m.url, w); if (alt) urls.push(alt);
   }
