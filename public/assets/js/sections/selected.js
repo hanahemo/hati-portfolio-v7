@@ -1,11 +1,10 @@
 // Selected Works — 가로 시네마. 섹션 핀 + 스크롤이 9개 풀블리드 프레임을 옆으로 밀며 흐름.
 // 중앙에 온 프레임이 컬러로 개화. reduced-motion / GSAP 부재 시 가로 드래그 스크롤 폴백.
-import { pickThumb, safeThumb, driveThumbFallback, renderTags } from './cards.js';
+import { thumbImg, renderTags } from './cards.js';
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-const frameThumb = (p, w) => safeThumb(p, w);   // 로컬 영상 제외 + Drive/YouTube 포스터 해결(공유 헬퍼)
 
 export function initSelected(portfolio, settings) {
   const section = document.getElementById('selected');
@@ -21,14 +20,13 @@ export function initSelected(portfolio, settings) {
   if (!items.length) { section.hidden = true; return; }
 
   track.innerHTML = items.map((p, i) => {
-    const thumb = frameThumb(p, 1400);
     const num = String(i + 1).padStart(2, '0');
     return `
       <a class="cframe" href="#project/${p.id}" data-id="${p.id}" data-cursor="view" aria-label="${escapeHtml(p.title)} — ${escapeHtml(p.category)}">
-        <div class="cframe__media">${thumb ? `<img src="${escapeHtml(thumb)}" data-fb="${escapeHtml(driveThumbFallback(pickThumb(p)))}" alt="" decoding="async" onerror="if(this.dataset.fb&&this.src!==this.dataset.fb){this.src=this.dataset.fb}else{this.style.visibility='hidden'}">` : ''}</div>
+        <div class="cframe__media">${thumbImg(p, 1400, '', { lazy: false })}</div>
         <span class="cframe__n">${num} — ${escapeHtml(p.category)}</span>
         <div class="cframe__caption">
-          ${renderTags(p, 'cframe__tags', 'cframe__tag')}
+          ${renderTags(p, 'cframe__tags', 'cframe__tag', 3)}
           <span class="cframe__title">${escapeHtml(p.title || '(untitled)')}</span>
         </div>
         <span class="cframe__view">View Project <span aria-hidden="true">→</span></span>
