@@ -62,6 +62,12 @@
   color: var(--color-text-mute);
   transition: color var(--dur-base);
 }
+.idx-row__main {
+  min-width: 0;                       /* 자식 제목 ellipsis 동작 */
+  display: flex; flex-direction: column; gap: 8px;
+  transform: translateX(0);
+  transition: transform var(--dur-slow) var(--ease-out-quart);
+}
 .idx-row__title {
   font-family: var(--font-display);
   font-weight: 500;
@@ -70,9 +76,24 @@
   letter-spacing: -0.02em;
   color: var(--color-text-dim);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  transform: translateX(0);
-  transition: color var(--dur-base) var(--ease-signature),
-              transform var(--dur-slow) var(--ease-out-quart);
+  transition: color var(--dur-base) var(--ease-signature);
+}
+/* 역할 태그 — 제목 아래 소형 줄. 앞에 작품 키컬러 바(--cardkey). */
+.idx-row__tags {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 6px 12px;
+}
+.idx-row__tags::before {
+  content: ''; flex: none;
+  width: 16px; height: 2px; border-radius: 2px;
+  background: var(--cardkey, var(--color-text-mute));
+  opacity: 0.9;
+}
+.idx-row__tag {
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--color-text-mute);
+  transition: color var(--dur-base);
 }
 .idx-row__cat {
   font-size: var(--fs-label); font-weight: 500;
@@ -83,11 +104,12 @@
 .idx-row:hover, .idx-row:focus-visible {
   border-color: var(--color-border-neon);
 }
+.idx-row:hover .idx-row__main,
+.idx-row:focus-visible .idx-row__main { transform: translateX(14px); }
 .idx-row:hover .idx-row__title,
-.idx-row:focus-visible .idx-row__title {
-  color: var(--color-text);
-  transform: translateX(14px);
-}
+.idx-row:focus-visible .idx-row__title { color: var(--color-text); }
+.idx-row:hover .idx-row__tag,
+.idx-row:focus-visible .idx-row__tag { color: var(--color-text-dim); }
 .idx-row:hover .idx-row__num,
 .idx-row:focus-visible .idx-row__num { color: var(--color-text); }
 .idx-row:hover .idx-row__cat,
@@ -140,5 +162,6 @@
   }
   .idx-row__thumb--empty { display: block; }
   .idx-row__title { font-size: 16px; white-space: normal; line-height: 1.3; }
-  .idx-row:hover .idx-row__title { transform: none; }
+  .idx-row:hover .idx-row__main { transform: none; }
+  .idx-row__tag { font-size: 10px; letter-spacing: 0.1em; }
 }

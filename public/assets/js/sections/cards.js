@@ -25,6 +25,23 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// 작품 키컬러(썸네일에서 추출한 HSL) → 태그 바 색. light=밝은 배경(All Works)용은 약간 진하게.
+function keyColor(project, light) {
+  const c = project && project.color;
+  if (!c || typeof c.h !== 'number') return '';
+  const h = Math.round(c.h);
+  const s = Math.round(Math.max(light ? 35 : 45, Math.min(light ? 60 : 78, (c.s || 0.4) * 100)));
+  const l = light ? 50 : 62;
+  return `hsl(${h}, ${s}%, ${l}%)`;
+}
+// 역할 태그(사진/미술/기획 등) 소형 마크업 — 썸네일 캡션 공용(All Works·Selected).
+function renderTags(project, wrapCls, itemCls, max = 6) {
+  const tags = Array.isArray(project.tags) ? project.tags.filter(Boolean).slice(0, max) : [];
+  if (!tags.length) return '';
+  return `<span class="${wrapCls}">${tags.map(t => `<span class="${itemCls}">${escapeHtml(t)}</span>`).join('')}</span>`;
+}
+export { keyColor, renderTags };
+
 // 행/프리뷰용 안전 썸네일 — Drive는 영상도 스틸을 주지만 로컬 영상 파일은 <img> 불가
 const DIRECT_VIDEO_RE = /\.(mp4|mov|webm|m4v)(\?|#|$)/i;
 function getYouTubeId(url) { const m = String(url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/); return m ? m[1] : ''; }
@@ -104,10 +121,15 @@ function renderRow(project) {
   a.href = `#project/${project.id}`;
   a.dataset.id = project.id;
   a.dataset.cursor = 'view';
+  const key = keyColor(project, true);
+  if (key) a.style.setProperty('--cardkey', key);
   a.innerHTML = `
     ${thumbHtml || `<span class="idx-row__thumb idx-row__thumb--empty" aria-hidden="true"></span>`}
     <span class="idx-row__num">${idStr}</span>
-    <span class="idx-row__title">${escapeHtml(project.title || '(untitled)')}</span>
+    <span class="idx-row__main">
+      <span class="idx-row__title">${escapeHtml(project.title || '(untitled)')}</span>
+      ${renderTags(project, 'idx-row__tags', 'idx-row__tag')}
+    </span>
     <span class="idx-row__cat">${escapeHtml(project.category)}</span>
   `;
   a.addEventListener('click', (e) => {
