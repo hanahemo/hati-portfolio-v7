@@ -26,9 +26,9 @@ export function initSelected(portfolio, settings) {
         <div class="cframe__media">${thumbImg(p, 1400, '', { lazy: false })}</div>
         <span class="cframe__n">${num} — ${escapeHtml(p.category)}</span>
         <div class="cframe__caption">
-          ${renderTags(p, 'cframe__tags', 'cframe__tag', 3)}
           <span class="cframe__title">${escapeHtml(p.title || '(untitled)')}</span>
         </div>
+        ${renderTags(p, 'cframe__tags', 'cframe__tag', 3)}
         <span class="cframe__view">View Project <span aria-hidden="true">→</span></span>
       </a>`;
   }).join('');

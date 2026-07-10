@@ -4,7 +4,10 @@
   height: 100svh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  padding: var(--space-6) 0 var(--space-6);
+  /* 상단 패딩은 고정 HUD(데스크탑 ≈73px · 모바일 ≈57px)를 피한다 —
+     안 그러면 '01 Selected Works' 라벨이 브랜드/내비 밴드 뒤에 깔려 겹친다.
+     publishEndRect()가 padTop을 읽어 핸드오프 좌표를 잡으므로 값이 커도 안전. */
+  padding: calc(var(--space-6) + 52px) 0 var(--space-6);
   overflow: hidden;
 }
 
@@ -76,39 +79,39 @@
   color: rgba(255,255,255,0.85);
   text-shadow: 0 1px 12px rgba(0,0,0,0.6);
 }
-/* 캡션 — 좌하단 앵커, 태그(위) + 제목(아래) 스택 */
+/* 캡션 — 제목만. 하단 로어서드 + 그라데이션 스크림. 태그는 프레임 밖(아래)으로 분리했다:
+   제목이 2줄이 돼도 태그가 이미지 위로 기어오르지 않는다(Hati). */
 .cframe__caption {
-  position: absolute; left: 24px; bottom: 22px; z-index: 2;
-  max-width: 82%;
-  display: flex; flex-direction: column; gap: 12px;
-}
-/* 역할 태그 — 모노톤 라인 알약. --focus로 제목과 함께 페이드.
-   캡션의 주인공은 제목이고 태그는 각주다. 크면 썸네일을 덮어버린다(Hati). */
-.cframe__tags {
-  display: flex; flex-wrap: wrap; align-items: center;
-  gap: 5px;
-  opacity: calc(0.15 + var(--focus, 0) * 0.85);
-}
-.cframe__tag {
-  padding: 2px 8px 3px; border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.32);
-  background: rgba(10,10,10,0.22);        /* 밝은 이미지 위 가독용 미세 워시 */
-  color: rgba(255,255,255,0.82);
-  font-size: var(--fs-micro); font-weight: 500;   /* All Works 인덱스 태그와 같은 크기 */
-  letter-spacing: 0.06em; line-height: 1.3;
-  white-space: nowrap;
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 46px 22px 18px;
+  background: linear-gradient(0deg, rgba(8,8,8,0.85) 0%, rgba(8,8,8,0.5) 42%, rgba(8,8,8,0) 100%);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  opacity: calc(0.35 + var(--focus, 0) * 0.65);
 }
 .cframe__title {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(24px, 4vw, 60px);
-  line-height: 0.98;
+  font-size: clamp(22px, 3.6vw, 54px);
+  line-height: 1.04;
   letter-spacing: -0.03em;
   color: #fff;
-  text-shadow: 0 2px 30px rgba(0,0,0,0.6);
-  opacity: calc(0.35 + var(--focus, 0) * 0.65);
-  transform: translateY(calc((1 - var(--focus, 0)) * 10px));
-  word-break: keep-all;   /* --focus는 JS 스크럽이 구동 — CSS 트랜지션이 스크럽과 어긋나므로 제거 */
+  text-shadow: 0 2px 22px rgba(0,0,0,0.55);
+  word-break: keep-all;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* 역할 태그 — 썸네일 밖, 프레임 바로 아래 한 줄. 다크 배경 위라 모노크롬 헤어라인. */
+.cframe__tags {
+  position: absolute; top: calc(100% + 12px); left: 0; z-index: 2;
+  display: flex; flex-wrap: nowrap; align-items: center; gap: 5px;
+  opacity: calc(0.15 + var(--focus, 0) * 0.85);
+}
+.cframe__tag {
+  padding: 2px 9px 3px; border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-mute);
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.06em; line-height: 1.3;
+  white-space: nowrap;
 }
 .cframe__view {
   position: absolute; right: 24px; bottom: 26px; z-index: 2;
@@ -151,6 +154,7 @@
 .cinema--static .cinema__track::-webkit-scrollbar { display: none; }
 .cinema--static .cframe {
   position: relative; flex: 0 0 auto;
+  display: flex; flex-direction: column;            /* 태그가 미디어 아래로 흐르게 */
   width: min(82vw, 900px) !important; height: auto !important;
   transform: none !important;                       /* 스케일 없음 */
   scroll-snap-align: center;
@@ -158,11 +162,12 @@
 .cinema--static .cframe__media { aspect-ratio: 16 / 9; height: auto; }
 .cinema--static .cframe__media::after { opacity: 0; }   /* 베일 없음 — 전부 밝게(풀컬러) */
 .cinema--static .cframe__title, .cinema--static .cframe__view, .cinema--static .cframe__tags { opacity: 1; transform: none; }
+/* 스크럽 모드에선 태그가 프레임 아래에 절대배치되지만, 정적 모드는 스케일이 없으니 일반 흐름으로 */
+.cinema--static .cframe__tags { position: static; margin-top: 10px; flex-wrap: wrap; }
 
 @media (max-width: 767px) {
   .cinema--static .cframe__title { font-size: clamp(20px, 6vw, 34px); }
   /* 좁은 프레임에선 긴 제목이 우하단 'VIEW PROJECT' 위로 올라타 겹친다.
      터치에선 프레임 전체가 링크라 라벨이 없어도 동작은 같다. */
   .cframe__view { display: none; }
-  .cframe__caption { max-width: calc(100% - 48px); }
 }
