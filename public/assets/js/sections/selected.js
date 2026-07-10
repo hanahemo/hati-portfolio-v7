@@ -108,19 +108,14 @@ export function initSelected(portfolio, settings) {
   });
   tl.to(prox, { p: 1, ease: 'none', duration: 1 }, 0);
 
-  // 호버 시 해당 프레임을 초점으로 당김
-  let hovered = -1;
-  frames.forEach((el, i) => {
-    el.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') hovered = i; });
-    el.addEventListener('pointerleave', () => { if (hovered === i) hovered = -1; });
-  });
+  // 시네마도 '스크롤 전용' — 호버로 초점을 당기지 않는다(hero 릴과 동일 이유: 호버 시 프레임이
+  // 커지며 재패킹돼 스크롤과 충돌·버벅임). 클릭 진입/커서 'view' 라벨은 그대로 유지.
 
   const smooth = (t) => t * t * (3 - 2 * t);   // smoothstep — 자석 같은 초점
   const SPREAD = 1.45;                          // 초점 반경(프레임 단위) — 클수록 완만
   const frame = () => {
     const p = Math.max(0, Math.min(1, prox.p));
-    let focus = p * (N - 1);
-    if (hovered >= 0) focus = focus * 0.35 + hovered * 0.65;
+    let focus = p * (N - 1);   // 스크롤 전용 포커스
 
     // 1) 스케일 + 렌더폭 → 타이트 패킹 (사이드 0.5 → 중앙 1.0)
     let total = 0;

@@ -252,12 +252,9 @@ export function initHero(settings, portfolio) {
   const st = tl.scrollTrigger;
   window.ScrollTrigger.addEventListener('refresh', () => { sizeConsts(); pinH = (pinEl && pinEl.getBoundingClientRect().height) || window.innerHeight; measureOff(); slats.forEach(a => a.style.width = MAXW + 'px'); strip.style.height = SLATH + 'px'; });
 
-  // 호버 시 해당 작품을 포커스로
-  let hovered = -1;
-  slats.forEach((el, i) => {
-    el.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') hovered = i; });
-    el.addEventListener('pointerleave', () => { if (hovered === i) hovered = -1; });
-  });
+  // 릴은 '스크롤 전용' — 마우스 호버로 포커스를 끌지 않는다.
+  // (호버 focus-pull은 스크롤 없이도 릴을 재정렬시키고, 스크롤 중 포인터가 얹히면 focus가
+  //  슬랫마다 튀어 '드르르륵' 버벅임을 만들어 제거함. 클릭 진입/커서 'view' 라벨은 유지.)
 
   // 물결 프레임 루프 — 얇은 스트립이 사인파처럼 부풀었다 가라앉음 + 완만한 중앙 포커스
   // wave 슬롯: 0 = 영상(media, 리딩 조각), 1..N = 프로젝트 슬랫(slats[i-1])
@@ -292,8 +289,7 @@ export function initHero(settings, portfolio) {
     vSmooth += (v - vSmooth) * (v > vSmooth ? 0.16 : 0.06);
     const speed = vSmooth / V_MAX;
 
-    let focus = Math.max(0, Math.min(1, prox.p)) * (NW - 1);
-    if (hovered >= 0) focus = focus * 0.4 + (hovered + 1) * 0.6;   // 프로젝트 슬랫(hovered) → wave 슬롯 +1
+    let focus = Math.max(0, Math.min(1, prox.p)) * (NW - 1);   // 스크롤 전용 포커스
     // 중앙 포커스 반경 — 속도 ↑ 시 넓게(더 완만)
     const cSig = 2.2 + speed * 2.4;
     const phase = prox.p * TWO_PI * CYCLES;
@@ -310,7 +306,6 @@ export function initHero(settings, portfolio) {
       const center = Math.exp(-dd * dd);                        // 중앙 봉우리 (항상 최대)
       // 중앙은 확실한 포커스, 주변엔 사인 크레스트가 물결처럼 — 둘 중 큰 값
       let tf = Math.max(center, 0.78 * sine * (0.35 + 0.65 * center) + 0.14 * sine);
-      if (hovered === i - 1) tf = Math.max(tf, 0.96);   // i=wave 슬롯, hovered=프로젝트 슬랫 → i-1
       if (tf > 1) tf = 1;
       // 포커스 진폭을 속도로 스케일 — 빠르면 FLAT로 수렴(균일), 느리면 tf 그대로(대비 큼)
       const t = FLAT + (tf - FLAT) * amp;
