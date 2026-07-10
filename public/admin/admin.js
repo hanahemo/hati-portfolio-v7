@@ -548,6 +548,8 @@ const settingsForm = $('#settingsForm');
 function renderSettings() {
   const s = state.settings || {};
   settingsForm.defaultTheme.value = s.defaultTheme === 'cereal' ? 'cereal' : 'studio';
+  settingsForm.gateTitle.value = s.gateTitle || '';
+  settingsForm.gateLogo.value = s.gateLogo || '';
   settingsForm.heroTitle.value = s.heroTitle || '';
   settingsForm.heroSubtitle.value = s.heroSubtitle || '';
   settingsForm.heroVideo.value = s.heroVideo || '';
@@ -571,6 +573,8 @@ settingsForm.addEventListener('submit', async (e) => {
   const fd = new FormData(settingsForm);
   const payload = {
     defaultTheme: fd.get('defaultTheme') === 'cereal' ? 'cereal' : 'studio',
+    gateTitle: String(fd.get('gateTitle') || '').trim(),
+    gateLogo: String(fd.get('gateLogo') || '').trim(),
     heroTitle: fd.get('heroTitle'),
     heroSubtitle: fd.get('heroSubtitle'),
     heroVideo: String(fd.get('heroVideo') || '').trim(),

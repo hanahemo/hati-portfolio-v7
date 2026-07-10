@@ -46,6 +46,14 @@
   letter-spacing: 0;
   color: var(--color-text-dim);
 }
+/* 중앙 이름을 로고 이미지로 쓸 때 (어드민 gateLogo) */
+.gate__logo {
+  display: block;
+  width: auto; height: auto;
+  max-height: clamp(60px, 12vh, 140px);
+  max-width: min(72vw, 520px);
+  object-fit: contain;
+}
 .gate__sub {
   font-size: var(--fs-body);
   color: var(--color-text-dim);

@@ -9,6 +9,23 @@ export function initGate(settings, lenis) {
   if (label && settings.curtainMain) label.textContent = settings.curtainMain;
   const author = gate.querySelector('.gate__foot');
   if (author && settings.curtainAuthor) author.textContent = `© ${settings.curtainAuthor} — Private Room`;
+
+  // 중앙 이름 — 어드민 설정: gateLogo(이미지) 우선 → gateTitle(텍스트) → 기본 'HATI'
+  const titleEl = gate.querySelector('.gate__title');
+  if (titleEl) {
+    if (settings.gateLogo) {
+      const img = document.createElement('img');
+      img.className = 'gate__logo';
+      img.src = settings.gateLogo;
+      img.alt = settings.gateTitle || 'HATI';
+      img.decoding = 'async';
+      titleEl.textContent = '';
+      titleEl.appendChild(img);
+    } else {
+      titleEl.textContent = settings.gateTitle || 'HATI';
+    }
+  }
+
   const hud = document.getElementById('hud');
 
   // 접근성: gate 활성 동안 메인 컨텐츠 차단
