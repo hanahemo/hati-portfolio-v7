@@ -187,11 +187,21 @@ export function initHero(settings, portfolio) {
   const discEl = document.getElementById('heroDisc');
   const DISCS = ['Visual Creative', 'Photography', 'Graphic', 'Video', 'Generative AI'];
   let discNodes = [], discW = [], discIdx = -1;
+  // 폭 모션은 GSAP 이 인라인 width 를 매 프레임 쓰게 해서 만든다.
+  // CSS transition:width 는 핀(fixed)+스크럽 아래에서 진행되지 않아 이전 폭에 얼어붙고,
+  // 바가 단어보다 좁아지면 글자가 잘린다. --disc-w 는 CSS 기본값 경로용으로 함께 유지한다.
+  const applyDiscW = (px, immediate) => {
+    discEl.style.setProperty('--disc-w', px + 'px');
+    if (immediate) gsap.set(discEl, { width: px });
+    else gsap.to(discEl, { width: px, duration: 0.55, ease: 'power2.inOut', overwrite: 'auto' });
+  };
   const setDisc = (i) => {
     i = Math.max(0, Math.min(DISCS.length - 1, i | 0));
     if (i === discIdx || !discNodes[i]) return;
+    const first = discIdx === -1;
     discNodes.forEach((s, k) => { s.classList.toggle('is-active', k === i); s.classList.toggle('is-out', k < i); });
-    if (discW[i]) discEl.style.setProperty('--disc-w', discW[i] + 'px');
+    const w = discW[i] || Math.ceil(discNodes[i].offsetWidth);   // 캐시가 비었으면 그 자리에서 잰다
+    if (w) applyDiscW(w, first);
     discIdx = i;
   };
   const measureDisc = () => {
@@ -199,8 +209,12 @@ export function initHero(settings, portfolio) {
     // offsetWidth 는 레이아웃 폭이라 opacity·transform 에 영향받지 않는다.
     // 재려고 저 둘을 인라인으로 켰다 끄면, 되돌리는 순간 1→0 페이드가 트리거돼
     // refresh(리사이즈)마다 단어 5개가 한꺼번에 비쳤다 사라진다.
-    discW = discNodes.map(s => Math.ceil(s.offsetWidth));
-    if (discIdx >= 0 && discW[discIdx]) discEl.style.setProperty('--disc-w', discW[discIdx] + 'px');
+    // 모달이 열려 있거나 히어로가 아직 레이아웃되기 전에 refresh 가 오면 offsetWidth 가 0 으로 잡힌다.
+    // 그 0 을 캐시에 넣으면 setDisc 의 폭 갱신이 영영 스킵돼 바가 한 단어 폭에 얼어붙는다.
+    const next = discNodes.map(s => Math.ceil(s.offsetWidth));
+    if (next.some(w => !w)) return;
+    discW = next;
+    if (discIdx >= 0 && discW[discIdx]) applyDiscW(discW[discIdx], true);   // 리사이즈 땐 애니메이션 없이 즉시
   };
   if (discEl) {
     discEl.innerHTML = '';   // HTML 기본 단어 제거 후 5개로 채움(리엘)
