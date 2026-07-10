@@ -139,9 +139,9 @@
 /* 직군 리엘 바 — 'Director of' 옆 키컬러 하이라이트, 단어가 스크롤(vid.t)에 따라 교체 */
 .hero__disc {
   position: relative;
-  display: inline-block; vertical-align: -0.14em;
-  height: 0.9em; overflow: hidden;
-  border-radius: 0.1em;
+  display: inline-block; vertical-align: -0.2em;
+  height: 1em; overflow: hidden;
+  border-radius: 0.11em;
   background: var(--grad-key);
   width: var(--disc-w, 5em);
   transition: width 0.55s var(--ease-signature);
@@ -149,13 +149,14 @@
 .hero__disc-word {
   position: absolute; top: 0; left: 0;
   height: 100%; display: flex; align-items: center;
-  padding: 0 0.24em; white-space: nowrap;
-  color: #17130a; font-weight: 700; letter-spacing: -0.02em;
-  opacity: 0; transform: translateY(0.9em);
+  padding: 0 0.38em; white-space: nowrap;      /* 좌우 여백 */
+  color: #17130a; font-weight: 700; font-size: 0.9em; letter-spacing: -0.02em;  /* 바 안 텍스트 살짝 작게 */
+  text-shadow: none;                            /* 그림자 제거 — 밝은 바 위 다크텍스트라 불필요 */
+  opacity: 0; transform: translateY(1.15em);
   transition: opacity 0.32s var(--ease-signature), transform 0.5s var(--ease-signature);
 }
 .hero__disc-word.is-active { opacity: 1; transform: translateY(0); }
-.hero__disc-word.is-out { opacity: 0; transform: translateY(-0.9em); }
+.hero__disc-word.is-out { opacity: 0; transform: translateY(-1.15em); }
 /* 정적 폴백(모바일/모션최소화) — 리엘 JS 미실행 시 기본 단어 하나만 자연스럽게 */
 .hero__disc:has(.hero__disc-word:only-child) { width: auto; }
 .hero__disc-word:only-child { position: static; opacity: 1; transform: none; }
