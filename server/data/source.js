@@ -6,7 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = __dirname;
+// 데이터 경로는 persist가 결정 — 볼륨 있으면 볼륨 하위, 없으면 이 폴더(server/data)
+const { DATA_DIR } = require('../persist');
 const PORTFOLIO_FILE = path.join(DATA_DIR, 'portfolio.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 

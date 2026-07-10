@@ -36,7 +36,10 @@
   display: block;
   height: clamp(40px, 4vw, 68px); width: auto; max-width: none; object-fit: contain;
   filter: brightness(0) invert(0.92);
+  transition: filter var(--dur-base) var(--ease-signature);
 }
+/* 호버 시 원래 색/디테일 복원 (실루엣 해제) — 마퀴는 이미 :hover에서 일시정지됨 */
+.marquee__item:hover img { filter: none; }
 @keyframes clientsMarquee {
   to { transform: translateX(-50%); }
 }

@@ -10,6 +10,7 @@ const noindex = require('./middleware/noindex');
 const apiRouter = require('./routes/api');
 const adminRouter = require('./routes/admin');
 const dataSource = require('./data/source');
+const persist = require('./persist');   // 볼륨 경로(데이터/업로드) 해석 + 시드
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,7 +48,7 @@ app.get('/robots.txt', (req, res) => {
 //   - /assets:  no-cache (버전 해시 없는 환경 — 매 요청 ETag 재검증, 변경 없으면 304)
 //   - 기타:     캐시 없음
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
-app.use('/uploads', express.static(path.join(PUBLIC_DIR, 'uploads'), {
+app.use('/uploads', express.static(persist.UPLOADS_DIR, {
   maxAge: 30 * 24 * 60 * 60 * 1000,
   immutable: false,
   etag: true

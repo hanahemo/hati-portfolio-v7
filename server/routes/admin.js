@@ -12,7 +12,7 @@ const source = require('../data/source');
 
 const router = express.Router();
 
-const UPLOADS_DIR = path.join(__dirname, '..', '..', 'public', 'uploads');
+const { UPLOADS_DIR } = require('../persist');   // 업로드는 볼륨(있으면)에 저장 → 재배포에도 유지
 const ADMIN_DIR = path.join(__dirname, '..', '..', 'public', 'admin');
 
 // ── 화이트리스트 ──
