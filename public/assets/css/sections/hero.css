@@ -73,12 +73,13 @@
 .hero__inner {
   grid-row: 1;
   display: grid;
-  align-content: center;
+  align-content: end;              /* 하단 앵커 — 빅 타이틀이 화면 아래에 앉는 에디토리얼 구도 */
   justify-items: start;
-  gap: var(--space-6);
+  gap: var(--space-5);
   max-width: 1600px;
   width: 100%;
   margin: 0 auto;
+  padding-bottom: var(--space-4);  /* 푸터 스트립과의 여백 */
   position: relative;
   z-index: 2;
   pointer-events: none;   /* 텍스트 레이어(인터랙션 요소 없음) — 롤 슬랫 클릭이 통과되도록 */
