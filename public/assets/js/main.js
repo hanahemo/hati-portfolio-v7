@@ -16,6 +16,21 @@ import { initProjectModal } from './project-modal.js';
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
 
+// 게이트/히어로 진입 상태 결정 (gate.js·hero.js가 sessionStorage 'hati:entered'를 읽음).
+// 테마 전환(studio↔cereal)으로 넘어온 경우에만 URL에 ?nogate=1이 붙어 게이트를 스킵.
+// 새 방문·새로고침엔 파라미터가 없어 항상 '처음부터'(게이트 → 인트로) 시작.
+try {
+  const params = new URLSearchParams(location.search);
+  if (params.has('nogate')) {
+    sessionStorage.setItem('hati:entered', '1');
+    params.delete('nogate');                       // 새로고침 시 다시 게이트 뜨도록 파라미터 제거
+    const qs = params.toString();
+    history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+  } else {
+    sessionStorage.removeItem('hati:entered');
+  }
+} catch (_) {}
+
 // ── 시네마틱 프리로더 — 썸네일 실로딩과 동기화된 % 카운터 (elva 문법) ──
 function runLoader() {
   const loader = document.getElementById('loader');

@@ -3,6 +3,8 @@ export function initGate(settings, lenis) {
   const main = document.getElementById('main');
   if (!gate) return;
 
+  // 진입 상태(alreadyIn)는 main.js가 URL ?nogate 파라미터로 sessionStorage에 미리 세팅함.
+  // (새 방문·새로고침 → 게이트 표시 / 테마 전환 → 스킵)
   const sub = gate.querySelector('.gate__sub');
   if (sub && settings.curtainSub) sub.textContent = settings.curtainSub;
   const label = gate.querySelector('.gate__label');

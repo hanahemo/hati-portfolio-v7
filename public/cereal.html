@@ -2732,7 +2732,7 @@ a.contact-card-row-value:hover {
 </head>
 <body>
 <!-- 테마 전환 — 다크(새 사이트/studio)로. 항상 보이는 고정 버튼 (스튜디오의 CEREAL 링크와 대칭) -->
-<a href="/studio" id="toStudioBtn" title="다크(새 사이트)로 전환" aria-label="다크(새 사이트)로 전환"
+<a href="/studio?nogate=1" id="toStudioBtn" title="다크(새 사이트)로 전환" aria-label="다크(새 사이트)로 전환"
    style="position:fixed;top:16px;right:18px;z-index:100000;display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:rgba(18,12,8,.72);color:#fff;font:600 11px/1 -apple-system,system-ui,'Segoe UI',sans-serif;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1px solid rgba(255,255,255,.3);box-shadow:0 4px 20px rgba(0,0,0,.28)">◐&nbsp;STUDIO</a>
 <!-- SVG Frozen/Crystallize Filter + Line Gradient -->
 <svg style="position:absolute;width:0;height:0" aria-hidden="true">
@@ -5281,8 +5281,8 @@ setTimeout(() => {
 
 // ── Theme Toggle ──
 function toggleTheme() {
-  // 시리얼 ↔ 새 사이트(studio) 전환. 서버가 쿠키(hati_theme=studio) 저장 후 studio 서빙.
-  window.location.href = '/studio';
+  // 시리얼 ↔ 새 사이트(studio) 전환. ?nogate=1 → 전환 시엔 게이트 스킵 (새로고침 땐 게이트 유지).
+  window.location.href = '/studio?nogate=1';
 }
 </script>
 
