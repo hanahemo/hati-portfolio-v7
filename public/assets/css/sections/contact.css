@@ -23,6 +23,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  padding-right: 0.12em;   /* 이탤릭 오버행이 클립 박스 끝에서 잘리지 않도록 여백 */
 }
 .contact__links {
   display: flex; gap: var(--space-7); justify-content: center; flex-wrap: wrap;
