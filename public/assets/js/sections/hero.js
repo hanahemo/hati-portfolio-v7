@@ -196,13 +196,10 @@ export function initHero(settings, portfolio) {
   };
   const measureDisc = () => {
     if (!discEl) return;
-    discW = discNodes.map(s => {
-      const tr = s.style.transition;
-      s.style.transition = 'none'; s.style.opacity = '1'; s.style.transform = 'none';
-      const w = Math.ceil(s.offsetWidth);
-      s.style.transition = tr; s.style.opacity = ''; s.style.transform = '';
-      return w;
-    });
+    // offsetWidth 는 레이아웃 폭이라 opacity·transform 에 영향받지 않는다.
+    // 재려고 저 둘을 인라인으로 켰다 끄면, 되돌리는 순간 1→0 페이드가 트리거돼
+    // refresh(리사이즈)마다 단어 5개가 한꺼번에 비쳤다 사라진다.
+    discW = discNodes.map(s => Math.ceil(s.offsetWidth));
     if (discIdx >= 0 && discW[discIdx]) discEl.style.setProperty('--disc-w', discW[discIdx] + 'px');
   };
   if (discEl) {
