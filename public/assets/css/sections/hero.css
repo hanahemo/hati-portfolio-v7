@@ -121,10 +121,14 @@
   text-shadow: none;   /* 그라데이션 클립 텍스트는 섀도 제외(할로 방지) */
 }
 
-/* 이름은 시그니처(작게, 세리프 그라데이션) · 'Director of [키컬러 바]'가 큰 주인공 */
+/* 이름은 시그니처(작게) · 'Director of [바]'가 주인공 — 단, 리파인드하게(과하지 않은 크기·비율) */
 .hero__line--name .hero__line-inner {
-  font-size: clamp(24px, 3.6vw, 54px);
+  font-size: clamp(20px, 2.8vw, 42px);
   color: var(--color-text-dim);
+}
+.hero__line--role .hero__line-inner {
+  font-size: clamp(34px, 5.6vw, 78px);   /* fs-mega(~122px)보다 확 줄여 리파인드 */
+  line-height: 1.06;
 }
 .hero__reg {
   font-family: var(--font-display);
