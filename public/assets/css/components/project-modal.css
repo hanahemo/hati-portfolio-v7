@@ -11,16 +11,17 @@
 }
 .pview[hidden] { display: none; }
 
-/* 키컬러 라이트 워시 배경 — 어드민 key-a/key-b 연동 */
+/* 작품별 라이트 파스텔 배경 — 썸네일에서 추출한 지배 색상(--pv-bg)을 톤으로 사용.
+   추출 실패/영상전용 프로젝트는 아래 기본값(소프트 라벤더 화이트)로 폴백. */
 .pview__bg {
   position: absolute; inset: 0;
-  background: linear-gradient(155deg, #ECE8FF 0%, #FDEAF2 55%, #FFF5F9 100%);
-  background: linear-gradient(155deg,
-    color-mix(in srgb, var(--key-a) 30%, white) 0%,
-    color-mix(in srgb, var(--key-b) 26%, white) 60%,
-    color-mix(in srgb, var(--key-b) 12%, white) 100%);
+  background-color: var(--pv-bg, #F4F0FF);
+  background-image:
+    linear-gradient(158deg, rgba(255,255,255,0) 42%, rgba(255,255,255,0.5) 100%),   /* 우하단 소프트 광원 */
+    linear-gradient(158deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 40%);    /* 좌상단 하이라이트 */
   clip-path: inset(0 0 100% 0);          /* 열림 시 위→아래로 펼쳐짐 */
-  transition: clip-path 720ms var(--ease-signature);
+  transition: clip-path 720ms var(--ease-signature),
+              background-color 720ms var(--ease-signature);   /* 작품 전환 시 톤이 부드럽게 이어짐 */
 }
 .pview.is-in .pview__bg { clip-path: inset(0 0 0 0); }
 

@@ -59,6 +59,76 @@ function renderLead(m, label) {
   return inner.video ? `<div class="pv-media--video">${inner.html}</div>` : inner.html;
 }
 
+// ── 작품별 배경 파스텔 추출 ─────────────────────────────────────────────
+// 썸네일(첫 이미지 미디어)의 지배 색상을 뽑아 '명도 높은 파스텔'로 변환해 배경 톤으로 사용.
+function projectThumbUrl(project) {
+  const media = Array.isArray(project.media) ? project.media : [];
+  if (!media.length) return '';
+  const pick = media.find(m => (m.type || '').startsWith('image')) || media[0];
+  const raw = pick.url || '';
+  const id = getDriveId(raw);
+  if (id) return `https://lh3.googleusercontent.com/d/${id}=w600`;   // 카드와 동일 해상도 → 캐시 히트
+  if (DIRECT_VIDEO_RE.test(raw)) return '';                          // 영상 파일은 스틸 없음 → 폴백
+  return raw;                                                        // 로컬/외부 이미지
+}
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  let h = 0, s = 0;
+  if (d !== 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    switch (max) {
+      case r: h = ((g - b) / d) % 6; break;
+      case g: h = (b - r) / d + 2; break;
+      default: h = (r - g) / d + 4; break;
+    }
+    h *= 60; if (h < 0) h += 360;
+  }
+  return [h, s, l];
+}
+// 지배 색상 → 명도 높은 파스텔 hsl 문자열. 거의 무채색 아트는 소프트 뉴트럴로.
+function toPastel(h, s) {
+  if (s < 0.08) return `hsl(${Math.round(h)}, 12%, 95%)`;
+  const S = Math.min(0.48, Math.max(0.3, s));   // 파스텔 채도 대역
+  return `hsl(${Math.round(h)}, ${Math.round(S * 100)}%, 93%)`;   // 명도 93% 고정 = 밝은 파스텔
+}
+// 썸네일 URL → 파스텔 hsl 문자열(Promise). CORS/로딩 실패 시 null(→ 기본 배경 폴백).
+function extractPastel(url) {
+  return new Promise((resolve) => {
+    if (!url) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.decoding = 'async';
+    img.onload = () => {
+      try {
+        const N = 40;
+        const cv = document.createElement('canvas'); cv.width = N; cv.height = N;
+        const ctx = cv.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, N, N);
+        const data = ctx.getImageData(0, 0, N, N).data;
+        let rw = 0, gw = 0, bw = 0, wsum = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+          if (a < 125) continue;
+          const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+          const l = (mx + mn) / 2 / 255;
+          if (l > 0.96 || l < 0.05) continue;      // 흰/검 근처는 색상 정보 없음 → 제외
+          const d = (mx - mn) / 255;
+          const w = d * d + 0.02;                  // 채도 높은 픽셀에 가중 → 지배 '색상'이 이김
+          rw += r * w; gw += g * w; bw += b * w; wsum += w;
+        }
+        if (!wsum) return resolve(null);
+        const [h, s] = rgbToHsl(rw / wsum, gw / wsum, bw / wsum);
+        resolve(toPastel(h, s));
+      } catch (_) { resolve(null); }   // 오염된 캔버스(CORS) 등 → 폴백
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 // 케이스 스터디 정렬 — 영상 카테고리는 영상을 맨 앞(리드)으로
 function orderedMedia(project) {
   const media = Array.isArray(project.media) ? project.media.slice() : [];
@@ -161,12 +231,29 @@ export function initProjectModal(state) {
     tagsEl.innerHTML = (project.tags || []).map(t => `<span class="pview__tag">${escapeHtml(t)}</span>`).join('');
   }
 
+  // 작품별 배경 파스텔 — 계산 결과는 캐시(재방문 시 즉시 적용)
+  const paletteCache = new Map();
+  function applyBackdrop(project) {
+    const cached = paletteCache.get(project.id);
+    if (cached) { modal.style.setProperty('--pv-bg', cached); return; }
+    modal.style.removeProperty('--pv-bg');   // 계산 전엔 CSS 기본값(소프트 라벤더 화이트)
+    const url = projectThumbUrl(project);
+    if (!url) return;
+    extractPastel(url).then(hsl => {
+      if (!hsl) return;
+      paletteCache.set(project.id, hsl);
+      // 그 사이 다른 작품으로 넘어갔으면 적용하지 않음
+      if (seq[currentIdx] && seq[currentIdx].id === project.id) modal.style.setProperty('--pv-bg', hsl);
+    });
+  }
+
   function open(id) {
     const project = state.portfolio.projects.find(p => p.id === Number(id));
     if (!project) return;
     currentIdx = seq.findIndex(p => p.id === project.id);
     updateNav();
     fill(project);
+    applyBackdrop(project);
 
     const wasHidden = modal.hidden;
     if (wasHidden) lastTrigger = document.activeElement;
