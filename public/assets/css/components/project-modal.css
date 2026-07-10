@@ -91,17 +91,32 @@
 .pview__title .pv-word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; }
 .pview__title .pv-word > span { display: inline-block; will-change: transform; }
 
+/* 리드 미디어 — 풀와이드 컨테인. 가로 이미지·영상은 페이지 폭을 꽉 채우고,
+   세로 사진은 뷰포트 높이에 맞춰 축소 후 가운데 정렬(크롭 없이 전체 노출, 한쪽 쏠림 제거). */
 .pview__lead {
   position: relative;
   width: 100%;
-  max-width: 1100px;                      /* 초대형 이미지 제한 (레이아웃 안정) */
+  z-index: 1;
+}
+.pview__lead > img {
+  display: block;
+  margin-inline: auto;                    /* 세로 사진이 좁아져도 가운데 정렬 */
+  width: auto; height: auto;
+  max-width: 100%;                        /* 가로는 페이지 폭 꽉 */
+  max-height: 86vh;                       /* 세로는 높이 캡(크롭 대신 축소) */
+  border-radius: var(--radius-card);
+  background: var(--pv-surface);
+}
+.pview__lead .pv-media--video {
+  position: relative;
+  width: 100%;
+  max-width: calc(84vh * 16 / 9);        /* 영상 높이가 뷰포트를 넘지 않게(컨트롤 노출 보장) → 가운데 정렬 */
+  margin-inline: auto;
+  aspect-ratio: 16/9;
   overflow: hidden;
   border-radius: var(--radius-card);
   background: var(--pv-surface);
-  z-index: 1;
 }
-.pview__lead > img { display: block; width: 100%; height: auto; }   /* 원본 비율 */
-.pview__lead .pv-media--video { position: relative; aspect-ratio: 16/9; }
 .pview__lead .pv-media--video iframe, .pview__lead .pv-media--video video {
   position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000;
 }
