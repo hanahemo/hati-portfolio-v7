@@ -121,21 +121,40 @@
   text-shadow: none;   /* 그라데이션 클립 텍스트는 섀도 제외(할로 방지) */
 }
 
-/* 이름-주도 히어로 — 'Hati'는 시그니처(크게, 세리프 그라데이션), 역할은 아래 받침 */
-.hero__line--role .hero__line-inner {
-  font-size: clamp(22px, 3.4vw, 46px);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+/* 이름은 시그니처(작게, 세리프 그라데이션) · 'Director of [키컬러 바]'가 큰 주인공 */
+.hero__line--name .hero__line-inner {
+  font-size: clamp(24px, 3.6vw, 54px);
   color: var(--color-text-dim);
 }
 .hero__reg {
   font-family: var(--font-display);
-  font-size: 0.2em; font-weight: 500;
-  vertical-align: super;
-  letter-spacing: 0;
-  color: var(--color-text-dim);
-  margin-left: 0.03em;
+  font-size: 0.22em; font-weight: 500;
+  vertical-align: super; letter-spacing: 0;
+  color: var(--color-text-mute); margin-left: 0.04em;
 }
+/* 직군 리엘 바 — 'Director of' 옆 키컬러 하이라이트, 단어가 스크롤(vid.t)에 따라 교체 */
+.hero__disc {
+  position: relative;
+  display: inline-block; vertical-align: -0.14em;
+  height: 0.9em; overflow: hidden;
+  border-radius: 0.1em;
+  background: var(--grad-key);
+  width: var(--disc-w, 5em);
+  transition: width 0.55s var(--ease-signature);
+}
+.hero__disc-word {
+  position: absolute; top: 0; left: 0;
+  height: 100%; display: flex; align-items: center;
+  padding: 0 0.24em; white-space: nowrap;
+  color: #17130a; font-weight: 700; letter-spacing: -0.02em;
+  opacity: 0; transform: translateY(0.9em);
+  transition: opacity 0.32s var(--ease-signature), transform 0.5s var(--ease-signature);
+}
+.hero__disc-word.is-active { opacity: 1; transform: translateY(0); }
+.hero__disc-word.is-out { opacity: 0; transform: translateY(-0.9em); }
+/* 정적 폴백(모바일/모션최소화) — 리엘 JS 미실행 시 기본 단어 하나만 자연스럽게 */
+.hero__disc:has(.hero__disc-word:only-child) { width: auto; }
+.hero__disc-word:only-child { position: static; opacity: 1; transform: none; }
 
 .hero__meta {
   display: flex; align-items: baseline; gap: var(--space-6);

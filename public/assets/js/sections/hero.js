@@ -183,6 +183,36 @@ export function initHero(settings, portfolio) {
   roll.classList.add('hero__roll--dyn');
   strip.style.height = SLATH + 'px';
 
+  // ── 직군 리엘 — 'Director of [단어]', 영상 스크럽 진행(vid.t)에 따라 단어가 순서대로 교체 ──
+  const discEl = document.getElementById('heroDisc');
+  const DISCS = ['Visual Creative', 'Photography', 'Graphic', 'Video', 'Generative AI'];
+  let discNodes = [], discW = [], discIdx = -1;
+  const setDisc = (i) => {
+    i = Math.max(0, Math.min(DISCS.length - 1, i | 0));
+    if (i === discIdx || !discNodes[i]) return;
+    discNodes.forEach((s, k) => { s.classList.toggle('is-active', k === i); s.classList.toggle('is-out', k < i); });
+    if (discW[i]) discEl.style.setProperty('--disc-w', discW[i] + 'px');
+    discIdx = i;
+  };
+  const measureDisc = () => {
+    if (!discEl) return;
+    discW = discNodes.map(s => {
+      const tr = s.style.transition;
+      s.style.transition = 'none'; s.style.opacity = '1'; s.style.transform = 'none';
+      const w = Math.ceil(s.offsetWidth);
+      s.style.transition = tr; s.style.opacity = ''; s.style.transform = '';
+      return w;
+    });
+    if (discIdx >= 0 && discW[discIdx]) discEl.style.setProperty('--disc-w', discW[discIdx] + 'px');
+  };
+  if (discEl) {
+    discEl.innerHTML = '';   // HTML 기본 단어 제거 후 5개로 채움(리엘)
+    discNodes = DISCS.map(w => { const s = document.createElement('span'); s.className = 'hero__disc-word'; s.textContent = w; discEl.appendChild(s); return s; });
+    measureDisc();
+    setDisc(0);
+    window.ScrollTrigger.addEventListener('refresh', measureDisc);
+  }
+
   // 타임라인(총 1.0): [0→VID] 영상 스크럽 · [VID→VID+SHR] 영상 '크기' 축소 핸드오프 · [VID+SHR→1] 롤 스윕
   const VID = 0.34;   // 영상 스크럽 구간
   const SHR = 0.16;   // 영상 축소 핸드오프 구간
@@ -252,6 +282,8 @@ export function initHero(settings, portfolio) {
         try { video.currentTime = tt; } catch (_) {}
       }
     }
+    // 직군 리엘 — 스크럽 진행에 따라 단어 교체 (Visual Creative → … → Generative AI)
+    if (discEl) setDisc(vid.t * DISCS.length);
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;
