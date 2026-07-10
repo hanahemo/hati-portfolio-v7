@@ -305,4 +305,17 @@
   .hero__ticks { gap: 3px; top: calc(var(--space-4) + 40px); }
   .hero__tick { height: 8px; }
   .hero__tick.is-on { height: 14px; }
+
+  /* 인트로 헤드카피 — 하단 앵커 대신 '중앙에서 살짝 아래 + 가운데 정렬'.
+     (하단 앵커면 스크롤·탭 시 손가락에 가림 / transform은 GSAP 핸드오프와 충돌하므로
+      grid 정렬 + 상단 패딩 바이어스로 아래로 살짝 민다) */
+  .hero__inner {
+    align-content: center;
+    justify-items: center;
+    text-align: center;
+    padding-top: 0;
+    padding-bottom: 13vh;   /* 블록을 위로 올려 헤드라인(디스크)이 중앙에서 살짝 아래에 오게 */
+  }
+  .hero__display { justify-items: center; }
+  .hero__line { margin-left: 0; padding-right: 0; }
 }
