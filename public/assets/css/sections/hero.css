@@ -35,6 +35,19 @@
     linear-gradient(118deg, rgba(14,14,16,0.42) 0%, rgba(14,14,16,0.16) 34%, rgba(14,14,16,0.02) 60%, rgba(14,14,16,0) 100%),
     linear-gradient(0deg, rgba(14,14,16,0.5) 0%, rgba(14,14,16,0.12) 34%, rgba(14,14,16,0) 60%);
 }
+/* 상단 스크림 — 고정 HUD(mix-blend-mode: difference)는 밝은 영상 위에서 탁해진다.
+   화면 최상단만 감쇠해 내비를 세우고, 영상 본체는 밝게 남긴다. */
+.hero__pin::before {
+  content: '';
+  position: absolute; inset: 0 0 auto 0;
+  height: 190px;
+  background: linear-gradient(180deg, rgba(14,14,16,0.62) 0%, rgba(14,14,16,0.20) 45%, rgba(14,14,16,0) 100%);
+  z-index: 3;                          /* JS가 .hero__media 에 인라인 z-index:2 를 준다 — 그 위여야 한다.
+                                          타이포(z:2)보다 위지만 헤드카피는 190px 아래라 닿지 않는다 */
+  pointer-events: none;
+}
+.hero--static .hero__pin::before { display: none; }
+
 .hero__veil {
   position: absolute; inset: 0;
   margin: calc(-1 * var(--space-8)) calc(-1 * var(--page-pad-x)) calc(-1 * var(--space-5));
@@ -88,7 +101,9 @@
 .hero__eyebrow {
   font-size: var(--fs-label); font-weight: 500;
   letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--color-text-mute);
+  /* 스크림은 상·하단에만 깔림 — 중앙의 밝은 영상 위로 올라오는 라벨은 불투명 글자 + 섀도로 세운다 */
+  color: var(--color-text);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.75), 0 2px 20px rgba(0,0,0,0.6);
 }
 
 /* 디스플레이 라인 — 마스크 리빌 */
@@ -171,9 +186,10 @@
   flex-wrap: wrap;
   font-size: var(--fs-label); font-weight: 500;
   letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--color-text-dim);
+  color: var(--color-text);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.75), 0 2px 20px rgba(0,0,0,0.6);
 }
-.hero__meta-loc { color: var(--color-text-mute); }
+.hero__meta-loc { color: var(--color-text); }
 
 /* ── 인덱스 틱 (작품 수만큼, 상단 중앙) ── */
 .hero__ticks {
