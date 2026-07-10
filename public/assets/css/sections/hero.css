@@ -151,8 +151,8 @@
 .hero__disc-word {
   position: absolute; top: 0; left: 0;
   height: 100%; display: flex; align-items: center;
-  padding: 0 0.38em; white-space: nowrap;      /* 좌우 여백 */
-  color: #17130a; font-weight: 700; font-size: 0.9em; letter-spacing: -0.02em;  /* 바 안 텍스트 살짝 작게 */
+  padding: 0 0.4em 0.1em; white-space: nowrap;  /* 좌우 여백 + 하단 여백(디센더가 위로 올라와 바닥에 안 닿게) */
+  color: #17130a; font-weight: 700; font-size: 0.8em; line-height: 1; letter-spacing: -0.02em;  /* 디센더(g,p,y)까지 바 안에 들어오도록 살짝 축소 */
   text-shadow: none;                            /* 그림자 제거 — 밝은 바 위 다크텍스트라 불필요 */
   opacity: 0; transform: translateY(1.15em);
   transition: opacity 0.32s var(--ease-signature), transform 0.5s var(--ease-signature);
