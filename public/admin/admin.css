@@ -355,6 +355,37 @@ select.admin-input option {
 .admin-media-row__input { flex: 1; min-width: 0; }
 .admin-media-row__del { flex: 0 0 auto; }
 
+/* ── Credits editor (역할 칩 + 이름 → 추가) ── */
+.admin-credits { display: flex; flex-direction: column; gap: 10px; }
+.admin-credits__roles { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-crole {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
+  padding: 5px 10px; border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border); background: transparent;
+  color: var(--color-text-mute); cursor: pointer;
+  transition: color var(--dur-base) var(--ease-signature),
+              border-color var(--dur-base) var(--ease-signature);
+}
+.admin-crole:hover { color: var(--color-neon); border-color: var(--color-neon); }
+.admin-credits__add { display: flex; gap: 8px; align-items: center; }
+.admin-credits__role { flex: 0 0 38%; min-width: 0; }
+.admin-credits__name { flex: 1; min-width: 0; }
+.admin-credits__list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.admin-credits__list:empty { display: none; }
+.admin-credits__item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 12px; border: 1px solid var(--color-border); border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.admin-credits__role-tag { flex: 0 0 auto; min-width: 108px; color: var(--color-neon); font-weight: 500; }
+.admin-credits__name-tag { flex: 1; min-width: 0; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-credits__del {
+  flex: 0 0 auto; background: none; border: none; cursor: pointer;
+  color: var(--color-text-mute); font-size: 16px; line-height: 1; padding: 2px 6px;
+  transition: color var(--dur-base);
+}
+.admin-credits__del:hover { color: #ff5a5a; }
+
 /* ── Reel order (시네마릴 순서) ── */
 .admin-reel {
   display: grid;

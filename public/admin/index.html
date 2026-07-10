@@ -283,11 +283,18 @@
           <span>result (결과 — 줄바꿈 가능)</span>
           <textarea name="result" rows="3" class="admin-input admin-textarea"></textarea>
         </label>
-        <label class="admin-field admin-field--wide">
-          <span>credits (한 줄에 하나씩 — "역할 — 이름")</span>
-          <textarea name="credits" rows="3" class="admin-input admin-textarea admin-textarea--mono"
-            placeholder="Director — 우상희"></textarea>
-        </label>
+        <div class="admin-field admin-field--wide">
+          <span>credits (스탭) — 역할 클릭 → 이름 입력 → 추가</span>
+          <div class="admin-credits">
+            <div class="admin-credits__roles" id="creditRoleChips"></div>
+            <div class="admin-credits__add">
+              <input type="text" id="creditRole" class="admin-input admin-credits__role" placeholder="역할 (칩 클릭 또는 직접 입력)" autocomplete="off">
+              <input type="text" id="creditName" class="admin-input admin-credits__name" placeholder="이름" autocomplete="off">
+              <button type="button" class="admin-pill admin-pill--sm" id="creditAdd">+ 추가</button>
+            </div>
+            <ul class="admin-credits__list" id="creditList"></ul>
+          </div>
+        </div>
         <div class="admin-field admin-field--wide">
           <span>media (구글드라이브 주소 · 한 항목씩 · 첫 번째가 대표 썸네일)</span>
           <div class="admin-media-rows" id="mediaRows"></div>

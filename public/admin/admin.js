@@ -250,6 +250,58 @@ function renderMediaRows(media) {
 }
 $('#mediaAddRow')?.addEventListener('click', () => addMediaRow(''));
 
+// ── 크레딧 에디터 (역할 프리셋 칩 클릭 → 이름 입력 → 추가) ──
+// 데이터는 그대로 credits:[{role,name}]. currentCredits가 소스 오브 트루스.
+const CREDIT_ROLES = ['Director','Photography','Cinematography','Videography','Editor','Art','Art Director','Creative Director','Graphic Design','Motion Graphics','VFX','AI','Colorist','Styling','Hair & Makeup','Gaffer','Lighting','Set Design','Producer','Production Manager','1st Assistant','Assistant','Starring','Model','Music','Sound Design','Campaign Strategy','Brand Design','Entire Production'];
+let currentCredits = [];
+const creditRoleInput = $('#creditRole');
+const creditNameInput = $('#creditName');
+const creditListEl = $('#creditList');
+
+function renderCreditRoleChips() {
+  const wrap = $('#creditRoleChips');
+  if (!wrap) return;
+  wrap.innerHTML = CREDIT_ROLES.map(r => `<button type="button" class="admin-crole" data-role="${escapeAttr(r)}">${escapeHtml(r)}</button>`).join('');
+}
+function renderCreditList() {
+  if (!creditListEl) return;
+  creditListEl.innerHTML = currentCredits.map((c, i) => `
+    <li class="admin-credits__item">
+      <span class="admin-credits__role-tag">${escapeHtml(c.role || '—')}</span>
+      <span class="admin-credits__name-tag">${escapeHtml(c.name || '')}</span>
+      <button type="button" class="admin-credits__del" data-i="${i}" aria-label="삭제">×</button>
+    </li>`).join('');
+}
+function addCredit() {
+  const role = (creditRoleInput?.value || '').trim();
+  const name = (creditNameInput?.value || '').trim();
+  if (!role && !name) return;
+  currentCredits.push({ role, name });
+  renderCreditList();
+  if (creditNameInput) { creditNameInput.value = ''; creditNameInput.focus(); }
+}
+// 저장 시: 입력칸에 남은 값 자동 반영 후 배열 반환
+function collectCredits() {
+  addCredit();
+  return currentCredits.map(c => ({ role: c.role, name: c.name })).filter(c => c.role || c.name);
+}
+$('#creditRoleChips')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.admin-crole');
+  if (!btn) return;
+  if (creditRoleInput) creditRoleInput.value = btn.dataset.role;
+  if (creditNameInput) creditNameInput.focus();
+});
+$('#creditAdd')?.addEventListener('click', addCredit);
+creditNameInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addCredit(); } });
+creditRoleInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); creditNameInput?.focus(); } });
+creditListEl?.addEventListener('click', (e) => {
+  const del = e.target.closest('.admin-credits__del');
+  if (!del) return;
+  currentCredits.splice(Number(del.dataset.i), 1);
+  renderCreditList();
+});
+renderCreditRoleChips();
+
 function openProjectModal(id) {
   const p = id ? state.portfolio.projects.find(x => x.id === id) : null;
   $('#projModalTitle').textContent = p ? `edit #${String(p.id).padStart(3, '0')}` : 'new project';
@@ -264,8 +316,10 @@ function openProjectModal(id) {
   projForm.role.value = p?.role ?? '';
   projForm.contribution.value = p?.contribution ?? '';
   projForm.result.value = p?.result ?? '';
-  projForm.credits.value = (p?.credits || [])
-    .map(c => [c.role, c.name].filter(Boolean).join(' — ')).join('\n');
+  currentCredits = (p?.credits || []).map(c => ({ role: c.role || '', name: c.name || '' }));
+  renderCreditList();
+  if (creditRoleInput) creditRoleInput.value = '';
+  if (creditNameInput) creditNameInput.value = '';
   renderMediaRows(p?.media || []);
   $('#projFormStatus').textContent = '';
   modal.hidden = false;
@@ -290,15 +344,8 @@ projForm.addEventListener('submit', async (e) => {
     role: String(fd.get('role') || '').trim(),
     contribution: String(fd.get('contribution') || '').trim(),
     result: String(fd.get('result') || ''),
-    // "역할 — 이름" (— 또는 - 구분) 한 줄에 하나씩 → {role, name}
-    credits: String(fd.get('credits') || '').split('\n')
-      .map(s => s.trim()).filter(Boolean)
-      .map(line => {
-        const m = line.split(/\s+[—–-]\s+/);
-        return m.length >= 2
-          ? { role: m[0].trim(), name: m.slice(1).join(' - ').trim() }
-          : { role: '', name: line };
-      }),
+    // 크레딧 — 칩 에디터 상태(currentCredits)에서 직접. 입력칸에 남은 값은 자동 반영.
+    credits: collectCredits(),
     media: $$('#mediaRows .admin-media-row').map(row => ({
       url: row.querySelector('.admin-media-row__input').value.trim(),
       type: row.querySelector('.admin-media-row__type').value
