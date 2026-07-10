@@ -201,11 +201,20 @@
     </section>
 
     <!-- MEDIA UPLOAD -->
+    <!-- media 탭 = 파일 업로더/URL 발급기. 작품은 여기가 아니라 projects 탭(드라이브 링크)에서.
+         여기는 히어로 인트로 영상처럼 '내 서버에서 직접 호스팅해야 하는 파일'만 올린다. -->
     <section class="admin-panel" data-panel="media">
       <div class="admin-panel__head">
         <h2 class="admin-panel__title">media upload</h2>
       </div>
-      <p class="admin-muted admin-hint">이미지/영상 파일을 업로드하면 <code>/uploads/</code>로 저장되고 URL이 복사됩니다.</p>
+      <p class="admin-muted admin-hint">
+        이미지/영상 파일을 업로드하면 <code>/uploads/</code>에 저장되고 URL이 복사됩니다.<br>
+        <strong>⚠️ 이럴 때만 여기 올리세요</strong> — 히어로 인트로 영상처럼 <strong>내 서버에서 직접 재생·호스팅해야 하는 파일</strong>
+        (구글드라이브 영상은 자동재생이 안 됩니다). 올린 뒤 복사된 <code>/uploads/…</code> URL을
+        <strong>settings 탭의 “hero video”</strong> 칸에 붙여넣으세요.<br>
+        <strong>작품(포트폴리오)은 여기가 아니라 <code>projects</code> 탭에서 구글드라이브 링크</strong>로 추가합니다.
+        about 갤러리·클라이언트 로고는 settings 탭의 업로드 위젯을 쓰세요.
+      </p>
       <div class="admin-drop" id="mediaDrop">
         <input type="file" id="mediaInput" accept="image/*,video/*" hidden>
         <button id="mediaPick" class="admin-pill admin-pill--primary">choose file</button>
