@@ -23,7 +23,9 @@
   .gate__label--r { display: none; }
 
   /* ── Hero ── */
-  .hero { padding: var(--space-8) var(--page-pad-x) var(--space-4); }
+  /* .hero 에는 패딩을 주지 않는다 — 게터는 .hero__pin 이 갖고 있고,
+     .hero__media 의 음수 마진은 pin 의 패딩만 상쇄하도록 맞춰져 있다.
+     여기서 또 패딩을 주면 그만큼 영상이 pin 의 overflow:hidden 에 잘려 검은 띠가 생긴다. */
   .hero__inner { gap: var(--space-5); }
   .hero__meta { gap: var(--space-3); font-size: 10px; letter-spacing: 0.14em; flex-direction: column; align-items: flex-start; }
   .hero__foot { font-size: 9px; }
