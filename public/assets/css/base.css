@@ -297,3 +297,12 @@ ul, ol { list-style: none; }
     align-items: center;
   }
 }
+
+/* ── 브랜드 마크 ® — 로고타입 곳곳에서 재사용 (나브 Hati® 기준 통일) ── */
+.brand-reg {
+  font-size: 0.5em;
+  font-weight: 500;
+  vertical-align: super;
+  letter-spacing: 0;
+  color: var(--color-text-mute);
+}

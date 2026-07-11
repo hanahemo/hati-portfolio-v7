@@ -3,7 +3,7 @@ const safeHttp = (u) => (/^https?:\/\//i.test(String(u || '').trim()) ? String(u
 
 export function initAbout(settings) {
   const title = document.getElementById('aboutTitle');
-  if (title) title.textContent = 'hati studio';
+  if (title) title.innerHTML = 'Hati<sup class="brand-reg">®</sup> Studio';   // 브랜드 마크 통일 (나브 Hati® 기준)
 
   const text = document.getElementById('aboutText');
   if (text) text.textContent = settings.aboutText || '';

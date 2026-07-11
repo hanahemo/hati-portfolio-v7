@@ -10,21 +10,31 @@ export function initGate(settings, lenis) {
   const label = gate.querySelector('.gate__label');
   if (label && settings.curtainMain) label.textContent = settings.curtainMain;
   const author = gate.querySelector('.gate__foot');
-  if (author && settings.curtainAuthor) author.textContent = `© ${settings.curtainAuthor} — Private Room`;
+  if (author && settings.curtainAuthor) {
+    // 브랜드 마크 통일 — 나브 Hati® 기준. 저장된 값의 꼬리 ®는 벗기고 다시 붙여 중복 방지.
+    const a = String(settings.curtainAuthor).replace(/\s*®\s*$/, '').trim();
+    author.textContent = `© ${a}® — Private Room`;
+  }
 
-  // 중앙 이름 — 어드민 설정: gateLogo(이미지) 우선 → gateTitle(텍스트) → 기본 'HATI'
+  // 중앙 이름 — 어드민 설정: gateLogo(이미지) 우선 → gateTitle(텍스트) → 기본 로고타입 'Hati®'
   const titleEl = gate.querySelector('.gate__title');
   if (titleEl) {
     if (settings.gateLogo) {
       const img = document.createElement('img');
       img.className = 'gate__logo';
       img.src = settings.gateLogo;
-      img.alt = settings.gateTitle || 'HATI';
+      img.alt = 'Hati®';
       img.decoding = 'async';
       titleEl.textContent = '';
       titleEl.appendChild(img);
     } else {
-      titleEl.textContent = settings.gateTitle || 'HATI';
+      // 저장값이 브랜드명(대소문자·® 무관)이면 통일 로고타입으로, 커스텀 텍스트면 그대로.
+      const raw = String(settings.gateTitle || '').trim();
+      if (!raw || /^hati\s*®?$/i.test(raw)) {
+        titleEl.innerHTML = 'Hati<sup class="gate__sup">®</sup>';
+      } else {
+        titleEl.textContent = raw;
+      }
     }
   }
 
