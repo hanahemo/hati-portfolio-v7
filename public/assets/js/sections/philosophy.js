@@ -36,6 +36,7 @@ export function initPhilosophy(settings) {
       scrub: 0.8,
       pin: true,
       pinSpacing: true,
+      refreshPriority: 3,   // credits(1)보다 먼저 refresh — 안 그러면 credits 시작점이 이 핀의 스페이서(+80%)만큼 일찍 걸려 어바웃 한중간에 핀이 튄다
     },
   });
 }

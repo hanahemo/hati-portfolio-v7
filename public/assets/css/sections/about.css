@@ -88,4 +88,28 @@
 @media (max-width: 767px) {
   .about__gallery { grid-template-columns: repeat(2, 1fr); gap: var(--grid-gap-mobile); }
 }
+/* ── 뎁스 콜라주 (JS가 1200px↑ + GSAP 가용 시 클래스 부여) ──
+   평면 벤또 대신 사진이 앞뒤 공간을 갖고 떠 있는다 — 엔딩크레딧의 부유 스틸과 같은 문법.
+   깊이 = 크기 + 겹침 + 명도/블러 + 스크롤 패럴랙스(JS). */
+.about__gallery--depth {
+  display: block;
+  position: relative;
+  height: 96vh;   /* 마지막 스틸이 하단 밖으로 살짝 흘러넘치게 — 크레딧 암전 컷 직전까지 빈 종이를 남기지 않는다 */
+}
+.about__gallery--depth img {
+  position: absolute;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  will-change: transform;
+  top: var(--t);
+  left: var(--l);
+  width: var(--w);
+}
+.about__gallery--depth img:nth-child(1),
+.about__gallery--depth img:nth-child(6n + 4) { aspect-ratio: 16 / 10; }   /* 와이드 악센트 유지 */
+.about__gallery--depth .is-near { z-index: 3; box-shadow: 0 18px 60px rgba(0,0,0,0.16); }
+.about__gallery--depth .is-mid  { z-index: 2; filter: grayscale(1) brightness(0.8); }
+.about__gallery--depth .is-far  { z-index: 1; filter: grayscale(1) brightness(0.72) blur(1.5px); }
+.about__gallery--depth .is-mid:hover, .about__gallery--depth .is-far:hover { filter: grayscale(0) brightness(1); }
+
 /* 모바일에서도 B/W 유지 — 데스크탑(호버 컬러 리빌)과 톤 일치. 터치에선 컬러 리빌 없이 모노크롬 고정 */

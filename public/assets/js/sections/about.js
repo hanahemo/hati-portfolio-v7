@@ -55,4 +55,42 @@ export function initAbout(settings) {
       scrollTrigger: { trigger: '.about__gallery', start: 'top 80%' }
     });
   }
+
+  // ── 뎁스 콜라주 — 데스크탑 2단 레이아웃에서만 (엔딩크레딧 부유 스틸과 같은 공간 문법) ──
+  if (window.innerWidth >= 1200 && items.length >= 3) {
+    // 슬롯: 컨테이너 % 기준 {top, left, width, depth}. near가 크게 앞, far가 작고 뒤로 물러남.
+    const SLOTS = [
+      { t: '0%',  l: '4%',  w: '82%', d: 'near' },
+      { t: '24%', l: '46%', w: '54%', d: 'mid'  },
+      { t: '36%', l: '0%',  w: '42%', d: 'far'  },
+      { t: '52%', l: '30%', w: '68%', d: 'near' },
+      { t: '76%', l: '2%',  w: '48%', d: 'mid'  },
+      { t: '84%', l: '56%', w: '40%', d: 'far'  },
+      { t: '96%', l: '18%', w: '58%', d: 'mid'  },
+      { t: '110%', l: '50%', w: '46%', d: 'far' },
+      { t: '118%', l: '4%',  w: '64%', d: 'near' },
+      { t: '138%', l: '42%', w: '50%', d: 'mid' },
+      { t: '148%', l: '0%',  w: '42%', d: 'far' },
+      { t: '160%', l: '28%', w: '60%', d: 'near' },
+    ];
+    const SPEED = { near: 1.0, mid: 0.55, far: 0.28 };   // 깊이별 패럴랙스 속도
+    const gal = document.getElementById('aboutGallery');
+    gal.classList.add('about__gallery--depth');
+    // 사진 수에 따라 컨테이너 높이 확장 (4장=112vh 기준, 6장 넘으면 슬롯 진출 폭만큼)
+    const maxT = parseFloat(SLOTS[Math.min(items.length, SLOTS.length) - 1].t);
+    if (maxT > 100) gal.style.height = `calc(96vh * ${(maxT + 45) / 100})`;
+    items.forEach((img, i) => {
+      const slot = SLOTS[i % SLOTS.length];
+      img.style.setProperty('--t', slot.t);
+      img.style.setProperty('--l', slot.l);
+      img.style.setProperty('--w', slot.w);
+      img.classList.add(`is-${slot.d}`);
+      // 패럴랙스 — 어바웃 통과 동안 깊이 속도만큼 상승. near가 성큼, far가 미동 = 앞뒤 공간감.
+      gsap.to(img, {
+        y: () => -110 * SPEED[slot.d],
+        ease: 'none',
+        scrollTrigger: { trigger: gal, start: 'top bottom', end: 'bottom top', scrub: 0.7 }
+      });
+    });
+  }
 }

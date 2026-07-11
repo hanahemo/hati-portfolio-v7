@@ -70,7 +70,7 @@
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(34px, 5.4vw, 74px);
+  font-size: clamp(28px, 4.6vw, 62px);
   color: #E9E7E2;
   margin: 0;
 }
@@ -80,6 +80,28 @@
   letter-spacing: 0.32em; text-transform: uppercase;
   color: rgba(233, 231, 226, 0.5);
   margin: 0;
+}
+
+/* 디즈니 엔딩크레딧식 부유 스틸 — 텍스트 롤 양옆을 사진이 뎁스를 갖고 스쳐간다.
+   깊이 = 크기·속도(패럴랙스)·블러·명도. 전부 B/W(어바웃 갤러리와 같은 톤). */
+.credits__still {
+  position: absolute;
+  margin: 0;
+  z-index: 0;                        /* 텍스트 롤 뒤 */
+  pointer-events: none;
+  will-change: transform;
+}
+.credits__still img {
+  display: block; width: 100%; height: auto;
+  border-radius: 4px;
+  filter: grayscale(1) brightness(0.62);
+}
+.credits__still--near { z-index: 3; }
+.credits__still--near img { filter: grayscale(1) brightness(0.78); }
+.credits__still--mid img { filter: grayscale(1) brightness(0.66); }
+.credits__still--far img { filter: grayscale(1) brightness(0.5) blur(2px); }
+@media (max-width: 767px) {
+  .credits__still { display: none; }   /* 좁은 화면에선 롤 텍스트만 */
 }
 
 /* 정적 폴백 — 모션 최소화/GSAP 부재 시: 롤 대신 짧은 정적 크레딧 */

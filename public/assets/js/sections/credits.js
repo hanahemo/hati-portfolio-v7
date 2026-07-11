@@ -6,6 +6,7 @@ export function initCredits(portfolio, settings) {
   const roll = document.getElementById('creditsRoll');
   const finale = document.getElementById('creditsFinale');
   if (!section || !roll || !finale) return;
+  const stage = section.querySelector('.credits__stage');
 
   const projects = portfolio?.projects || [];
   const clients = [...new Set(projects.map(p => String(p.client || '').trim()).filter(Boolean))];
@@ -44,9 +45,32 @@ export function initCredits(portfolio, settings) {
   }
 
   const gsap = window.gsap;
+
+  // 부유 스틸 — 어바웃 갤러리 사진이 크레딧 사이를 뎁스를 갖고 흘러간다 (디즈니 엔딩크레딧 문법)
+  // 깊이별 속도: near(가깝고 큼, 빠름) > mid > far(작고 흐림, 느림). 롤 구간(0~0.78) 안에서만 살고 피날레 전에 퇴장.
+  const SLOTS = [
+    { x: '6%',  w: 280, depth: 'near', speed: 0.85, at: 0.00 },
+    { x: '76%', w: 220, depth: 'far',  speed: 0.40, at: 0.10 },
+    { x: '73%', w: 300, depth: 'mid',  speed: 0.62, at: 0.34 },
+    { x: '8%',  w: 200, depth: 'far',  speed: 0.45, at: 0.48 },
+    { x: '70%', w: 260, depth: 'near', speed: 0.90, at: 0.58 },
+    { x: '10%', w: 240, depth: 'mid',  speed: 0.58, at: 0.72 },
+  ];
+  const photos = (settings.aboutGallery || []).slice(0, SLOTS.length);
+  const stills = photos.map((url, i) => {
+    const slot = SLOTS[i];
+    const fig = document.createElement('figure');
+    fig.className = `credits__still credits__still--${slot.depth}`;
+    fig.style.left = slot.x;
+    fig.style.width = slot.w + 'px';
+    fig.style.top = '100%';
+    fig.innerHTML = `<img src="${url}" alt="" loading="lazy" onerror="this.parentNode.remove()">`;
+    stage.insertBefore(fig, finale);
+    return { fig, slot };
+  });
   // 롤 이동량 — 화면 아래(100vh)에서 출발해 완전히 위로 빠져나갈 때까지
   const travel = () => -(roll.scrollHeight + window.innerHeight);
-  gsap.timeline({
+  const tl = gsap.timeline({
     scrollTrigger: {
       trigger: section,
       start: 'top top',
@@ -60,5 +84,16 @@ export function initCredits(portfolio, settings) {
   })
     .fromTo(roll, { y: 0 }, { y: travel, ease: 'none', duration: 0.78 }, 0)
     .fromTo(finale, { opacity: 0 }, { opacity: 1, ease: 'none', duration: 0.08 }, 0.8)
-    .to(finale, { opacity: 1, ease: 'none', duration: 0.12 }, 0.88);   // 홀드 — 피날레가 잠시 무대를 지킨다
+    .to(finale, { opacity: 1, ease: 'none', duration: 0.12 }, 0.88)    // 홀드 — 피날레가 잠시 무대를 지킨다
+    .add(() => {}, 1);
+  // 스틸 패럴랙스 — 각자 등장 시점(at)부터 롤 종료(0.78)까지, 깊이 속도만큼만 이동
+  stills.forEach(({ fig, slot }) => {
+    const dur = 0.78 - slot.at;
+    if (dur <= 0.05) return;
+    tl.fromTo(fig,
+      { y: 0 },
+      { y: () => -(window.innerHeight + slot.w * 1.6) * slot.speed - window.innerHeight * 0.2, ease: 'none', duration: dur },
+      slot.at);
+    tl.to(fig, { opacity: 0, ease: 'none', duration: 0.05 }, Math.max(slot.at, 0.73));
+  });
 }
