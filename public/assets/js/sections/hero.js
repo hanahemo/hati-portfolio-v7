@@ -52,9 +52,10 @@ export function initHero(settings, portfolio) {
       : Math.min(132, Math.round(window.innerWidth * 0.072));   // 포커스 슬랫 폭 (기존 14% → 7.2%)
     MINW = Math.max(15, Math.round(window.innerWidth * 0.02));
     GAP = 6;
-    // 중앙 기준 높이(테이퍼는 프레임 루프의 scaleY가 담당) — 상하 여백 확보 위해 축소(78%→64%)
+    // 중앙 기준 높이(테이퍼는 프레임 루프의 scaleY가 담당). 모바일도 데스크탑과 같은 비율로 —
+    // 0.42는 세로 긴 폰에서 롤이 작은 띠로 쭈그러들고 위아래 검은 공백이 과했다(붙다 만 느낌).
     SLATH = window.innerWidth < 768
-      ? Math.round(Math.min(window.innerHeight * 0.42, 320))
+      ? Math.round(Math.min(window.innerHeight * 0.62, window.innerHeight - 210))
       : Math.round(Math.min(window.innerHeight * 0.64, window.innerHeight - 230));
   };
   sizeConsts();
