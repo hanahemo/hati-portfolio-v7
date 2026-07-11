@@ -24,7 +24,7 @@ export function initSelected(portfolio, settings) {
     return `
       <a class="cframe" href="#project/${p.id}" data-id="${p.id}" data-cursor="view" aria-label="${escapeHtml(p.title)} — ${escapeHtml(p.category)}">
         <div class="cframe__media">${thumbImg(p, 1400, '', { lazy: false })}</div>
-        <span class="cframe__n">${num} — ${escapeHtml(p.category)}</span>
+        <span class="cframe__n">SCENE ${num} — ${escapeHtml(String(p.category || '').toUpperCase())}</span>
         <div class="cframe__caption">
           <span class="cframe__title">${escapeHtml(p.title || '(untitled)')}</span>
         </div>

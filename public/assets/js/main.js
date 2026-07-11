@@ -10,6 +10,7 @@ import { initPhilosophy } from './sections/philosophy.js';
 import { initClients } from './sections/clients.js';
 import { initAbout } from './sections/about.js';
 import { initContact } from './sections/contact.js';
+import { initCredits } from './sections/credits.js';
 import { initProjectModal } from './project-modal.js';
 
 // 이전 스크롤 위치 기억 금지 — 새로고침/뒤로가기 시에도 항상 최상단(타이틀)에서 시작
@@ -142,6 +143,7 @@ function preloadThumbs(projects, onProgress, timeoutMs = 8000) {
   initPhilosophy(settings);
   initClients(settings);
   initAbout(settings);
+  initCredits(portfolio, settings);
   initContact(settings);
   initProjectModal({ portfolio, settings, lenis });
 
@@ -230,7 +232,10 @@ function preloadThumbs(projects, onProgress, timeoutMs = 8000) {
         .fromTo(actBgFrame, { scale: 1 }, { scale: () => coverScale, ease: 'power1.in', duration: 1 }, 0)
         .fromTo(actBgImg, { filter: 'blur(0px)' }, { filter: 'blur(62px)', ease: 'power1.inOut', duration: 1 }, 0)
         .fromTo(actBgGrain, { opacity: 0 }, { opacity: 0.5, ease: 'none', duration: 0.7 }, 0.12)
-        .fromTo(actBgScrim, { opacity: 0 }, { opacity: 1, ease: 'none', duration: 0.62 }, 0.42);
+        .fromTo(actBgScrim, { opacity: 0 }, { opacity: 1, ease: 'none', duration: 0.62 }, 0.42)
+        // 인터미션 — 하우스 라이트가 올라오는 중간 구간에만 떠올랐다 사라짐
+        .fromTo('#actBgInter', { opacity: 0 }, { opacity: 1, ease: 'none', duration: 0.2 }, 0.44)
+        .to('#actBgInter', { opacity: 0, ease: 'none', duration: 0.2 }, 0.78);
     }
 
     document.querySelectorAll('.section:not(#philosophy):not(#works):not(#about)').forEach(sec => {

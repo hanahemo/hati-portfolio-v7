@@ -55,7 +55,21 @@ export function initGate(settings, lenis) {
   lockMain();
 
   const btn = document.getElementById('gateEnter');
+  const ticket = document.getElementById('gateTicket');
+  let entering = false;
   const enter = () => {
+    if (entering) return;
+    entering = true;
+    // 절취 — 스텁이 찢겨 나간 뒤 커튼이 걷힘
+    const reducedNow = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (ticket && !reducedNow && !gate.classList.contains('is-hidden')) {
+      gate.classList.add('is-torn');
+      setTimeout(doEnter, 300);
+    } else {
+      doEnter();
+    }
+  };
+  const doEnter = () => {
     gate.classList.add('is-hidden');
     sessionStorage.setItem('hati:entered', '1');
     unlockMain();
@@ -70,17 +84,33 @@ export function initGate(settings, lenis) {
     main?.querySelector('h1, [tabindex], a, button')?.focus?.({ preventScroll: true });
   };
   btn?.addEventListener('click', enter);
+  ticket?.addEventListener('click', enter);
+  ticket?.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enter(); } });
 
   // Enter/Space로도 진입
-  btn?.focus?.({ preventScroll: true });
+  (btn || ticket)?.focus?.({ preventScroll: true });
 
   // ── 워드마크 키네틱 등장 (첫 방문, 로더 종료 시점) ──
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const alreadyIn = !!sessionStorage.getItem('hati:entered');
+
+  // 발권 — 관람번호는 로컬 방문 횟수. 백엔드 없이도 '내 티켓'이라는 감각을 만든다.
+  const meta = document.getElementById('gateTicketMeta');
+  if (meta && !alreadyIn) {
+    let n = 1;
+    try {
+      n = parseInt(localStorage.getItem('hati:ticketNo') || '0', 10) + 1;
+      localStorage.setItem('hati:ticketNo', String(n));
+    } catch (_) {}
+    const d = new Date();
+    const dd = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    meta.textContent = `№ ${String(n).padStart(4, '0')} — ${dd}`;
+  }
   if (!alreadyIn && window.gsap && !reduced) {
     const bits = [
       gate.querySelector('.gate__title'),
       gate.querySelector('.gate__sub'),
+      ticket,
       btn,
     ].filter(Boolean);
     window.gsap.set(bits, { opacity: 0, y: 34 });

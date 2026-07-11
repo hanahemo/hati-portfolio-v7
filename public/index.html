@@ -44,6 +44,7 @@
   <link rel="stylesheet" href="/assets/css/sections/philosophy.css">
   <link rel="stylesheet" href="/assets/css/sections/clients.css">
   <link rel="stylesheet" href="/assets/css/sections/about.css">
+  <link rel="stylesheet" href="/assets/css/sections/credits.css">
   <link rel="stylesheet" href="/assets/css/sections/contact.css">
   <link rel="stylesheet" href="/assets/css/mobile.css">
 
@@ -63,6 +64,7 @@
   <div class="act-bg__frame" id="actBgFrame"><img class="act-bg__img" id="actBgImg" alt="" decoding="async"></div>
   <div class="act-bg__grain" id="actBgGrain"></div>
   <div class="act-bg__scrim" id="actBgScrim"></div>
+  <div class="act-bg__inter" id="actBgInter" aria-hidden="true"><span>Intermission</span></div>
 </div>
 
 <!-- grain overlay -->
@@ -83,6 +85,14 @@
   <div class="gate__main">
     <h1 class="gate__title" id="gateTitle">Hati<sup class="gate__sup">®</sup></h1>
     <p class="gate__sub"></p>
+    <div class="gate__ticket" id="gateTicket" role="button" tabindex="0" aria-label="입장 — Admit one">
+      <span class="gate__ticket-main">
+        <span class="gate__ticket-k">Private Screening</span>
+        <span class="gate__ticket-admit">Admit One</span>
+        <span class="gate__ticket-meta" id="gateTicketMeta">№ 0001 — 2026</span>
+      </span>
+      <span class="gate__ticket-stub" aria-hidden="true">A1</span>
+    </div>
   </div>
   <div class="gate__foot">© Hati® — Private Room</div>
 </section>
@@ -200,6 +210,17 @@
         <div class="about__sns" id="aboutSns"></div>
       </div>
       <div class="about__gallery" id="aboutGallery"></div>
+    </div>
+  </section>
+
+  <!-- END CREDITS — 시사회 피날레. 컨택트는 쿠키영상 -->
+  <section class="credits act-light" id="credits" aria-label="End credits">
+    <div class="credits__stage">
+      <div class="credits__roll" id="creditsRoll"></div>
+      <div class="credits__finale" id="creditsFinale">
+        <p class="credits__brand">A Hati<sup class="credits__sup">®</sup> Production</p>
+        <p class="credits__meta">Seoul — EST. 2020</p>
+      </div>
     </div>
   </section>
 

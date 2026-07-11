@@ -119,6 +119,25 @@ ul, ol { list-style: none; }
   .act-light { background: #ecebe6; }
 }
 
+/* 인터미션 — 1막(상영)과 2막(로비) 사이, 하우스 라이트가 올라오는 순간의 표기 */
+.act-bg__inter {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  opacity: 0;                        /* main.js 블리드 스크럽이 중간 구간에서 페이드 인/아웃 */
+  pointer-events: none;
+}
+.act-bg__inter span {
+  display: inline-flex; align-items: center; gap: 22px;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 0.42em; text-transform: uppercase;
+  color: rgba(23, 20, 15, 0.66);
+}
+.act-bg__inter span::before, .act-bg__inter span::after {
+  content: '';
+  width: 52px; height: 1px;
+  background: rgba(23, 20, 15, 0.4);
+}
+
 /* Grain overlay — 필르믹 노이즈, 극히 미세 */
 .grain {
   position: fixed; inset: 0; pointer-events: none; z-index: var(--z-grain);

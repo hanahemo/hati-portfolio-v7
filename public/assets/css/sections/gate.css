@@ -68,3 +68,62 @@
   color: var(--color-text-mute);
   text-align: center;
 }
+
+/* ── 입장권 — 프라이빗 시사회 발권. 헤어라인 아웃라인(필 금지), 모노 타이포 ── */
+.gate__ticket {
+  display: inline-flex; align-items: stretch;
+  margin-top: var(--space-4);
+  border: 1px solid var(--color-hairline);
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: border-color var(--dur-base);
+}
+.gate__ticket:hover, .gate__ticket:focus-visible { border-color: var(--color-border-neon); }
+.gate__ticket-main {
+  display: grid; gap: 6px;
+  padding: 16px 26px 15px;
+  text-align: left;
+}
+.gate__ticket-k {
+  font-size: var(--fs-micro); font-weight: 500;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--color-text-mute);
+}
+.gate__ticket-admit {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 24px;
+  color: var(--color-text);
+  letter-spacing: 0.01em;
+}
+.gate__ticket-meta {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 10.5px; letter-spacing: 0.14em;
+  color: var(--color-text-mute);
+}
+.gate__ticket-stub {
+  display: grid; place-items: center;
+  padding: 0 18px;
+  border-left: 1px dashed var(--color-hairline);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px; letter-spacing: 0.2em;
+  color: var(--color-text-dim);
+  transition: transform 0.32s var(--ease-signature), opacity 0.32s;
+}
+/* 절취공 — 퍼포레이션 상하 펀치 노치 */
+.gate__ticket::before, .gate__ticket::after {
+  content: '';
+  position: absolute; right: 47px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-hairline);
+}
+.gate__ticket::before { top: -6px; }
+.gate__ticket::after { bottom: -6px; }
+/* 입장 순간 — 스텁 절취 */
+.gate.is-torn .gate__ticket-stub { transform: translateX(30px) rotate(9deg); opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .gate.is-torn .gate__ticket-stub { transform: none; transition: none; }
+}
