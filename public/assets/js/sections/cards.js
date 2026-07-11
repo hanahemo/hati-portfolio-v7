@@ -133,8 +133,9 @@ function createPreview() {
 }
 
 // ── 인덱스 행 ──
-function renderRow(project) {
-  const idStr = String(project.id).padStart(3, '0');
+function renderRow(project, seq) {
+  // 카탈로그 순번 — 정렬 순서 그대로 001부터. 원시 id(008, 030…)는 뒤죽박죽으로 읽혀 인덱스의 권위를 깎는다.
+  const idStr = String((seq ?? 0) + 1).padStart(3, '0');
   const thumbHtml = thumbImg(project, 300, 'idx-row__thumb');
   const a = document.createElement('a');
   a.className = 'idx-row';
@@ -195,7 +196,7 @@ export function initAllWorks(portfolio) {
   // userAction=false(최초/해시) → 정적으로 두고, 스크롤 진입 시 아래 1회 트리거가 리빌.
   function render(userAction) {
     list.innerHTML = '';
-    filtered().forEach(p => list.appendChild(renderRow(p)));
+    filtered().forEach((p, i) => list.appendChild(renderRow(p, i)));
     preview?.hide();
     if (userAction && window.gsap && !reduced) {
       window.gsap.from(list.children, {
