@@ -27,6 +27,7 @@ const SOFT_INK = 'D6D4CF';
 const HAIR = 'DDDAD4';
 const SERIF = 'Georgia';        // 디스플레이(영문) — Win/Mac 공통 탑재
 const SANS = 'Malgun Gothic';   // 한글 본문/타이틀
+const KEY = 'C7B9FF';           // 브랜드 키(라벤더) — 커버 워드마크 악센트. ponytail: 솔리드(PPT는 그라데이션 텍스트 불가)
 
 const PW = 13.333, PH = 7.5, M = 0.62;
 const DPI = 150;                 // 이미지 픽셀 밀도 (인치 → px)
@@ -248,7 +249,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
     s.els.push(
       { type: 'text', text: 'PORTFOLIO', x: M, y: 2.35, w: 6, h: 0.32, font: 'sans', size: 11, color: MUTE_INK, charSpacing: 5 },
       { type: 'text', runs: [
-          { text: 'Hati', font: 'serif', italic: true, size: 118, color: WHITE },
+          { text: 'Hati', font: 'serif', italic: true, size: 118, color: KEY },
           { text: ' ®', font: 'sans', size: 30, color: MUTE_INK },
         ], x: M - 0.06, y: 2.75, w: PW - M * 2, h: 1.95 },
       { type: 'text', text: headline, x: M, y: 4.78, w: 10.5, h: 0.5, font: 'sans', size: 15, color: SOFT_INK, charSpacing: 1 },
