@@ -9,8 +9,9 @@
 .contact__mega {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: var(--fs-mega);
-  letter-spacing: -0.04em;
+  /* 클로징 커튼콜 — 히어로(최대 190px)와 수미상관으로 무대를 채운다 (Hati 결정 3=B) */
+  font-size: clamp(48px, 13vw, 210px);
+  letter-spacing: -0.045em;
   line-height: 1;
   color: var(--color-text);
   margin-bottom: var(--space-7);
