@@ -22,7 +22,7 @@ export function initAbout(settings) {
 
   const gallery = document.getElementById('aboutGallery');
   if (gallery) {
-    const imgs = (settings.aboutGallery || []).slice(0, 5);
+    const imgs = (settings.aboutGallery || []).slice(0, 12);   // ponytail: 12장 상한, 벤또가 그 이상 필요하면 올려
     gallery.innerHTML = imgs.map((u, i) => `<img src="${escapeHtml(u)}" alt="hati studio ${i + 1}" loading="lazy" onerror="this.style.display='none'">`).join('');
   }
 
