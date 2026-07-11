@@ -25,8 +25,21 @@ export function initAbout(settings) {
 
   const gallery = document.getElementById('aboutGallery');
   if (gallery) {
-    const imgs = (settings.aboutGallery || []).slice(0, 12);   // ponytail: 12장 상한, 벤또가 그 이상 필요하면 올려
-    gallery.innerHTML = imgs.map((u, i) => `<img src="${escapeHtml(u)}" alt="hati studio ${i + 1}" loading="lazy" onerror="this.style.display='none'">`).join('');
+    const imgs = (settings.aboutGallery || []).slice(0, 24);   // 풀폭 컬럼 콜라주 — 상한 넉넉히
+    const colCount = window.innerWidth >= 1200 ? 3 : 2;
+    gallery.innerHTML = '';
+    const cols = Array.from({ length: colCount }, (_, c) => {
+      const d = document.createElement('div');
+      d.className = 'about__gallery__col' + (colCount === 3 && c === 1 ? ' about__gallery__col--mid' : '');
+      gallery.appendChild(d);
+      return d;
+    });
+    imgs.forEach((u, i) => {
+      const img = document.createElement('img');
+      img.src = u; img.alt = `hati studio ${i + 1}`; img.loading = 'lazy';
+      img.setAttribute('onerror', "this.style.display='none'");
+      cols[i % colCount].appendChild(img);   // 라운드로빈 분배 — 세로/가로 섞여도 얼추 균형
+    });
   }
 
   // 스태거 리빌 — 갤러리 + 텍스트 블록
@@ -50,44 +63,22 @@ export function initAbout(settings) {
   if (items.length) {
     gsap.from(items, {
       opacity: 0, y: 40, scale: 0.96,
-      stagger: 0.1, duration: 0.7,
+      stagger: 0.08, duration: 0.7,
       ease: 'cubic-bezier(0.45, 0.05, 0.55, 0.95)',
-      scrollTrigger: { trigger: '.about__gallery', start: 'top 80%' }
+      scrollTrigger: { trigger: '.about__gallery', start: 'top 82%' }
     });
   }
 
-  // ── 뎁스 콜라주 — 데스크탑 2단 레이아웃에서만 (엔딩크레딧 부유 스틸과 같은 공간 문법) ──
-  if (window.innerWidth >= 1200 && items.length >= 3) {
-    // 슬롯: 컨테이너 % 기준 {top, left, width, depth}. near가 크게 앞, far가 작고 뒤로 물러남.
-    const SLOTS = [
-      { t: '0%',  l: '4%',  w: '82%', d: 'near' },
-      { t: '24%', l: '46%', w: '54%', d: 'mid'  },
-      { t: '36%', l: '0%',  w: '42%', d: 'far'  },
-      { t: '52%', l: '30%', w: '68%', d: 'near' },
-      { t: '76%', l: '2%',  w: '48%', d: 'mid'  },
-      { t: '84%', l: '56%', w: '40%', d: 'far'  },
-      { t: '96%', l: '18%', w: '58%', d: 'mid'  },
-      { t: '110%', l: '50%', w: '46%', d: 'far' },
-      { t: '118%', l: '4%',  w: '64%', d: 'near' },
-      { t: '138%', l: '42%', w: '50%', d: 'mid' },
-      { t: '148%', l: '0%',  w: '42%', d: 'far' },
-      { t: '160%', l: '28%', w: '60%', d: 'near' },
-    ];
-    const SPEED = { near: 1.0, mid: 0.55, far: 0.28 };   // 깊이별 패럴랙스 속도
+  // ── 깊이 패럴랙스 — 컬럼 통째로 다른 속도로 흘러 앞뒤 공간감 (디즈니 크레딧 문법) ──
+  // 컬럼 wrapper를 움직이므로 컬럼 내부 사진은 절대 안 겹친다.
+  const colEls = document.querySelectorAll('.about__gallery__col');
+  if (window.innerWidth >= 1000 && colEls.length) {
     const gal = document.getElementById('aboutGallery');
-    gal.classList.add('about__gallery--depth');
-    // 사진 수에 따라 컨테이너 높이 확장 (4장=112vh 기준, 6장 넘으면 슬롯 진출 폭만큼)
-    const maxT = parseFloat(SLOTS[Math.min(items.length, SLOTS.length) - 1].t);
-    if (maxT > 100) gal.style.height = `calc(96vh * ${(maxT + 45) / 100})`;
-    items.forEach((img, i) => {
-      const slot = SLOTS[i % SLOTS.length];
-      img.style.setProperty('--t', slot.t);
-      img.style.setProperty('--l', slot.l);
-      img.style.setProperty('--w', slot.w);
-      img.classList.add(`is-${slot.d}`);
-      // 패럴랙스 — 어바웃 통과 동안 깊이 속도만큼 상승. near가 성큼, far가 미동 = 앞뒤 공간감.
-      gsap.to(img, {
-        y: () => -110 * SPEED[slot.d],
+    // 가운데 컬럼이 가장 앞(빠름), 바깥이 뒤(느림)
+    const COL_SPEED = colEls.length === 3 ? [50, 120, 78] : [90, 48];
+    colEls.forEach((col, ci) => {
+      gsap.to(col, {
+        y: () => -COL_SPEED[ci] || 0,
         ease: 'none',
         scrollTrigger: { trigger: gal, start: 'top bottom', end: 'bottom top', scrub: 0.7 }
       });

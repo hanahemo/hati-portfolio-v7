@@ -62,54 +62,34 @@
 .about__sns .pill:hover { background: none; color: var(--color-text); }
 .about__sns .pill:hover::after { transform: scaleX(0.35); }
 
-/* Gallery — 무겹침 스택 */
+/* Gallery — 풀폭 컬럼 콜라주. 텍스트 2단 아래 전체 폭을 쓰는 사진 밴드.
+   JS가 사진을 명시적 컬럼(div)에 분배하고, 컬럼 통째로 다른 속도의 패럴랙스를 준다.
+   → 앞뒤 공간감(디즈니 크레딧 문법)을 내면서도 컬럼 내부 사진은 절대 안 겹친다. 사진 수 무제한. */
 .about__gallery {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-flow: dense;                 /* 와이드 셀 사이 빈틈을 자동으로 메워 벤또 패킹 */
+  margin-top: var(--space-9);
+  display: flex;
   gap: var(--grid-gap);
+  align-items: flex-start;
 }
+.about__gallery__col {
+  flex: 1;
+  display: flex; flex-direction: column;
+  gap: var(--grid-gap);
+  will-change: transform;            /* 깊이 패럴랙스(JS)용 */
+}
+.about__gallery__col--mid { margin-top: var(--space-8); }   /* 가운데 컬럼을 처음부터 살짝 내려 리듬 어긋냄 */
 .about__gallery img {
-  width: 100%; height: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
+  display: block;
+  width: 100%; height: auto;         /* 원본 비율 유지 — 폰카 세로/가로 크롭 없음 */
   border-radius: var(--radius-card);
   filter: grayscale(1) brightness(0.85);
   transition: filter 700ms var(--ease-signature);
 }
 .about__gallery img:hover { filter: grayscale(0) brightness(1); }
-/* 벤또 리듬 — 히어로(1번) + 5장마다 와이드 악센트. 장수가 늘어도 단조롭지 않게. */
-.about__gallery img:nth-child(1),
-.about__gallery img:nth-child(6n + 4) {
-  grid-column: span 2;
-  aspect-ratio: 16 / 10;
-}
-
 @media (max-width: 767px) {
-  .about__gallery { grid-template-columns: repeat(2, 1fr); gap: var(--grid-gap-mobile); }
+  .about__gallery { gap: var(--grid-gap-mobile); }
+  .about__gallery__col { gap: var(--grid-gap-mobile); }
+  .about__gallery__col--mid { margin-top: var(--space-6); }
 }
-/* ── 뎁스 콜라주 (JS가 1200px↑ + GSAP 가용 시 클래스 부여) ──
-   평면 벤또 대신 사진이 앞뒤 공간을 갖고 떠 있는다 — 엔딩크레딧의 부유 스틸과 같은 문법.
-   깊이 = 크기 + 겹침 + 명도/블러 + 스크롤 패럴랙스(JS). */
-.about__gallery--depth {
-  display: block;
-  position: relative;
-  height: 96vh;   /* 마지막 스틸이 하단 밖으로 살짝 흘러넘치게 — 크레딧 암전 컷 직전까지 빈 종이를 남기지 않는다 */
-}
-.about__gallery--depth img {
-  position: absolute;
-  height: auto;
-  aspect-ratio: 4 / 5;
-  will-change: transform;
-  top: var(--t);
-  left: var(--l);
-  width: var(--w);
-}
-.about__gallery--depth img:nth-child(1),
-.about__gallery--depth img:nth-child(6n + 4) { aspect-ratio: 16 / 10; }   /* 와이드 악센트 유지 */
-.about__gallery--depth .is-near { z-index: 3; box-shadow: 0 18px 60px rgba(0,0,0,0.16); }
-.about__gallery--depth .is-mid  { z-index: 2; filter: grayscale(1) brightness(0.8); }
-.about__gallery--depth .is-far  { z-index: 1; filter: grayscale(1) brightness(0.72) blur(1.5px); }
-.about__gallery--depth .is-mid:hover, .about__gallery--depth .is-far:hover { filter: grayscale(0) brightness(1); }
 
 /* 모바일에서도 B/W 유지 — 데스크탑(호버 컬러 리빌)과 톤 일치. 터치에선 컬러 리빌 없이 모노크롬 고정 */
