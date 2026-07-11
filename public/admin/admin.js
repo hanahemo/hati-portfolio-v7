@@ -48,6 +48,7 @@ async function loadAll() {
   renderFeatured();
   renderReel();
   renderSettings();
+  renderDeck();
 }
 
 // ── Tabs ──
@@ -62,6 +63,69 @@ $$('.admin-tab').forEach(tab => {
     // reel 탭은 열 때마다 최신 order로 다시 그림 (projects 탭에서 정렬 변경 반영)
     if (key === 'reel') renderReel();
   });
+});
+
+// ── Deck 탭 — PPT 장표 전용 텍스트 (전역 + 작품별) ──
+function renderDeck() {
+  const form = $('#deckForm');
+  if (!form) return;
+  const d = (state.settings && state.settings.deck) || {};
+  form.coverHeadline.value = d.coverHeadline || '';
+  form.statement.value = d.statement || '';
+  form.introText.value = d.introText || '';
+  form.services.value = d.services || '';
+
+  const wrap = $('#deckProjects');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const byId = new Map((state.portfolio.projects || []).map(p => [p.id, p]));
+  const feat = (state.settings.featuredProjectIds || []).map(id => byId.get(id)).filter(Boolean);
+  feat.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'admin-deck-row';
+    row.innerHTML = `
+      <div class="admin-deck-row__title"></div>
+      <div class="admin-deck-row__grid">
+        <label class="admin-field"><span>client</span><input class="admin-input" data-f="client" maxlength="200"></label>
+        <label class="admin-field"><span>year</span><input class="admin-input" data-f="year" maxlength="20"></label>
+        <label class="admin-field admin-field--wide"><span>장표 요약 (히어로 한 줄 카피)</span><input class="admin-input" data-f="deckSummary" maxlength="600"></label>
+        <label class="admin-field admin-field--wide"><span>커버 이미지 URL (비우면 첫 미디어)</span><input class="admin-input" data-f="coverImage" maxlength="500" placeholder="https://drive.google.com/... 또는 /uploads/..."></label>
+      </div>
+      <div class="admin-form__actions"><button type="button" class="admin-pill admin-pill--sm" data-save>save</button><span class="admin-muted" data-status></span></div>`;
+    row.querySelector('.admin-deck-row__title').textContent = p.title || '(untitled)';
+    ['client', 'year', 'deckSummary', 'coverImage'].forEach(f => { row.querySelector(`[data-f="${f}"]`).value = p[f] || ''; });
+    row.querySelector('[data-save]').addEventListener('click', async () => {
+      const patch = {};
+      ['client', 'year', 'deckSummary', 'coverImage'].forEach(f => { patch[f] = row.querySelector(`[data-f="${f}"]`).value; });
+      const st = row.querySelector('[data-status]');
+      try {
+        const updated = await api(`/portfolio/${p.id}`, { method: 'PUT', body: JSON.stringify(patch) });
+        Object.assign(p, updated || patch);
+        st.textContent = '저장됨';
+        setTimeout(() => { st.textContent = ''; }, 1800);
+      } catch (err) { st.textContent = '실패: ' + err.message; }
+    });
+    wrap.appendChild(row);
+  });
+}
+
+const deckForm = $('#deckForm');
+if (deckForm) deckForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const st = $('#deckStatus');
+  try {
+    const deck = {
+      coverHeadline: deckForm.coverHeadline.value,
+      statement: deckForm.statement.value,
+      introText: deckForm.introText.value,
+      services: deckForm.services.value,
+    };
+    const merged = await api('/settings', { method: 'PUT', body: JSON.stringify({ deck }) });
+    state.settings = merged || state.settings;
+    if (st) st.textContent = '저장됨';
+    toast('deck 텍스트 저장 완료');
+    setTimeout(() => { if (st) st.textContent = ''; }, 1800);
+  } catch (err) { if (st) st.textContent = '실패: ' + err.message; toast('저장 실패', 'err'); }
 });
 
 // ── PPT 내보내기 — 현재 데이터 스냅샷을 기업 제출용 덱으로 (settings 탭) ──

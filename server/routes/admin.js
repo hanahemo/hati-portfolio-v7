@@ -24,7 +24,8 @@ const ALLOWED_SETTINGS = new Set([
   'philosophy', 'curtainMain', 'curtainSub', 'curtainAuthor',
   'clientLogos', 'featuredProjectIds',
   'keyColorA', 'keyColorB', 'est', 'reelAnchorHue', 'defaultTheme',
-  'gateTitle', 'gateLogo'
+  'gateTitle', 'gateLogo',
+  'deck'   // PPT 장표 전역 텍스트 (어드민 deck 탭: 커버 헤드라인/스테이트먼트/디렉터 노트/서비스)
 ]);
 const ALLOWED_EXT = new Set([
   '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif',
@@ -49,6 +50,13 @@ function safeUrl(val) {
     return ['http:', 'https:'].includes(u.protocol) ? val.slice(0, 500) : '';
   } catch { return ''; }
 }
+// 미디어 참조 — 절대 URL(http/https) 또는 사이트 상대경로(/uploads/... 등)
+function safeMediaRef(val) {
+  if (typeof val !== 'string' || !val.trim()) return '';
+  const s = val.trim();
+  if (s.startsWith('/') && !s.startsWith('//')) return s.slice(0, 500);
+  return safeUrl(s);
+}
 
 function pickProject(body, base = {}) {
   return {
@@ -64,6 +72,11 @@ function pickProject(body, base = {}) {
     role: typeof body.role === 'string' ? body.role.slice(0, 2000) : (base.role || ''),
     contribution: typeof body.contribution === 'string' ? body.contribution.slice(0, 200) : (base.contribution || ''),
     result: typeof body.result === 'string' ? body.result.slice(0, 4000) : (base.result || ''),
+    // PPT 장표 전용 필드 (어드민 deck 탭에서 작성) — 미전송 시 기존 값 보존
+    client: typeof body.client === 'string' ? body.client.slice(0, 200) : (base.client || ''),
+    year: typeof body.year === 'string' ? body.year.slice(0, 20) : (base.year || ''),
+    deckSummary: typeof body.deckSummary === 'string' ? body.deckSummary.slice(0, 600) : (base.deckSummary || ''),
+    coverImage: safeMediaRef(body.coverImage !== undefined ? body.coverImage : base.coverImage),
     credits: Array.isArray(body.credits)
       ? body.credits
           .filter(c => c && (c.role || c.name))
@@ -248,6 +261,17 @@ router.put('/api/settings', async (req, res) => {
     const patch = Object.fromEntries(
       Object.entries(req.body || {}).filter(([k]) => ALLOWED_SETTINGS.has(k))
     );
+    // deck 은 자유 객체가 아니라 정해진 문자열 필드만
+    if (patch.deck !== undefined) {
+      const d = patch.deck && typeof patch.deck === 'object' ? patch.deck : {};
+      const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : '';
+      patch.deck = {
+        coverHeadline: str(d.coverHeadline, 200),
+        statement: str(d.statement, 300),
+        introText: str(d.introText, 2000),
+        services: str(d.services, 1000),
+      };
+    }
     const merged = { ...cur, ...patch };
     await writeSettings(merged);
     res.json(merged);

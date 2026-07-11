@@ -33,6 +33,7 @@
     <button class="admin-tab" data-tab="featured" role="tab" aria-selected="false">featured</button>
     <button class="admin-tab" data-tab="reel" role="tab" aria-selected="false">reel order</button>
     <button class="admin-tab" data-tab="settings" role="tab" aria-selected="false">settings</button>
+    <button class="admin-tab" data-tab="deck" role="tab" aria-selected="false">deck</button>
     <button class="admin-tab" data-tab="media" role="tab" aria-selected="false">media</button>
   </div>
 
@@ -207,18 +208,55 @@
         </div>
       </form>
 
-      <!-- PPT 내보내기 — 현재 데이터의 스냅샷을 기업 제출용 표준 덱으로 -->
+    </section>
+
+    <!-- DECK — PPT 장표 작성 + 내보내기 -->
+    <section class="admin-panel" data-panel="deck">
+      <div class="admin-panel__head">
+        <h2 class="admin-panel__title">portfolio deck</h2>
+      </div>
+      <p class="admin-muted">홈페이지 데이터로 제출용 포트폴리오 덱(.pptx)을 생성합니다. 아래 텍스트는 장표에만 쓰이고 홈페이지에는 나오지 않습니다. 비워두면 해당 단락은 장표에서 자동으로 빠집니다.</p>
+
       <div class="admin-export">
-        <h3 class="admin-export__title">PPT 내보내기</h3>
-        <p class="admin-muted">현재 게시물 데이터로 기업 제출용 포트폴리오 덱(.pptx)을 생성합니다. 비어 있는 항목은 장표에서 자동으로 빠집니다.</p>
+        <h3 class="admin-export__title">내보내기</h3>
         <div class="admin-export__row">
           <select id="pptScope" class="admin-input admin-export__scope">
-            <option value="featured">셀렉티드 웍스만</option>
-            <option value="all">전체 작품</option>
+            <option value="featured">셀렉티드 웍스 (케이스스터디 덱)</option>
+            <option value="all">전체 작품 (카탈로그 덱)</option>
           </select>
           <button type="button" class="admin-pill admin-pill--primary" id="pptExportBtn">PPT 생성</button>
           <span id="pptStatus" class="admin-muted"></span>
         </div>
+      </div>
+
+      <form id="deckForm" class="admin-form">
+        <h3 class="admin-export__title">전역 텍스트</h3>
+        <div class="admin-field admin-field--wide">
+          <span>커버 헤드라인 (기본: Visual Creative Portfolio)</span>
+          <input name="coverHeadline" class="admin-input" maxlength="200">
+        </div>
+        <div class="admin-field admin-field--wide">
+          <span>스테이트먼트 — 2번 장표의 큰 한 줄 (비우면 settings 의 philosophy 사용)</span>
+          <input name="statement" class="admin-input" maxlength="300">
+        </div>
+        <div class="admin-field admin-field--wide">
+          <span>인트로덕션 단락 (비우면 about 텍스트 사용)</span>
+          <textarea name="introText" rows="4" class="admin-input admin-textarea" maxlength="2000"></textarea>
+        </div>
+        <div class="admin-field admin-field--wide">
+          <span>서비스 목록 — 한 줄에 하나 (채우면 인트로 장표의 스탯 로우 대신 표시)</span>
+          <textarea name="services" rows="3" class="admin-input admin-textarea" maxlength="1000"></textarea>
+        </div>
+        <div class="admin-form__actions">
+          <button type="submit" class="admin-pill admin-pill--primary">save deck texts</button>
+          <span id="deckStatus" class="admin-muted"></span>
+        </div>
+      </form>
+
+      <div class="admin-export">
+        <h3 class="admin-export__title">작품별 장표 정보 (셀렉티드 웍스)</h3>
+        <p class="admin-muted">클라이언트/연도는 킥커와 인덱스에, 요약은 히어로 장표의 한 줄 카피로 들어갑니다. 커버 이미지 URL을 지정하면 그 이미지가 히어로 스틸이 됩니다.</p>
+        <div id="deckProjects"></div>
       </div>
     </section>
 

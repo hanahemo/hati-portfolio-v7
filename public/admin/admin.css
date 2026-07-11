@@ -693,3 +693,15 @@ select.admin-input option {
 .admin-export__title { font-size: 14px; margin: 0 0 6px; }
 .admin-export__row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 .admin-export__scope { max-width: 200px; }
+
+/* ── Deck 탭 — 작품별 장표 정보 행 ── */
+.admin-deck-row {
+  padding: 18px 0 14px;
+  border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));
+}
+.admin-deck-row__title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.admin-deck-row__grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
+}
+.admin-deck-row__grid .admin-field--wide { grid-column: 1 / -1; }
+.admin-deck-row .admin-form__actions { margin-top: 10px; }
