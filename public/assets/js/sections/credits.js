@@ -48,7 +48,16 @@ export function initCredits(portfolio, settings) {
 
   // 부유 스틸 — 어바웃 갤러리 사진이 크레딧 사이를 뎁스를 갖고 흘러간다 (디즈니 엔딩크레딧 문법)
   // 깊이별 속도: near(가깝고 큼, 빠름) > mid > far(작고 흐림, 느림). 롤 구간(0~0.78) 안에서만 살고 피날레 전에 퇴장.
-  const SLOTS = [
+  // 모바일은 화면이 좁아 스틸을 작게 + 텍스트 뒤 배경으로(디즈니처럼 크레딧 뒤로 장면이 흐름) — CSS 미디어쿼리가 z-index/명도 처리.
+  const isMobile = window.innerWidth < 768;
+  const SLOTS = isMobile ? [
+    { x: '6%',  w: 108, depth: 'mid',  speed: 0.60, at: 0.00 },
+    { x: '64%', w: 96,  depth: 'far',  speed: 0.42, at: 0.14 },
+    { x: '56%', w: 116, depth: 'near', speed: 0.72, at: 0.34 },
+    { x: '8%',  w: 92,  depth: 'far',  speed: 0.46, at: 0.50 },
+    { x: '60%', w: 104, depth: 'mid',  speed: 0.66, at: 0.60 },
+    { x: '10%', w: 100, depth: 'near', speed: 0.58, at: 0.74 },
+  ] : [
     { x: '6%',  w: 280, depth: 'near', speed: 0.85, at: 0.00 },
     { x: '76%', w: 220, depth: 'far',  speed: 0.40, at: 0.10 },
     { x: '73%', w: 300, depth: 'mid',  speed: 0.62, at: 0.34 },

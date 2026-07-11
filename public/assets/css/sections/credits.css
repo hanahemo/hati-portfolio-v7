@@ -100,8 +100,16 @@
 .credits__still--near img { filter: grayscale(1) brightness(0.78); }
 .credits__still--mid img { filter: grayscale(1) brightness(0.66); }
 .credits__still--far img { filter: grayscale(1) brightness(0.5) blur(2px); }
+/* 모바일 — 화면이 좁아 스틸을 텍스트 뒤 배경으로(디즈니처럼 크레딧 뒤로 장면이 흐름).
+   전부 z-index 0으로 눌러 롤(z:4)·피날레(z:5) 아래에 두고, 더 어둡게 깔아 텍스트 가독 유지. */
 @media (max-width: 767px) {
-  .credits__still { display: none; }   /* 좁은 화면에선 롤 텍스트만 */
+  .credits__still,
+  .credits__still--near,
+  .credits__still--mid,
+  .credits__still--far { z-index: 0; }
+  .credits__still img { filter: grayscale(1) brightness(0.4) blur(1px); }
+  .credits__roll { z-index: 4; }
+  .credits__finale { z-index: 5; }
 }
 
 /* 정적 폴백 — 모션 최소화/GSAP 부재 시: 롤 대신 짧은 정적 크레딧 */
