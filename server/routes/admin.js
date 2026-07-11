@@ -299,9 +299,11 @@ router.post('/api/upload', (req, res) => {
 });
 
 // ── PPT 내보내기 — 현재 데이터의 스냅샷을 기업 제출용 표준 덱으로 (server/ppt/deck.js) ──
-const { buildDeckBuffer } = require('../ppt/deck');
+// deck 모듈은 네이티브 의존성(sharp)을 물어 lazy require — 로드 실패해도 사이트 전체는 죽지 않고
+// 이 엔드포인트만 500 을 낸다.
 router.get('/api/export-ppt', async (req, res) => {
   try {
+    const { buildDeckBuffer } = require('../ppt/deck');
     const scope = req.query.scope === 'all' ? 'all' : 'featured';
     const [portfolio, settings] = await Promise.all([readPortfolio(), readSettings()]);
     const buf = await buildDeckBuffer({ portfolio, settings, scope });
