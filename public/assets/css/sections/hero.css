@@ -139,7 +139,9 @@
 
 /* 이름은 시그니처(작게) · 'Director of [바]'가 주인공 — 단, 리파인드하게(과하지 않은 크기·비율) */
 .hero__line--name .hero__line-inner {
-  font-size: clamp(20px, 2.8vw, 42px);
+  /* 사인 록업 승격 (Hati 결정 1=안1) — 세리프 이름이 디스플레이의 첫 줄.
+     세리프(이름) → 산세리프(직함) 대비 = 덱 커버와 같은 문법. 배경 Hati 응용 영상과 호응. */
+  font-size: clamp(34px, 5.2vw, 88px);
   color: var(--color-text-dim);
 }
 .hero__line--role .hero__line-inner {
