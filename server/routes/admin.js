@@ -274,4 +274,19 @@ router.post('/api/upload', (req, res) => {
   });
 });
 
+// ── PPT 내보내기 — 현재 데이터의 스냅샷을 기업 제출용 표준 덱으로 (server/ppt/deck.js) ──
+const { buildDeckBuffer } = require('../ppt/deck');
+router.get('/api/export-ppt', async (req, res) => {
+  try {
+    const scope = req.query.scope === 'all' ? 'all' : 'featured';
+    const [portfolio, settings] = await Promise.all([readPortfolio(), readSettings()]);
+    const buf = await buildDeckBuffer({ portfolio, settings, scope });
+    const d = new Date();
+    const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+    res.setHeader('Content-Disposition', `attachment; filename="Hati_Portfolio_${ymd}_${scope}.pptx"`);
+    res.send(buf);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;

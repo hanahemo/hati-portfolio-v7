@@ -64,6 +64,35 @@ $$('.admin-tab').forEach(tab => {
   });
 });
 
+// ── PPT 내보내기 — 현재 데이터 스냅샷을 기업 제출용 덱으로 (settings 탭) ──
+const pptBtn = $('#pptExportBtn');
+if (pptBtn) pptBtn.addEventListener('click', async () => {
+  const scope = ($('#pptScope') && $('#pptScope').value) === 'all' ? 'all' : 'featured';
+  const status = $('#pptStatus');
+  pptBtn.disabled = true;
+  if (status) status.textContent = '생성 중… (이미지 수집에 수십 초 걸릴 수 있어요)';
+  try {
+    const res = await fetch(`${API}/export-ppt?scope=${scope}`, { credentials: 'same-origin' });
+    if (res.status === 401) { location.href = '/admin/login'; return; }
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'export failed');
+    // 세션 만료가 302→로그인 HTML 로 돌아오는 경로 방어 — pptx 가 아니면 다운로드하지 않는다
+    if (!(res.headers.get('content-type') || '').includes('presentationml')) { location.href = '/admin/login'; return; }
+    const blob = await res.blob();
+    const cd = res.headers.get('content-disposition') || '';
+    const m = cd.match(/filename="([^"]+)"/);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (m && m[1]) || 'Hati_Portfolio.pptx';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    if (status) status.textContent = `완료 — ${(blob.size / 1048576).toFixed(1)}MB`;
+    toast('PPT 생성 완료');
+  } catch (err) {
+    if (status) status.textContent = '실패: ' + err.message;
+    toast('PPT 생성 실패', 'err');
+  } finally { pptBtn.disabled = false; }
+});
+
 // ── Logout ──
 $('#logoutBtn').addEventListener('click', async () => {
   await fetch('/admin/logout', { method: 'POST' });

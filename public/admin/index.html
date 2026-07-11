@@ -206,6 +206,20 @@
           <span id="settingsStatus" class="admin-muted"></span>
         </div>
       </form>
+
+      <!-- PPT 내보내기 — 현재 데이터의 스냅샷을 기업 제출용 표준 덱으로 -->
+      <div class="admin-export">
+        <h3 class="admin-export__title">PPT 내보내기</h3>
+        <p class="admin-muted">현재 게시물 데이터로 기업 제출용 포트폴리오 덱(.pptx)을 생성합니다. 비어 있는 항목은 장표에서 자동으로 빠집니다.</p>
+        <div class="admin-export__row">
+          <select id="pptScope" class="admin-input admin-export__scope">
+            <option value="featured">셀렉티드 웍스만</option>
+            <option value="all">전체 작품</option>
+          </select>
+          <button type="button" class="admin-pill admin-pill--primary" id="pptExportBtn">PPT 생성</button>
+          <span id="pptStatus" class="admin-muted"></span>
+        </div>
+      </div>
     </section>
 
     <!-- MEDIA UPLOAD -->

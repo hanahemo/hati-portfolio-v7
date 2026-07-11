@@ -684,3 +684,12 @@ select.admin-input option {
 #mediaList li {
   display: flex; align-items: center; gap: 12px;
 }
+
+/* ── PPT 내보내기 (settings 탭) ── */
+.admin-export {
+  margin-top: 32px; padding-top: 24px;
+  border-top: 1px solid var(--color-border, rgba(255,255,255,0.12));
+}
+.admin-export__title { font-size: 14px; margin: 0 0 6px; }
+.admin-export__row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.admin-export__scope { max-width: 200px; }
