@@ -691,8 +691,8 @@ select.admin-input option {
   border-top: 1px solid var(--color-border, rgba(255,255,255,0.12));
 }
 .admin-export__title { font-size: 14px; margin: 0 0 6px; }
-.admin-export__row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
-.admin-export__scope { max-width: 200px; }
+.admin-export__row { display: flex; align-items: center; gap: 12px; margin: 14px 0 28px; flex-wrap: wrap; }
+.admin-export__scope { max-width: 320px; }   /* 옵션 라벨('셀렉티드 웍스 (케이스스터디)')이 잘리지 않게 */
 
 /* ── Deck 탭 — 작품별 장표 정보 행 ── */
 .admin-deck-row {

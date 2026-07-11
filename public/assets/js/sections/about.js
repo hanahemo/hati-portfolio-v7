@@ -5,11 +5,14 @@ export function initAbout(settings) {
   const title = document.getElementById('aboutTitle');
   if (title) title.innerHTML = 'Hati<sup class="brand-reg">®</sup> Studio';   // 브랜드 마크 통일 (나브 Hati® 기준)
 
+  const meta = document.querySelector('#about .about__meta');
+  if (meta && settings.est) meta.textContent = `Director · EST. ${settings.est}`;   // 연도는 settings.est 단일 소스
+
   const text = document.getElementById('aboutText');
   if (text) text.textContent = settings.aboutText || '';
 
-  const quote = document.getElementById('aboutQuote');
-  if (quote && settings.philosophy) quote.textContent = settings.philosophy;
+  // aboutQuote — 필로소피 섹션이 같은 문구를 풀스크린으로 이미 보여주므로 About에서는 반복하지 않는다.
+  // (요소는 비워두면 :empty 규칙으로 숨겨짐)
 
   const sns = document.getElementById('aboutSns');
   if (sns) {

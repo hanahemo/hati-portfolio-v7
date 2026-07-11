@@ -88,6 +88,4 @@
 @media (max-width: 767px) {
   .about__gallery { grid-template-columns: repeat(2, 1fr); gap: var(--grid-gap-mobile); }
 }
-@media (hover: none) {
-  .about__gallery img { filter: none; }
-}
+/* 모바일에서도 B/W 유지 — 데스크탑(호버 컬러 리빌)과 톤 일치. 터치에선 컬러 리빌 없이 모노크롬 고정 */

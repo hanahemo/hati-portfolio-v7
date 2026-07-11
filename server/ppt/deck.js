@@ -153,7 +153,16 @@ async function bakeLogo(buf, maxWIn, maxHIn) {
     if (!meta.width || !meta.height) return null;
     const scale = Math.min((px(maxWIn)) / meta.width, (px(maxHIn)) / meta.height, 1);
     const w = Math.max(1, Math.round(meta.width * scale)), h = Math.max(1, Math.round(meta.height * scale));
-    const out = await sharp(buf).resize(w, h).png().toBuffer();
+    // 모노톤 처리 — 홈페이지 marquee 의 brightness(0) invert(0.92) 와 동일한 톤(#EBEBEB).
+    // 원색 로고들이 잉크 지면에서 제각각 튀지 않게 알파를 마스크로 단색 화이트그레이 실루엣으로 굽는다.
+    let out;
+    if ((meta.channels || 3) >= 4 || meta.hasAlpha) {
+      const alpha = await sharp(buf).resize(w, h).ensureAlpha().extractChannel('alpha').toBuffer();
+      out = await sharp({ create: { width: w, height: h, channels: 3, background: { r: 235, g: 235, b: 235 } } })
+        .joinChannel(alpha).png().toBuffer();
+    } else {
+      out = await sharp(buf).resize(w, h).grayscale().png().toBuffer();   // 알파 없는 로고 폴백
+    }
     return { data: 'data:image/png;base64,' + out.toString('base64'), w: w / DPI, h: h / DPI };
   } catch (_) { return null; }
 }
@@ -238,6 +247,8 @@ async function buildSpecs({ portfolio, settings, scope }) {
   const slides = [];   // {bg, dark, els:[]}
   let pageCounter = 0;
   const newSlide = (bg, dark) => { const s = { bg, dark, els: [] }; slides.push(s); pageCounter++; return s; };
+  const indexPatch = [];   // 인덱스 → 실제 장표 번호 매핑 (프로젝트 장표 생성 후 2-pass 로 기입)
+  const projPage = [];     // projIdx → 해당 프로젝트 첫 장표 번호
 
   // ═══ 1. 커버 — 타이포 전용 (잉크 지면, 사진 없음). 세리프 워드마크가 주인공 ═══
   {
@@ -250,7 +261,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
       { type: 'text', text: 'PORTFOLIO', x: M, y: 2.35, w: 6, h: 0.32, font: 'sans', size: 11, color: MUTE_INK, charSpacing: 5 },
       { type: 'text', runs: [
           { text: 'Hati', font: 'serif', italic: true, size: 118, color: KEY },
-          { text: ' ®', font: 'sans', size: 30, color: MUTE_INK },
+          { text: ' ®', font: 'sans', size: 22, color: MUTE_INK, superscript: true },   // 나브 위첨자 ® 문법과 정렬
         ], x: M - 0.06, y: 2.75, w: PW - M * 2, h: 1.95 },
       { type: 'text', text: headline, x: M, y: 4.78, w: 10.5, h: 0.5, font: 'sans', size: 15, color: SOFT_INK, charSpacing: 1 },
     );
@@ -344,21 +355,26 @@ async function buildSpecs({ portfolio, settings, scope }) {
     const colW = colCount === 1 ? 9.5 : 5.85;
     for (let c = 0; c < colCount; c++) {
       const runs = [];
-      rows.slice(c * per, (c + 1) * per).forEach(r => {
+      rows.slice(c * per, (c + 1) * per).forEach((r, k) => {
         runs.push({ text: r.no + '   ', font: 'serif', italic: true, size: rows.length > 24 ? 9 : 10.5, color: MUTE });
         runs.push({ text: r.title, font: 'sans', size: rows.length > 24 ? 10 : 12, color: INK, bold: false });
-        runs.push({ text: '   —  ' + r.meta, font: 'sans', size: rows.length > 24 ? 8 : 9, color: MUTE, breakLine: true, paraSpaceAfter: rows.length > 24 ? 5 : 9 });
+        const metaRun = { text: '   —  ' + r.meta, font: 'sans', size: rows.length > 24 ? 8 : 9, color: MUTE, breakLine: true, paraSpaceAfter: rows.length > 24 ? 5 : 9 };
+        runs.push(metaRun);
+        indexPatch.push({ run: metaRun, projIdx: c * per + k });   // 실제 장표 번호는 프로젝트 장표가 다 잡힌 뒤 채운다
       });
       s.els.push({ type: 'text', runs, x: M + c * 6.35, y: 2.15, w: colW, h: 4.7, valign: 'top', shrink: true });
     }
     pageNo(s.els, pageCounter, false);
   }
 
-  // ── 팩트 리치텍스트 ──
+  // ── 팩트 리치텍스트 — (A)(B) 에디토리얼 마커로 블록을 넘버링 (Filmsupply 각주 문법) ──
   function factRuns(p, { compact = false } = {}) {
     const runs = [];
+    let markerIdx = 0;
     const fact = (label, value, opts = {}) => {
-      runs.push({ text: label, font: 'sans', size: 8.5, color: MUTE, charSpacing: 3, breakLine: true, paraSpaceBefore: 11, paraSpaceAfter: 3 });
+      const marker = `( ${String.fromCharCode(65 + markerIdx++)} )  `;
+      runs.push({ text: marker, font: 'serif', italic: true, size: 8.5, color: MUTE, paraSpaceBefore: 11 });
+      runs.push({ text: label, font: 'sans', size: 8.5, color: MUTE, charSpacing: 3, breakLine: true, paraSpaceAfter: 3 });
       (Array.isArray(value) ? value : [value]).forEach(l =>
         runs.push({ text: l, font: 'sans', size: compact ? 10 : 11, color: INK, breakLine: true, paraSpaceAfter: 2, ...opts }));
     };
@@ -374,6 +390,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
       if (credits.length > cap) lines.push(`외 ${credits.length - cap}`);
       fact('CREDITS', lines, { size: 9, color: MUTE });
     }
+    runs.factCount = markerIdx;   // 블록 수 — 레이아웃 분기(인라인/스킵)는 run 수가 아니라 블록 수로 판단
     return runs;
   }
 
@@ -393,22 +410,42 @@ async function buildSpecs({ portfolio, settings, scope }) {
           { type: 'text', text: `${count} PROJECTS`, x: M + 0.08, y: 4.5, w: 6, h: 0.32, font: 'sans', size: 10, color: MUTE_INK, charSpacing: 3 },
         );
       }
-      const s = newSlide(PAPER, false);
+      const meta = [filled(p.client), filled(p.year)].filter(Boolean).join(' — ');
+      const tagLine = [String(p.category || '').toUpperCase(), ...(Array.isArray(p.tags) ? p.tags.filter(filled) : [])].join(' · ');
+      const sum = filled(p.deckSummary) || '';
+      const facts = factRuns(p, { compact: true });
       const buf = (rawImgs[i] || [])[0];
+
+      // 팩트도 요약도 빈약하면 스플릿 우측이 빈 종이가 된다 — 풀블리드 히어로로 전환 (이미지가 주인공)
+      if (buf && !sum && (facts.factCount || 0) < 2) {
+        const s = newSlide(INK, true);
+        projPage[i] = pageCounter;
+        const img = await bakeImage(buf, PW, PH, { scrim: 'bottom', position: 'attention', quality: 78 });
+        if (img) s.els.push({ type: 'image', data: img, x: 0, y: 0, w: PW, h: PH });
+        s.els.push(
+          { type: 'text', runs: [
+              { text: `( ${nn(i + 1)} )`, font: 'serif', italic: true, size: 12, color: SOFT_INK },
+              { text: '    ' + tagLine + (meta ? `    —    ${meta}` : ''), font: 'sans', size: 9, color: SOFT_INK, charSpacing: 2 },
+            ], x: M, y: 5.75, w: PW - M * 2, h: 0.32 },
+          { type: 'text', text: p.title || '(untitled)', x: M - 0.02, y: 6.1, w: PW - M * 2, h: 0.75, font: 'sans', size: 25, bold: true, color: WHITE, valign: 'top', shrink: true },
+        );
+        pageNo(s.els, pageCounter, true);
+        continue;
+      }
+
+      const s = newSlide(PAPER, false);
+      projPage[i] = pageCounter;
       const img = buf && await bakeImage(buf, 6.4, PH, { position: 'attention' });
       if (img) s.els.push({ type: 'image', data: img, x: 0, y: 0, w: 6.4, h: PH });
       const tx = img ? 7.0 : M, tw = img ? PW - 7.0 - M : PW - M * 2;
-      const meta = [filled(p.client), filled(p.year)].filter(Boolean).join(' — ');
       const runs = [
         { text: `( ${nn(i + 1)} )`, font: 'serif', italic: true, size: 12, color: MUTE, breakLine: true, paraSpaceAfter: 12 },
         { text: p.title || '(untitled)', font: 'sans', size: 21, bold: true, color: INK, breakLine: true, paraSpaceAfter: 5 },
       ];
-      const tagLine = [String(p.category || '').toUpperCase(), ...(Array.isArray(p.tags) ? p.tags.filter(filled) : [])].join(' · ');
       if (meta) runs.push({ text: meta, font: 'sans', size: 10.5, color: INK, breakLine: true, paraSpaceAfter: 3 });
       runs.push({ text: tagLine, font: 'sans', size: 9, color: MUTE, breakLine: true, paraSpaceAfter: 6, charSpacing: 1 });
-      const sum = filled(p.deckSummary) || '';
       if (sum) runs.push({ text: sum, font: 'sans', size: 10.5, color: INK, breakLine: true, paraSpaceAfter: 4, lineSpacingMultiple: 1.4 });
-      runs.push(...factRuns(p, { compact: true }));
+      runs.push(...facts);
       s.els.push({ type: 'text', runs, x: tx, y: 0.85, w: tw, h: PH - 1.6, valign: 'top', shrink: true });
       pageNo(s.els, pageCounter, false);
     }
@@ -423,6 +460,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
 
       // ── 히어로: 풀블리드 + 구운 하단 스크림, 트리트먼트 타이포 ──
       const s = newSlide(INK, true);
+      projPage[i] = pageCounter;
       const heroImg = bufs[0] && await bakeImage(bufs[0], PW, PH, { scrim: 'bottom', position: 'attention', quality: 80 });
       if (heroImg) s.els.push({ type: 'image', data: heroImg, x: 0, y: 0, w: PW, h: PH });
       railTop(s.els, year);
@@ -442,7 +480,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
       const descFull = cleanNote(p.description, 460);
       // 팩트가 한두 줄뿐이면 칼럼이 죽는다 — 킥커 라인에 인라인으로 붙이고 벤토를 전폭으로
       let inlineFacts = '';
-      if (stillBufs.length && runs.length && runs.length < 4) {
+      if (stillBufs.length && runs.length && (runs.factCount || 0) < 2) {
         inlineFacts = [
           filled(p.contribution) && `CONTRIBUTION ${filled(p.contribution)}`,
           filled(p.role) && oneLiner(p.role, 60),
@@ -450,7 +488,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
         runs = [];
       }
       // 스틸도 설명도 없고 팩트마저 짧으면 — 빈 종이를 만드느니 디테일을 생략 (히어로가 이미 킥커를 든다)
-      const skipDetail = !stillBufs.length && !descFull && runs.length < 8;
+      const skipDetail = !stillBufs.length && !descFull && (runs.factCount || 0) < 3;
       if ((runs.length || stillBufs.length || descFull) && !skipDetail) {
         const d = newSlide(PAPER, false);
         d.els.push(
@@ -513,12 +551,20 @@ async function buildSpecs({ portfolio, settings, scope }) {
     const s = newSlide(INK, true);
     railTop(s.els, year);
     s.els.push(
-      { type: 'text', text: 'Thank you.', x: M, y: 2.35, w: 12, h: 1.15, font: 'serif', italic: true, size: 58, color: WHITE },
+      { type: 'text', runs: [
+          { text: 'Thank you', font: 'serif', italic: true, size: 58, color: WHITE },
+          { text: '.', font: 'serif', italic: true, size: 58, color: KEY },   // 커버 라벤더와 북엔드
+        ], x: M, y: 2.35, w: 12, h: 1.15 },
       { type: 'line', x: M + 0.03, y: 3.95, w: 1.1, color: '5A5852', width: 1 },
     );
     const lines = [email, phone, instaHandle && `Instagram  ${instaHandle}`, 'hatist.studio'].filter(Boolean);
     s.els.push({ type: 'text', runs: lines.map(t => ({ text: t, font: 'sans', size: 12.5, color: SOFT_INK, breakLine: true, paraSpaceAfter: 7 })), x: M + 0.03, y: 4.3, w: 10, h: 1.9, valign: 'top' });
     s.els.push({ type: 'text', text: `GENERATED FROM HATIST.STUDIO — ${dateStr}`, x: M + 0.03, y: PH - 0.52, w: 8, h: 0.3, font: 'sans', size: 8, color: MUTE_INK, charSpacing: 2 });
+  }
+
+  // 인덱스 2-pass — 각 행 끝에 실제 장표 번호 기입 ("… — meta · 07")
+  for (const { run, projIdx } of indexPatch) {
+    if (projPage[projIdx]) run.text += `   ·   ${nn(projPage[projIdx])}`;
   }
 
   return slides;
@@ -557,7 +603,7 @@ function renderPptx(slides) {
               fontFace: font(r.font), fontSize: r.size, bold: r.bold, italic: r.italic,
               color: r.color, charSpacing: r.charSpacing, breakLine: r.breakLine,
               paraSpaceBefore: r.paraSpaceBefore, paraSpaceAfter: r.paraSpaceAfter,
-              lineSpacingMultiple: r.lineSpacingMultiple,
+              lineSpacingMultiple: r.lineSpacingMultiple, superscript: r.superscript,
             },
           })), opts);
         } else {
@@ -578,7 +624,7 @@ function renderHtml(slides) {
   const S = 96;   // px per inch
   const font = f => (f === 'serif' ? 'Georgia, serif' : "'Malgun Gothic','Apple SD Gothic Neo',sans-serif");
   const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const runHtml = r => `<span style="font-family:${font(r.font)};font-size:${(r.size || 12) * S / 72}px;${r.bold ? 'font-weight:700;' : ''}${r.italic ? 'font-style:italic;' : ''}color:#${r.color || '000'};letter-spacing:${(r.charSpacing || 0) * S / 72 / 10}px;">${esc(r.text)}</span>${r.breakLine ? `<div style="height:${((r.paraSpaceAfter || 0) + (r.paraSpaceBefore || 0)) * S / 72}px"></div>` : ''}`;
+  const runHtml = r => `<span style="font-family:${font(r.font)};font-size:${(r.size || 12) * S / 72}px;${r.bold ? 'font-weight:700;' : ''}${r.italic ? 'font-style:italic;' : ''}${r.superscript ? 'vertical-align:super;' : ''}color:#${r.color || '000'};letter-spacing:${(r.charSpacing || 0) * S / 72 / 10}px;">${esc(r.text)}</span>${r.breakLine ? `<div style="height:${((r.paraSpaceAfter || 0) + (r.paraSpaceBefore || 0)) * S / 72}px"></div>` : ''}`;
   const body = slides.map((sl, i) => `
   <div class="slide" style="position:relative;width:${PW * S}px;height:${PH * S}px;background:#${sl.bg};overflow:hidden;margin:24px auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)" data-n="${i + 1}">
     ${sl.els.map(el => {

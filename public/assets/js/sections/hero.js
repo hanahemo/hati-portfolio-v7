@@ -15,6 +15,8 @@ export function initHero(settings, portfolio) {
   const metaRoles = hero.querySelector('.hero__meta-roles');
   const subtitle = String(settings.heroSubtitle || '').trim();
   if (metaRoles && subtitle) metaRoles.textContent = subtitle;
+  const metaLoc = hero.querySelector('.hero__meta-loc');
+  if (metaLoc && settings.est) metaLoc.textContent = `Seoul — EST. ${settings.est}`;   // 연도는 settings.est 단일 소스
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lines = hero.querySelectorAll('.hero__line-inner');
@@ -252,6 +254,8 @@ export function initHero(settings, portfolio) {
   tl.to(roll, { opacity: 1, ease: 'none', duration: SHR * 0.55 }, VID + SHR * 0.45)
     .to(ticksWrap, { opacity: 1, ease: 'none', duration: SHR * 0.55 }, VID + SHR * 0.45)
     .to(prox, { p: 1, ease: 'none', duration: 1 - (VID + SHR) }, VID + SHR);
+  // 언핀 직전 하단 레일 페이드 — 레일 텍스트가 고정 나브를 그대로 통과하며 겹치는 순간 제거
+  if (foot) tl.to(foot, { opacity: 0, ease: 'none', duration: 0.05 }, 0.95);
 
   const st = tl.scrollTrigger;
   window.ScrollTrigger.addEventListener('refresh', () => { sizeConsts(); pinH = (pinEl && pinEl.getBoundingClientRect().height) || window.innerHeight; measureOff(); slats.forEach(a => a.style.width = MAXW + 'px'); strip.style.height = SLATH + 'px'; });

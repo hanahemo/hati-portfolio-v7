@@ -17,8 +17,14 @@ export function initCursor() {
   const text = cursor.querySelector('.cursor__text');
   let tx = 0, ty = 0, cx = 0, cy = 0;
 
+  // 첫 mousemove 전엔 숨김 — (0,0) 좌상단에 도트가 박혀 보이는 로드 직후 아티팩트 제거
+  cursor.style.opacity = '0';
+  ring.style.opacity = '0';
+  let shown = false;
+
   window.addEventListener('mousemove', (e) => {
     tx = e.clientX; ty = e.clientY;
+    if (!shown) { shown = true; cx = tx; cy = ty; cursor.style.opacity = ''; ring.style.opacity = ''; }
   });
 
   function raf() {

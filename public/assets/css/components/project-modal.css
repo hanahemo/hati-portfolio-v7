@@ -37,12 +37,17 @@
 .pview__scroll::-webkit-scrollbar { width: 9px; }
 .pview__scroll::-webkit-scrollbar-thumb { background: var(--pv-mute); border-radius: 5px; }
 
-/* 상단 바 — sticky */
+/* 상단 바 — sticky. 글래스 베일: 이미지가 아래를 지나가도 카운터/CLOSE 가독 유지 */
 .pview__top {
   position: sticky; top: 0; z-index: 5;
   display: flex; align-items: baseline; gap: var(--space-5);
   padding: var(--space-5) var(--page-pad-x);
   mix-blend-mode: normal;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(to bottom, rgba(255,255,255,0.34), rgba(255,255,255,0.08));
+  mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
 }
 .pview__pos {
   font-family: var(--font-mono);
