@@ -228,8 +228,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
   jobs.push(() => filled(settings.aboutImage) ? resolveBuffer(settings.aboutImage, 1000) : null);
   const resolved = await withPool(jobs, 5);
   const rawImgs = resolved.slice(0, projects.length);
-  const coverBuf = resolved[projects.length];
-  const aboutBuf = resolved[projects.length + 1];
+  const aboutBuf = resolved[projects.length];   // 커버는 사진을 쓰지 않는다(타이포 전용) — hero-poster 는 인물이라 뺐다
 
   // 로고
   const logoBufs = await withPool((Array.isArray(settings.clientLogos) ? settings.clientLogos : [])
@@ -239,23 +238,28 @@ async function buildSpecs({ portfolio, settings, scope }) {
   let pageCounter = 0;
   const newSlide = (bg, dark) => { const s = { bg, dark, els: [] }; slides.push(s); pageCounter++; return s; };
 
-  // ═══ 1. 커버 — 풀블리드 + 구운 스크림 + 세리프 디스플레이 ═══
+  // ═══ 1. 커버 — 타이포 전용 (잉크 지면, 사진 없음). 세리프 워드마크가 주인공 ═══
   {
     const s = newSlide(INK, true);
-    const img = coverBuf && await bakeImage(coverBuf, PW, PH, { scrim: 'bottom', position: 'centre', quality: 82 });
-    if (img) s.els.push({ type: 'image', data: img, x: 0, y: 0, w: PW, h: PH });
     railTop(s.els, year);
     const headline = filled(deck.coverHeadline) || 'Visual Creative Portfolio';
+    const sub = filled(settings.heroSubtitle);
+    // 상단 얇은 규칙 + 카테고리 캡션으로 프레임을 잡는다
     s.els.push(
+      { type: 'text', text: 'PORTFOLIO', x: M, y: 2.35, w: 6, h: 0.32, font: 'sans', size: 11, color: MUTE_INK, charSpacing: 5 },
       { type: 'text', runs: [
-          { text: 'Hati', font: 'serif', italic: true, size: 72, color: WHITE },
-          { text: ' ®', font: 'sans', size: 20, color: MUTE_INK },
-        ], x: M - 0.05, y: 4.62, w: 9, h: 1.35 },
-      { type: 'text', text: headline, x: M, y: 6.02, w: 9.5, h: 0.45, font: 'sans', size: 14, color: SOFT_INK, charSpacing: 1 },
-      { type: 'text', text: `SEOUL${est ? ' — EST. ' + est : ''}`, x: PW - 4.2 - M, y: 6.14, w: 4.2, h: 0.3, font: 'sans', size: 9.5, color: MUTE_INK, align: 'right', charSpacing: 2 },
+          { text: 'Hati', font: 'serif', italic: true, size: 118, color: WHITE },
+          { text: ' ®', font: 'sans', size: 30, color: MUTE_INK },
+        ], x: M - 0.06, y: 2.75, w: PW - M * 2, h: 1.95 },
+      { type: 'text', text: headline, x: M, y: 4.78, w: 10.5, h: 0.5, font: 'sans', size: 15, color: SOFT_INK, charSpacing: 1 },
     );
+    if (sub) s.els.push({ type: 'text', text: sub.toUpperCase(), x: M, y: 5.32, w: 10.5, h: 0.35, font: 'sans', size: 9.5, color: MUTE_INK, charSpacing: 2 });
+    // 하단 메타 스트립
     s.els.push({ type: 'line', x: M, y: 6.72, w: PW - M * 2, color: '5A5852', width: 0.5 });
-    s.els.push({ type: 'text', text: [email, phone, instaHandle].filter(Boolean).join('    ·    '), x: M, y: 6.9, w: PW - M * 2, h: 0.3, font: 'sans', size: 9.5, color: MUTE_INK });
+    s.els.push(
+      { type: 'text', text: [email, phone, instaHandle].filter(Boolean).join('    ·    '), x: M, y: 6.9, w: 9, h: 0.3, font: 'sans', size: 9.5, color: MUTE_INK },
+      { type: 'text', text: `SEOUL${est ? ' — EST. ' + est : ''}`, x: PW - 4.2 - M, y: 6.9, w: 4.2, h: 0.3, font: 'sans', size: 9.5, color: MUTE_INK, align: 'right', charSpacing: 2 },
+    );
   }
 
   // ═══ 2. 스테이트먼트 — 타이포 온리 (네거티브 스페이스) ═══
