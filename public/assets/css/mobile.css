@@ -43,7 +43,7 @@
   /* ── Clients ── */
   .clients { padding: var(--space-7) var(--page-pad-x); }
   .marquee__track { gap: var(--space-5) var(--space-6); }
-  .marquee__item img { height: 34px; }
+  .marquee__item img { height: 52px; }   /* 로고를 키움 (기존 34px → 52px) */
   .marquee__item { font-size: 10px; }
 
   /* ── About ── */

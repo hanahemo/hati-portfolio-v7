@@ -71,9 +71,13 @@ export function initCredits(portfolio, settings) {
     { x: '72%', w: 230, depth: 'mid',  speed: 0.60, at: 0.70 },
     { x: '9%',  w: 215, depth: 'far',  speed: 0.44, at: 0.76 },
   ];
-  const photos = (settings.aboutGallery || []).slice(0, SLOTS.length);
+  // 어드민에서 추가한 현장 스틸 전부를 흘린다 — 슬롯 수로 자르지 않는다(예전 slice가 11번째부터 삭제하던 버그).
+  // 슬롯(위치·깊이·속도)은 순환 재사용하고, 등장 시점 at은 전체 장수에 걸쳐 고르게 재분배해 롤 구간 안에 흩뿌린다.
+  const photos = settings.aboutGallery || [];
+  const N = photos.length;
   const stills = photos.map((url, i) => {
-    const slot = SLOTS[i];
+    const tpl = SLOTS[i % SLOTS.length];
+    const slot = { ...tpl, at: N > 1 ? (i / N) * 0.68 : 0 };   // 0.68 상한 → dur ≥ 0.10, 장수 무관 마지막 장까지 렌더
     const fig = document.createElement('figure');
     fig.className = `credits__still credits__still--${slot.depth}`;
     fig.style.left = slot.x;
