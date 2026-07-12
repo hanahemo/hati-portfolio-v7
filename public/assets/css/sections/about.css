@@ -1,4 +1,15 @@
 /* About — 에디토리얼 2단 */
+#about { position: relative; }
+/* Fade to black — 어바웃(밝은 2막) 하단이 검정으로 잠겨 크레딧(잉크)과 이어진다.
+   밝음→검정 하드컷을 없애 영화의 '페이드 투 블랙 → 엔드 크레딧' 문법으로. */
+#about::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 62vh;
+  background: linear-gradient(to bottom, transparent, #101010 88%);
+  pointer-events: none;
+  z-index: 4;
+}
 .about__grid {
   display: grid;
   grid-template-columns: 55fr 45fr;
