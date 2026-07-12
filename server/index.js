@@ -75,14 +75,6 @@ app.get('/uploads/:file', async (req, res, next) => {
     return res.send(buf);
   } catch (_) { return next(); }                                  // 이미지 아님/실패 → 원본(정상 타입) 폴백
 });
-
-// 임시 진단 — sharp 로드 실패 원인 확인용(고치면 제거)
-app.get('/_sharpcheck', (req, res) => {
-  const out = { platform: process.platform, arch: process.arch, node: process.version };
-  try { const s = require('sharp'); out.sharp = 'OK ' + JSON.stringify(s.versions || {}); }
-  catch (e) { out.sharp = 'FAIL: ' + ((e && e.message) || String(e)); }
-  res.json(out);
-});
 app.use('/uploads', express.static(persist.UPLOADS_DIR, {
   maxAge: 30 * 24 * 60 * 60 * 1000,
   immutable: false,
