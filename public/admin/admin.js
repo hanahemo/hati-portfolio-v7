@@ -701,6 +701,7 @@ function renderSettings() {
   settingsForm.contactEmail.value = s.contactEmail || '';
   settingsForm.contactPhone.value = s.contactPhone || '';
   settingsForm.contactInstagram.value = s.contactInstagram || '';
+  if (settingsForm.contactLinkedin) settingsForm.contactLinkedin.value = s.contactLinkedin || '';
   settingsForm.curtainSub.value = s.curtainSub || '';
   settingsForm.philosophy.value = s.philosophy || '';
   settingsForm.aboutText.value = s.aboutText || '';
@@ -727,10 +728,12 @@ settingsForm.addEventListener('submit', async (e) => {
     contactEmail: fd.get('contactEmail'),
     contactPhone: fd.get('contactPhone'),
     contactInstagram: fd.get('contactInstagram'),
+    contactLinkedin: fd.get('contactLinkedin'),
     curtainSub: fd.get('curtainSub'),
     philosophy: fd.get('philosophy'),
     aboutText: fd.get('aboutText'),
-    // 업로드 위젯이 관리하는 배열 (textarea 폐기)
+    // 업로드 위젯이 관리하는 값 (state 에서 직접 — 폼 필드가 아님)
+    aboutImage: String(state.settings.aboutImage || '').trim(),
     aboutGallery: Array.isArray(state.settings.aboutGallery) ? state.settings.aboutGallery : [],
     clientLogos: Array.isArray(state.settings.clientLogos) ? state.settings.clientLogos : [],
     // featured 리스트가 settings에 포함되어 있어 경쟁조건 방지 위해 현재 state 값 병합
