@@ -1,6 +1,7 @@
 /* Contact — 클로징 스테이트먼트 */
 .contact {
-  min-height: 90vh;
+  min-height: 100vh;
+  min-height: 100svh;   /* 클로징 = 뷰포트 풀필 → 맨 아래 스크롤 시 상단에 크레딧(잉크) 꼬리가 안 남는다 */
   display: grid; align-content: center; justify-items: center;
   padding: var(--space-9) var(--page-pad-x) max(var(--space-9), env(safe-area-inset-bottom));
   text-align: center;

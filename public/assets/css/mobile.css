@@ -51,7 +51,7 @@
   .about__quote { font-size: 18px; }
 
   /* ── Contact ── */
-  .contact { min-height: 70vh; }
+  .contact { min-height: 100svh; }
   .contact__links { gap: var(--space-5); flex-direction: column; align-items: center; margin-bottom: var(--space-7); }
   .contact__link { font-size: 16px; }
 }
@@ -65,5 +65,5 @@
 @media (max-width: 767px) and (orientation: landscape) {
   .hero { min-height: auto; }
   .philosophy { min-height: 90vh; }
-  .contact { min-height: 90vh; }
+  .contact { min-height: 100svh; }
 }
