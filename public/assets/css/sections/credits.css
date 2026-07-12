@@ -135,9 +135,10 @@
 .credits--flow .credits__roll { position: relative; top: 0; }
 .credits--flow .credits__finale {
   position: relative; inset: auto;
-  opacity: 1;
+  opacity: 1 !important;   /* 어떤 JS 잔재도 콘텐츠를 못 숨기게 */
   margin-top: 13vh;
 }
+.credits--flow .credits__roll, .credits--flow .credits__roll > * { opacity: 1 !important; transform: none !important; }
 
 /* 정적 폴백 — 모션 최소화/GSAP 부재 시: 롤 대신 짧은 정적 크레딧 */
 .credits--static { height: auto; }

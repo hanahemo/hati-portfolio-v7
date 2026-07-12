@@ -89,20 +89,15 @@ export function initCredits(portfolio, settings) {
   //    크레딧은 자연 스크롤로 항상 보이게 하고, 리빌만 얹는다. 스틸은 섹션 높이 %로 정적 산포. ──
   if (isMobile) {
     section.classList.add('credits--flow');
+    // 가시성 원칙: 모바일 크레딧은 어떤 애니메이션에도 인질 잡히지 않는다.
+    // opacity 숨김 리빌 금지(실기기에서 트리거 미발화 시 콘텐츠가 영영 투명 — 실제 발생했던 버그).
+    // 장식은 transform 패럴랙스만 — 실패해도 콘텐츠는 그대로 보인다.
     stills.forEach(({ fig }, i) => {
       fig.style.top = (6 + (i % 8) * 11) + '%';
       gsap.to(fig, {
         y: -60 - (i % 3) * 30, ease: 'none',
         scrollTrigger: { trigger: section, start: 'top bottom', end: 'bottom top', scrub: 0.6 }
       });
-    });
-    gsap.from(roll.children, {
-      opacity: 0, y: 26, stagger: 0.05, duration: 0.6, ease: 'power2.out',
-      scrollTrigger: { trigger: section, start: 'top 78%' }
-    });
-    gsap.from(finale, {
-      opacity: 0, y: 20, duration: 0.8, ease: 'power2.out',
-      scrollTrigger: { trigger: finale, start: 'top 92%' }
     });
     return;
   }
