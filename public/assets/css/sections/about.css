@@ -5,7 +5,7 @@
 #about::after {
   content: '';
   position: absolute; left: 0; right: 0; bottom: 0;
-  height: 62vh;
+  height: 30vh;
   background: linear-gradient(to bottom, transparent, #101010 88%);
   pointer-events: none;
   z-index: 4;
@@ -73,34 +73,20 @@
 .about__sns .pill:hover { background: none; color: var(--color-text); }
 .about__sns .pill:hover::after { transform: scaleX(0.35); }
 
-/* Gallery — 풀폭 컬럼 콜라주. 텍스트 2단 아래 전체 폭을 쓰는 사진 밴드.
-   JS가 사진을 명시적 컬럼(div)에 분배하고, 컬럼 통째로 다른 속도의 패럴랙스를 준다.
-   → 앞뒤 공간감(디즈니 크레딧 문법)을 내면서도 컬럼 내부 사진은 절대 안 겹친다. 사진 수 무제한. */
-.about__gallery {
-  margin-top: var(--space-9);
-  display: flex;
-  gap: var(--grid-gap);
-  align-items: flex-start;
-}
-.about__gallery__col {
-  flex: 1;
-  display: flex; flex-direction: column;
-  gap: var(--grid-gap);
-  will-change: transform;            /* 깊이 패럴랙스(JS)용 */
-}
-.about__gallery__col--mid { margin-top: var(--space-8); }   /* 가운데 컬럼을 처음부터 살짝 내려 리듬 어긋냄 */
-.about__gallery img {
-  display: block;
-  width: 100%; height: auto;         /* 원본 비율 유지 — 폰카 세로/가로 크롭 없음 */
+/* Portrait — 어바웃은 프로필 사진 한 장. 현장 스틸은 엔딩크레딧에서 흐른다.
+   문서 플로우를 출렁이게 하던 대용량 갤러리를 빼고, aspect-ratio 예약으로 로드 시 레이아웃 시프트 0. */
+.about__portrait {
+  margin: 0;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
   border-radius: var(--radius-card);
-  filter: grayscale(1) brightness(0.85);
-  transition: filter 700ms var(--ease-signature);
 }
-.about__gallery img:hover { filter: grayscale(0) brightness(1); }
-@media (max-width: 767px) {
-  .about__gallery { gap: var(--grid-gap-mobile); }
-  .about__gallery__col { gap: var(--grid-gap-mobile); }
-  .about__gallery__col--mid { margin-top: var(--space-6); }
+.about__portrait img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
 }
+@media (max-width: 1199px) { .about__portrait { max-width: 520px; } }
 
 /* 모바일에서도 B/W 유지 — 데스크탑(호버 컬러 리빌)과 톤 일치. 터치에선 컬러 리빌 없이 모노크롬 고정 */

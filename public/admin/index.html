@@ -187,7 +187,15 @@
           <textarea name="aboutText" rows="6" class="admin-input admin-textarea"></textarea>
         </label>
         <div class="admin-field admin-field--wide">
-          <span>about gallery (이미지 업로드 · 드래그로 순서 변경 · 최대 5장)</span>
+          <span>about 프로필 사진 (어바웃 섹션에 1장 표시)</span>
+          <div class="admin-uploader">
+            <div class="admin-uploader__grid" id="aboutImageGrid"></div>
+            <button type="button" class="admin-pill admin-pill--sm" id="aboutImageAdd">+ 프로필 업로드</button>
+            <input type="file" id="aboutImageInput" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="admin-field admin-field--wide">
+          <span>현장 스틸 (엔딩크레딧에 흐르는 사진 · 드래그로 순서 변경)</span>
           <div class="admin-uploader">
             <div class="admin-uploader__grid" id="galleryGrid"></div>
             <button type="button" class="admin-pill admin-pill--sm" id="galleryAdd">+ 이미지 업로드</button>

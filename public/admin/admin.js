@@ -704,7 +704,8 @@ function renderSettings() {
   settingsForm.curtainSub.value = s.curtainSub || '';
   settingsForm.philosophy.value = s.philosophy || '';
   settingsForm.aboutText.value = s.aboutText || '';
-  renderGallery();   // about gallery 업로드 위젯
+  renderGallery();
+  renderAboutImage();   // about gallery 업로드 위젯
   renderLogos();     // client logos 업로드 위젯
 }
 
@@ -806,6 +807,27 @@ function renderLogos() {
   });
   attachUploaderDrag(grid, list, renderLogos);
 }
+
+function renderAboutImage() {
+  const grid = $('#aboutImageGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const url = state.settings.aboutImage;
+  if (!url) return;
+  const cell = document.createElement('div');
+  cell.className = 'admin-uploader__item';
+  cell.innerHTML = `<img src="${escapeAttr(url)}" alt="" loading="lazy"><button type="button" class="admin-uploader__del" aria-label="remove">✕</button>`;
+  cell.querySelector('.admin-uploader__del').addEventListener('click', () => { state.settings.aboutImage = ''; renderAboutImage(); });
+  grid.appendChild(cell);
+}
+$('#aboutImageAdd')?.addEventListener('click', () => $('#aboutImageInput').click());
+$('#aboutImageInput')?.addEventListener('change', async (e) => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  toast('uploading…');
+  try { const d = await uploadImage(f); state.settings.aboutImage = d.url; renderAboutImage(); toast('added — save 잊지 마세요'); }
+  catch (err) { toast(err.message, 'err'); }
+  e.target.value = '';
+});
 
 $('#galleryAdd')?.addEventListener('click', () => $('#galleryInput').click());
 $('#galleryInput')?.addEventListener('change', async (e) => {

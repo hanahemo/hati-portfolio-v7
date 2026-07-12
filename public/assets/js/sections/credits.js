@@ -52,18 +52,24 @@ export function initCredits(portfolio, settings) {
   const isMobile = window.innerWidth < 768;
   const SLOTS = isMobile ? [
     { x: '6%',  w: 108, depth: 'mid',  speed: 0.60, at: 0.00 },
-    { x: '64%', w: 96,  depth: 'far',  speed: 0.42, at: 0.14 },
-    { x: '56%', w: 116, depth: 'near', speed: 0.72, at: 0.34 },
-    { x: '8%',  w: 92,  depth: 'far',  speed: 0.46, at: 0.50 },
-    { x: '60%', w: 104, depth: 'mid',  speed: 0.66, at: 0.60 },
-    { x: '10%', w: 100, depth: 'near', speed: 0.58, at: 0.74 },
+    { x: '64%', w: 96,  depth: 'far',  speed: 0.42, at: 0.10 },
+    { x: '56%', w: 116, depth: 'near', speed: 0.72, at: 0.22 },
+    { x: '8%',  w: 92,  depth: 'far',  speed: 0.46, at: 0.34 },
+    { x: '60%', w: 104, depth: 'mid',  speed: 0.66, at: 0.46 },
+    { x: '10%', w: 100, depth: 'near', speed: 0.58, at: 0.56 },
+    { x: '58%', w: 98,  depth: 'far',  speed: 0.44, at: 0.66 },
+    { x: '7%',  w: 110, depth: 'mid',  speed: 0.62, at: 0.74 },
   ] : [
     { x: '6%',  w: 280, depth: 'near', speed: 0.85, at: 0.00 },
-    { x: '76%', w: 220, depth: 'far',  speed: 0.40, at: 0.10 },
-    { x: '73%', w: 300, depth: 'mid',  speed: 0.62, at: 0.34 },
-    { x: '8%',  w: 200, depth: 'far',  speed: 0.45, at: 0.48 },
-    { x: '70%', w: 260, depth: 'near', speed: 0.90, at: 0.58 },
-    { x: '10%', w: 240, depth: 'mid',  speed: 0.58, at: 0.72 },
+    { x: '76%', w: 220, depth: 'far',  speed: 0.40, at: 0.08 },
+    { x: '73%', w: 300, depth: 'mid',  speed: 0.62, at: 0.18 },
+    { x: '8%',  w: 200, depth: 'far',  speed: 0.45, at: 0.28 },
+    { x: '70%', w: 260, depth: 'near', speed: 0.90, at: 0.38 },
+    { x: '10%', w: 240, depth: 'mid',  speed: 0.58, at: 0.46 },
+    { x: '75%', w: 210, depth: 'far',  speed: 0.42, at: 0.54 },
+    { x: '5%',  w: 300, depth: 'near', speed: 0.88, at: 0.62 },
+    { x: '72%', w: 230, depth: 'mid',  speed: 0.60, at: 0.70 },
+    { x: '9%',  w: 215, depth: 'far',  speed: 0.44, at: 0.76 },
   ];
   const photos = (settings.aboutGallery || []).slice(0, SLOTS.length);
   const stills = photos.map((url, i) => {
@@ -87,6 +93,7 @@ export function initCredits(portfolio, settings) {
       scrub: 0.6,
       pin: true,                     // sticky는 Lenis/overflow 환경에서 안 붙는다 — 사이트 공통 문법(GSAP pin) 사용
       pinSpacing: true,
+      anticipatePin: 1,              // 핀 체결 순간 1프레임 스냅 방지
       invalidateOnRefresh: true,
       refreshPriority: 1,            // 핀 refresh 순서 = DOM 순서 (hero 12 > actBg 5 > credits 1)
     }

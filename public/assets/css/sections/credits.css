@@ -100,6 +100,17 @@
 .credits__still--near img { filter: grayscale(1) brightness(0.78); }
 .credits__still--mid img { filter: grayscale(1) brightness(0.66); }
 .credits__still--far img { filter: grayscale(1) brightness(0.5) blur(2px); }
+/* 필름 그레인 — 시네마틱 노이즈. 전 레이어(스틸·텍스트) 위에 얇게 덮여 프레임 전체가 '필름'이 된다 */
+.credits__grain {
+  position: absolute; inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background-image: url('/assets/images/grain.png');
+  background-repeat: repeat;
+  opacity: 0.11;
+  mix-blend-mode: overlay;
+}
+
 /* 모바일 — 화면이 좁아 스틸을 텍스트 뒤 배경으로(디즈니처럼 크레딧 뒤로 장면이 흐름).
    전부 z-index 0으로 눌러 롤(z:4)·피날레(z:5) 아래에 두고, 더 어둡게 깔아 텍스트 가독 유지. */
 @media (max-width: 767px) {
