@@ -55,14 +55,22 @@ app.use('/uploads', express.static(persist.UPLOADS_DIR, {
 }));
 app.use('/assets', express.static(path.join(PUBLIC_DIR, 'assets'), {
   etag: true,
-  setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
+  setHeaders: (res, filePath) => {
+    // 버전 해시 없는 환경 — JS/CSS는 캐시 금지.
+    // no-cache(재검증)는 모바일 크롬이 bfcache/디스크캐시로 재검증을 건너뛰고 옛 코드를 물고 있는 사례가 있어,
+    // 재배포 후 즉시 최신을 강제하려면 no-store 가 확실하다. 이미지/폰트/그레인 등 안정 에셋은 계속 캐시.
+    if (/\.(?:js|mjs|css)$/i.test(filePath)) res.setHeader('Cache-Control', 'no-store');
+    else res.setHeader('Cache-Control', 'public, max-age=86400');
+  }
 }));
 
 // ── 테마 라우팅 — studio(새 사이트) / cereal(시리얼) ──
 // / = 어드민 기본 테마(defaultTheme, 기본 studio). 홈은 항상 기본 테마로 열림(쿠키 지속 없음).
 // /studio·/cereal = 해당 테마 직접 서빙(양쪽 전환 버튼이 여기로 이동).
-const sendTheme = (res, theme) =>
+const sendTheme = (res, theme) => {
+  res.setHeader('Cache-Control', 'no-store');   // 엔트리 HTML은 항상 새로 — 최신 에셋 참조를 확실히 물게
   res.sendFile(path.join(PUBLIC_DIR, theme === 'cereal' ? 'cereal.html' : 'index.html'));
+};
 app.get('/', async (req, res) => {
   let theme = 'studio';
   try { const s = await dataSource.readSettings(); if (s && s.defaultTheme === 'cereal') theme = 'cereal'; }
