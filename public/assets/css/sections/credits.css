@@ -118,7 +118,7 @@
   .credits__still--near,
   .credits__still--mid,
   .credits__still--far { z-index: 0; }
-  .credits__still img { filter: grayscale(1) brightness(0.4) blur(1px); }
+  .credits__still img { filter: grayscale(1) brightness(0.5) blur(0.6px); }
   .credits__roll { z-index: 4; }
   .credits__finale { z-index: 5; }
 }

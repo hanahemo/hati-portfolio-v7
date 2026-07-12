@@ -96,10 +96,15 @@ export function initCredits(portfolio, settings) {
     // 가시성 원칙: 모바일 크레딧은 어떤 애니메이션에도 인질 잡히지 않는다.
     // opacity 숨김 리빌 금지(실기기에서 트리거 미발화 시 콘텐츠가 영영 투명 — 실제 발생했던 버그).
     // 장식은 transform 패럴랙스만 — 실패해도 콘텐츠는 그대로 보인다.
+    const M = stills.length;
     stills.forEach(({ fig }, i) => {
-      fig.style.top = (6 + (i % 8) * 11) + '%';
+      // 전 장수에 걸쳐 세로 고르게 분산 — i%8로 6장이 같은 자리에 겹쳐 쌓이던 '투박함' 제거.
+      // 좌우 교차 + 작은 폭(72~92px)으로 큰 블록이 아닌 은은한 배경 텍스처가 되게.
+      fig.style.top = (4 + (i / Math.max(1, M)) * 90).toFixed(1) + '%';
+      fig.style.left = (i % 2 === 0 ? 6 : 60) + '%';
+      fig.style.width = (72 + (i % 3) * 10) + 'px';
       gsap.to(fig, {
-        y: -60 - (i % 3) * 30, ease: 'none',
+        y: -40 - (i % 3) * 22, ease: 'none',
         scrollTrigger: { trigger: section, start: 'top bottom', end: 'bottom top', scrub: 0.6 }
       });
     });
