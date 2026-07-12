@@ -105,8 +105,12 @@ async function sendTheme(req, res, theme, settings) {
   try { html = fs.readFileSync(file, 'utf8'); } catch (_) { return res.sendFile(file); }
   try {
     const s = settings || await dataSource.readSettings();
-    const proto = process.env.NODE_ENV === 'production' ? 'https' : req.protocol;
-    const base = `${proto}://${req.get('host')}`;
+    const host = req.get('host') || '';
+    // Railway 프록시가 넘기는 실제 클라이언트 프로토콜을 우선(프록시 뒤 req.protocol은 http).
+    // 없으면 로컬만 http, 그 외엔 https(카톡 등은 og:image가 https여야 함).
+    const xf = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+    const proto = xf || (/localhost|127\.0\.0\.1/.test(host) ? 'http' : 'https');
+    const base = `${proto}://${host}`;
     const og = String((s && s.ogImage) || '').trim();
     const abs = og ? (/^https?:\/\//i.test(og) ? og : base + og) : base + '/assets/images/og-image.png';
     const a = escapeAttr(abs);
