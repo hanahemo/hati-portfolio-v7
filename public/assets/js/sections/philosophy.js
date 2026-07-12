@@ -12,9 +12,20 @@ export function initPhilosophy(settings) {
 
   const section = document.getElementById('philosophy');
   const gsap = window.gsap;
-  const ST = window.ScrollTrigger;
 
-  // SplitType이 있으면 단어 단위 스태거, 없으면 줄 단위 페이드 폴백
+  // 모바일 — 핀+스크럽(SplitType 워드 리빌)은 Lenis 위에서 덜커덩거린다.
+  // 줄 단위로 한 번 페이드 인만. 핀이 없어 스크롤이 매끄럽고 텍스트 중앙정렬도 안 깨진다.
+  if (window.innerWidth < 768) {
+    const lines = el.querySelectorAll('.line1, .line2');
+    gsap.set(lines, { opacity: 0.15, y: 16 });
+    gsap.to(lines, {
+      opacity: 1, y: 0, stagger: 0.12, duration: 0.7, ease: 'power2.out',
+      scrollTrigger: { trigger: section, start: 'top 68%' }
+    });
+    return;
+  }
+
+  // 데스크탑 — 핀 + 스크럽 워드 리빌
   let targets;
   if (window.SplitType) {
     const split = new window.SplitType(el.querySelectorAll('.line1, .line2'), { types: 'words' });

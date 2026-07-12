@@ -162,12 +162,12 @@ export function initHero(settings, portfolio) {
     }
     const markDur = () => { if (Number.isFinite(video.duration) && video.duration > 0) vidDur = video.duration; };
     video.addEventListener('loadedmetadata', markDur);
-    // 디코딩 프라임 — 최초 재생→즉시 정지로 시킹 가능 상태 확보(일부 브라우저는 첫 seek 전 디코드 필요)
+    // 디코딩 프라임 — 재생 없이 첫 프레임만 seek 으로 디코드.
+    // (play()→pause() 방식은 모바일에서 로드 직후 영상이 눈에 띄게 잠깐 재생됨 — 스크럽 전용이라 재생은 필요 없다.)
     const prime = () => {
       markDur();
-      const pr = video.play?.();
-      if (pr && pr.then) pr.then(() => { video.pause(); vidReady = true; }).catch(() => { vidReady = true; });
-      else vidReady = true;
+      try { video.currentTime = 0.04; } catch (_) {}
+      vidReady = true;
     };
     if (video.readyState >= 1) prime();
     else video.addEventListener('loadedmetadata', prime, { once: true });

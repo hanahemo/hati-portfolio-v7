@@ -89,4 +89,9 @@
 }
 @media (max-width: 1199px) { .about__portrait { max-width: 520px; } }
 
+/* 모바일 — about 본문은 수동 줄바꿈(pre-line) 대신 자연 흐름. 좁은 화면에서 강제 개행이 고아줄을 만든다 */
+@media (max-width: 767px) {
+  .about__text { white-space: normal; }
+}
+
 /* 모바일에서도 B/W 유지 — 데스크탑(호버 컬러 리빌)과 톤 일치. 터치에선 컬러 리빌 없이 모노크롬 고정 */

@@ -93,7 +93,6 @@ export function initCredits(portfolio, settings) {
       scrub: 0.6,
       pin: true,                     // sticky는 Lenis/overflow 환경에서 안 붙는다 — 사이트 공통 문법(GSAP pin) 사용
       pinSpacing: true,
-      anticipatePin: 1,              // 핀 체결 순간 1프레임 스냅 방지
       invalidateOnRefresh: true,
       refreshPriority: 1,            // 핀 refresh 순서 = DOM 순서 (hero 12 > actBg 5 > credits 1)
     }
