@@ -29,7 +29,9 @@ export function initAbout(settings) {
   const portrait = document.getElementById('aboutPortrait');
   const portraitSrc = String(settings.aboutImage || (settings.aboutGallery || [])[0] || '').trim();
   if (portrait && portraitSrc) {
-    portrait.innerHTML = `<img src="${escapeHtml(portraitSrc)}" alt="Hati portrait" loading="lazy" onerror="this.parentNode.hidden=true">`;
+    // 원본 대신 표시폭(최대 520px)의 2x WebP 썸네일 — 대용량 원본 다운로드 방지
+    const psized = /^\/uploads\//.test(portraitSrc) ? `${portraitSrc}${portraitSrc.includes('?') ? '&' : '?'}w=900` : portraitSrc;
+    portrait.innerHTML = `<img src="${escapeHtml(psized)}" alt="Hati portrait" loading="lazy" decoding="async" onerror="this.parentNode.hidden=true">`;
     portrait.hidden = false;
   }
 

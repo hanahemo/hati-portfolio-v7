@@ -75,6 +75,9 @@ export function initCredits(portfolio, settings) {
   // 슬롯(위치·깊이·속도)은 순환 재사용하고, 등장 시점 at은 전체 장수에 걸쳐 고르게 재분배해 롤 구간 안에 흩뿌린다.
   const photos = settings.aboutGallery || [];
   const N = photos.length;
+  // 원본(3~6MB)을 그대로 받지 않고 표시 크기에 맞춘 WebP 썸네일을 요청 — 모바일 버벅임의 주원인 해소.
+  const thumbW = isMobile ? 440 : 720;   // near 144px@3x ≈ 432 / 데스크탑 300px@2x = 600 커버
+  const thumb = (url) => /^\/uploads\//.test(url) ? `${url}${url.includes('?') ? '&' : '?'}w=${thumbW}` : url;
   const stills = photos.map((url, i) => {
     const tpl = SLOTS[i % SLOTS.length];
     const slot = { ...tpl, at: N > 1 ? (i / N) * 0.68 : 0 };   // 0.68 상한 → dur ≥ 0.10, 장수 무관 마지막 장까지 렌더
@@ -83,7 +86,7 @@ export function initCredits(portfolio, settings) {
     fig.style.left = slot.x;
     fig.style.width = slot.w + 'px';
     fig.style.top = '100%';
-    fig.innerHTML = `<img src="${url}" alt="" loading="lazy" onerror="this.parentNode.remove()">`;
+    fig.innerHTML = `<img src="${thumb(url)}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.remove()">`;
     stage.insertBefore(fig, finale);
     return { fig, slot };
   });

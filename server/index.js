@@ -5,6 +5,8 @@ try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.e
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
+const fs = require('fs');
+const sharp = require('sharp');
 
 const noindex = require('./middleware/noindex');
 const apiRouter = require('./routes/api');
@@ -48,6 +50,28 @@ app.get('/robots.txt', (req, res) => {
 //   - /assets:  no-cache (버전 해시 없는 환경 — 매 요청 ETag 재검증, 변경 없으면 304)
 //   - 기타:     캐시 없음
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+
+// On-demand 썸네일 — /uploads/<file>?w=<폭> 이면 원본을 그 폭의 WebP로 줄여 내려준다.
+// 폰 카메라 원본(3~6MB)을 74~144px로 쓰던 크레딧/어바웃이 원본 전체를 받아 모바일이 버벅이던 문제 해결.
+// 결과물은 볼륨의 .cache 에 저장(폭별 불변) → 재요청·재배포에도 재계산 없음. ?w 없으면 아래 static으로 폴백.
+const RESIZE_CACHE = path.join(persist.UPLOADS_DIR, '.cache');
+try { fs.mkdirSync(RESIZE_CACHE, { recursive: true }); } catch (_) {}
+app.get('/uploads/:file', async (req, res, next) => {
+  const w = parseInt(req.query.w, 10);
+  if (!Number.isFinite(w)) return next();                         // ?w 없음 → 원본 static
+  const width = Math.min(1600, Math.max(48, w));
+  const src = path.join(persist.UPLOADS_DIR, req.params.file);
+  if (!src.startsWith(persist.UPLOADS_DIR + path.sep)) return next();   // 경로 이탈 차단
+  const cached = path.join(RESIZE_CACHE, `${req.params.file}.w${width}.webp`);
+  res.type('image/webp');
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');  // 폭별 파생물은 불변
+  if (fs.existsSync(cached)) return res.sendFile(cached);
+  try {
+    const buf = await sharp(src).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 72 }).toBuffer();
+    fs.writeFile(cached, buf, () => {});                          // 캐시에 비동기 기록
+    return res.send(buf);
+  } catch (_) { return next(); }                                  // 이미지 아님/실패 → 원본 폴백
+});
 app.use('/uploads', express.static(persist.UPLOADS_DIR, {
   maxAge: 30 * 24 * 60 * 60 * 1000,
   immutable: false,
