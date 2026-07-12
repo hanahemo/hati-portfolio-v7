@@ -114,11 +114,13 @@
 /* 모바일 — 화면이 좁아 스틸을 텍스트 뒤 배경으로(디즈니처럼 크레딧 뒤로 장면이 흐름).
    전부 z-index 0으로 눌러 롤(z:4)·피날레(z:5) 아래에 두고, 더 어둡게 깔아 텍스트 가독 유지. */
 @media (max-width: 767px) {
-  .credits__still,
-  .credits__still--near,
-  .credits__still--mid,
-  .credits__still--far { z-index: 0; }
-  .credits__still img { filter: grayscale(1) brightness(0.5) blur(0.6px); }
+  /* 깊이 레이어 — far(뒤·흐림) < mid < near(앞·선명), 전부 텍스트 롤(z4) 아래 */
+  .credits__still--far  { z-index: 0; }
+  .credits__still--mid  { z-index: 1; }
+  .credits__still--near { z-index: 2; }
+  .credits__still--near img { filter: grayscale(1) brightness(0.72); }
+  .credits__still--mid img  { filter: grayscale(1) brightness(0.56) blur(1px); }
+  .credits__still--far img  { filter: grayscale(1) brightness(0.4) blur(2.5px); }
   .credits__roll { z-index: 4; }
   .credits__finale { z-index: 5; }
 }

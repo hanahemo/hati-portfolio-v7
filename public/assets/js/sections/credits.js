@@ -96,15 +96,21 @@ export function initCredits(portfolio, settings) {
     // 가시성 원칙: 모바일 크레딧은 어떤 애니메이션에도 인질 잡히지 않는다.
     // opacity 숨김 리빌 금지(실기기에서 트리거 미발화 시 콘텐츠가 영영 투명 — 실제 발생했던 버그).
     // 장식은 transform 패럴랙스만 — 실패해도 콘텐츠는 그대로 보인다.
-    const M = stills.length;
-    stills.forEach(({ fig }, i) => {
-      // 전 장수에 걸쳐 세로 고르게 분산 — i%8로 6장이 같은 자리에 겹쳐 쌓이던 '투박함' 제거.
-      // 좌우 교차 + 작은 폭(72~92px)으로 큰 블록이 아닌 은은한 배경 텍스처가 되게.
-      fig.style.top = (4 + (i / Math.max(1, M)) * 90).toFixed(1) + '%';
-      fig.style.left = (i % 2 === 0 ? 6 : 60) + '%';
-      fig.style.width = (72 + (i % 3) * 10) + 'px';
+    const M = Math.max(1, stills.length);
+    const vw = window.innerWidth;
+    // 깊이 체계 — near(가깝게: 크고 선명·빠름) / mid / far(멀게: 작고 흐림·느림).
+    // 크기·이동량·프레임 물림을 깊이로 벌려 공간감과 패럴랙스를 살린다. (블러/명도는 CSS 깊이 클래스가 담당)
+    const DW = { near: 144, mid: 104, far: 74 };      // 폭(px) — 가까울수록 큼
+    const INSET = { near: -22, mid: 8, far: 24 };     // near는 프레임 밖으로 흘려 '가까이 지나가는' 크롭
+    const TRAVEL = { near: -215, mid: -120, far: -52 }; // 스크롤당 이동량 — 가까울수록 많이(=빠르게) 흐른다
+    stills.forEach(({ fig, slot }, i) => {
+      const d = slot.depth in DW ? slot.depth : 'mid';
+      const w = DW[d];
+      fig.style.width = w + 'px';
+      fig.style.top = (3 + (i / M) * 92).toFixed(1) + '%';    // 세로 균등 분산 — 겹쳐 쌓임 방지
+      fig.style.left = (i % 2 === 0 ? INSET[d] : vw - w - INSET[d]) + 'px';  // 좌우 교차
       gsap.to(fig, {
-        y: -40 - (i % 3) * 22, ease: 'none',
+        y: TRAVEL[d], ease: 'none',
         scrollTrigger: { trigger: section, start: 'top bottom', end: 'bottom top', scrub: 0.6 }
       });
     });
