@@ -112,7 +112,7 @@ async function sendTheme(req, res, theme, settings) {
     const proto = xf || (/localhost|127\.0\.0\.1/.test(host) ? 'http' : 'https');
     const base = `${proto}://${host}`;
     const og = String((s && s.ogImage) || '').trim();
-    const abs = og ? (/^https?:\/\//i.test(og) ? og : base + og) : base + '/assets/images/og-image.png';
+    const abs = og ? (/^https?:\/\//i.test(og) ? og : base + og) : base + '/assets/images/og-hero.jpg';
     const a = escapeAttr(abs);
     html = html
       .replace(/(<meta\s+property="og:image"\s+content=")[^"]*(")/i, `$1${a}$2`)
