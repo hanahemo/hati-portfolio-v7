@@ -199,6 +199,15 @@
           </div>
         </div>
         <div class="admin-field admin-field--wide">
+          <span>공유 썸네일 (카톡·메시지 링크 미리보기 · 권장 1200×630 JPG/PNG)</span>
+          <div class="admin-uploader">
+            <div class="admin-uploader__grid" id="ogImageGrid"></div>
+            <button type="button" class="admin-pill admin-pill--sm" id="ogImageAdd">+ 썸네일 업로드</button>
+            <input type="file" id="ogImageInput" accept="image/*" hidden>
+          </div>
+          <small class="admin-muted">저장 후에도 카톡/메시지는 예전 썸네일을 한동안 캐싱합니다 — 새 이미지를 올리면 URL이 바뀌어 대개 자동 갱신되지만, 즉시 안 바뀌면 카톡은 링크 재전송/캐시 초기화가 필요할 수 있습니다.</small>
+        </div>
+        <div class="admin-field admin-field--wide">
           <span>현장 스틸 (엔딩크레딧에 흐르는 사진 · 드래그로 순서 변경)</span>
           <div class="admin-uploader">
             <div class="admin-uploader__grid" id="galleryGrid"></div>

@@ -94,18 +94,36 @@ app.use('/assets', express.static(path.join(PUBLIC_DIR, 'assets'), {
 // ── 테마 라우팅 — studio(새 사이트) / cereal(시리얼) ──
 // / = 어드민 기본 테마(defaultTheme, 기본 studio). 홈은 항상 기본 테마로 열림(쿠키 지속 없음).
 // /studio·/cereal = 해당 테마 직접 서빙(양쪽 전환 버튼이 여기로 이동).
-const sendTheme = (res, theme) => {
+// 공유 크롤러(카톡·아이메시지·페북 등)는 JS를 실행하지 않고 HTML의 meta 태그만 읽는다.
+// → og:image/twitter:image를 서버가 절대 URL로 주입한다: 어드민 설정 ogImage > 기본 og-image.png.
+// 프로덕션은 Railway TLS 뒤 → https 강제(상대경로 og는 카톡 등에서 안 뜬다).
+const escapeAttr = (s) => String(s).replace(/"/g, '&quot;');
+async function sendTheme(req, res, theme, settings) {
   res.setHeader('Cache-Control', 'no-store');   // 엔트리 HTML은 항상 새로 — 최신 에셋 참조를 확실히 물게
-  res.sendFile(path.join(PUBLIC_DIR, theme === 'cereal' ? 'cereal.html' : 'index.html'));
-};
+  const file = path.join(PUBLIC_DIR, theme === 'cereal' ? 'cereal.html' : 'index.html');
+  let html;
+  try { html = fs.readFileSync(file, 'utf8'); } catch (_) { return res.sendFile(file); }
+  try {
+    const s = settings || await dataSource.readSettings();
+    const proto = process.env.NODE_ENV === 'production' ? 'https' : req.protocol;
+    const base = `${proto}://${req.get('host')}`;
+    const og = String((s && s.ogImage) || '').trim();
+    const abs = og ? (/^https?:\/\//i.test(og) ? og : base + og) : base + '/assets/images/og-image.png';
+    const a = escapeAttr(abs);
+    html = html
+      .replace(/(<meta\s+property="og:image"\s+content=")[^"]*(")/i, `$1${a}$2`)
+      .replace(/(<meta\s+name="twitter:image"\s+content=")[^"]*(")/i, `$1${a}$2`);
+  } catch (_) {}
+  res.type('html').send(html);
+}
 app.get('/', async (req, res) => {
-  let theme = 'studio';
-  try { const s = await dataSource.readSettings(); if (s && s.defaultTheme === 'cereal') theme = 'cereal'; }
-  catch (_) {}
-  sendTheme(res, theme);
+  let s = null;
+  try { s = await dataSource.readSettings(); } catch (_) {}
+  const theme = (s && s.defaultTheme === 'cereal') ? 'cereal' : 'studio';
+  await sendTheme(req, res, theme, s);
 });
-app.get('/studio', (req, res) => sendTheme(res, 'studio'));
-app.get('/cereal', (req, res) => sendTheme(res, 'cereal'));
+app.get('/studio', (req, res) => sendTheme(req, res, 'studio'));
+app.get('/cereal', (req, res) => sendTheme(req, res, 'cereal'));
 
 app.use(express.static(PUBLIC_DIR));
 

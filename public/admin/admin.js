@@ -707,6 +707,7 @@ function renderSettings() {
   settingsForm.aboutText.value = s.aboutText || '';
   renderGallery();
   renderAboutImage();   // about gallery 업로드 위젯
+  renderOgImage();      // 공유 썸네일(OG) 업로드 위젯
   renderLogos();     // client logos 업로드 위젯
 }
 
@@ -734,6 +735,7 @@ settingsForm.addEventListener('submit', async (e) => {
     aboutText: fd.get('aboutText'),
     // 업로드 위젯이 관리하는 값 (state 에서 직접 — 폼 필드가 아님)
     aboutImage: String(state.settings.aboutImage || '').trim(),
+    ogImage: String(state.settings.ogImage || '').trim(),
     aboutGallery: Array.isArray(state.settings.aboutGallery) ? state.settings.aboutGallery : [],
     clientLogos: Array.isArray(state.settings.clientLogos) ? state.settings.clientLogos : [],
     // featured 리스트가 settings에 포함되어 있어 경쟁조건 방지 위해 현재 state 값 병합
@@ -828,6 +830,27 @@ $('#aboutImageInput')?.addEventListener('change', async (e) => {
   const f = e.target.files && e.target.files[0]; if (!f) return;
   toast('uploading…');
   try { const d = await uploadImage(f); state.settings.aboutImage = d.url; renderAboutImage(); toast('added — save 잊지 마세요'); }
+  catch (err) { toast(err.message, 'err'); }
+  e.target.value = '';
+});
+
+function renderOgImage() {
+  const grid = $('#ogImageGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const url = state.settings.ogImage;
+  if (!url) return;
+  const cell = document.createElement('div');
+  cell.className = 'admin-uploader__item';
+  cell.innerHTML = `<img src="${escapeAttr(url)}" alt="" loading="lazy"><button type="button" class="admin-uploader__del" aria-label="remove">✕</button>`;
+  cell.querySelector('.admin-uploader__del').addEventListener('click', () => { state.settings.ogImage = ''; renderOgImage(); });
+  grid.appendChild(cell);
+}
+$('#ogImageAdd')?.addEventListener('click', () => $('#ogImageInput').click());
+$('#ogImageInput')?.addEventListener('change', async (e) => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  toast('uploading…');
+  try { const d = await uploadImage(f); state.settings.ogImage = d.url; renderOgImage(); toast('added — save 잊지 마세요'); }
   catch (err) { toast(err.message, 'err'); }
   e.target.value = '';
 });
