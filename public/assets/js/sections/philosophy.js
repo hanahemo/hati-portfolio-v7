@@ -13,25 +13,24 @@ export function initPhilosophy(settings) {
   const section = document.getElementById('philosophy');
   const gsap = window.gsap;
 
-  // 모바일 — 핀+스크럽(SplitType 워드 리빌)은 Lenis 위에서 덜커덩거린다.
-  // 줄 단위로 한 번 페이드 인만. 핀이 없어 스크롤이 매끄럽고 텍스트 중앙정렬도 안 깨진다.
-  if (window.innerWidth < 768) {
-    const lines = el.querySelectorAll('.line1, .line2');
-    gsap.set(lines, { opacity: 0.15, y: 16 });
-    gsap.to(lines, {
-      opacity: 1, y: 0, stagger: 0.12, duration: 0.7, ease: 'power2.out',
-      scrollTrigger: { trigger: section, start: 'top 68%' }
-    });
-    return;
-  }
-
-  // 데스크탑 — 핀 + 스크럽 워드 리빌
+  // 워드 분해 — 데스크탑·모바일 공용 (글자가 서서히 차오르는 리빌)
   let targets;
   if (window.SplitType) {
     const split = new window.SplitType(el.querySelectorAll('.line1, .line2'), { types: 'words' });
     targets = split.words;
   } else {
     targets = el.querySelectorAll('.line1, .line2');
+  }
+
+  // 모바일 — 핀+스크럽은 터치 스크롤에서 덜커덩거린다.
+  // 같은 워드 리빌을 '시간 기반'으로: 섹션 진입 시 단어가 순서대로 차오름. 핀 없음 = 매끄러운 스크롤 + 중앙정렬 유지.
+  if (window.innerWidth < 768) {
+    gsap.set(targets, { opacity: 0.12, y: 14 });
+    gsap.to(targets, {
+      opacity: 1, y: 0, stagger: 0.07, duration: 0.55, ease: 'power2.out',
+      scrollTrigger: { trigger: section, start: 'top 62%' }
+    });
+    return;
   }
 
   gsap.set(targets, { opacity: 0.15, y: 20 });

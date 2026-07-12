@@ -42,6 +42,7 @@
   letter-spacing: -0.005em;
   max-width: 54ch;
   word-break: keep-all;
+  text-wrap: pretty;   /* 고아 단어(마지막 줄 한 단어) 방지 — 지원 브라우저에서 줄배분 최적화 */
 }
 .about__quote {
   font-family: var(--font-serif);

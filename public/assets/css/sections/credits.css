@@ -123,6 +123,22 @@
   .credits__finale { z-index: 5; }
 }
 
+/* 모바일 flow — 핀 없이 자연 스크롤. 콘텐츠가 문서 흐름에 있어 어떤 기기에서도 반드시 보인다 */
+.credits--flow { height: auto; }
+.credits--flow .credits__stage {
+  height: auto;
+  overflow: hidden;
+  display: block;
+  padding: 15vh 0 9vh;
+}
+.credits--flow .credits__stage::before, .credits--flow .credits__stage::after { display: none; }
+.credits--flow .credits__roll { position: relative; top: 0; }
+.credits--flow .credits__finale {
+  position: relative; inset: auto;
+  opacity: 1;
+  margin-top: 13vh;
+}
+
 /* 정적 폴백 — 모션 최소화/GSAP 부재 시: 롤 대신 짧은 정적 크레딧 */
 .credits--static { height: auto; }
 .credits--static .credits__stage { position: static; height: auto; overflow: visible; padding: 18vh 0; }

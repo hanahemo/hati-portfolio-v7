@@ -83,6 +83,29 @@ export function initCredits(portfolio, settings) {
     stage.insertBefore(fig, finale);
     return { fig, slot };
   });
+
+  // ── 모바일: 핀 없는 일반 흐름 — 실기기에서 빠른 플릭이 핀 구간을 한 번에 통과하면
+  //    scrub이 못 따라와 검은 화면만 보인다(재현: 헤드리스 느린 스크롤에선 정상).
+  //    크레딧은 자연 스크롤로 항상 보이게 하고, 리빌만 얹는다. 스틸은 섹션 높이 %로 정적 산포. ──
+  if (isMobile) {
+    section.classList.add('credits--flow');
+    stills.forEach(({ fig }, i) => {
+      fig.style.top = (6 + (i % 8) * 11) + '%';
+      gsap.to(fig, {
+        y: -60 - (i % 3) * 30, ease: 'none',
+        scrollTrigger: { trigger: section, start: 'top bottom', end: 'bottom top', scrub: 0.6 }
+      });
+    });
+    gsap.from(roll.children, {
+      opacity: 0, y: 26, stagger: 0.05, duration: 0.6, ease: 'power2.out',
+      scrollTrigger: { trigger: section, start: 'top 78%' }
+    });
+    gsap.from(finale, {
+      opacity: 0, y: 20, duration: 0.8, ease: 'power2.out',
+      scrollTrigger: { trigger: finale, start: 'top 92%' }
+    });
+    return;
+  }
   // 롤 이동량 — 화면 아래(100vh)에서 출발해 완전히 위로 빠져나갈 때까지
   const travel = () => -(roll.scrollHeight + window.innerHeight);
   const tl = gsap.timeline({
