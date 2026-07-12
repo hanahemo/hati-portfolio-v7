@@ -6,7 +6,6 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
 
 const noindex = require('./middleware/noindex');
 const apiRouter = require('./routes/api');
@@ -67,6 +66,7 @@ app.get('/uploads/:file', async (req, res, next) => {
   res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');  // 폭별 파생물은 불변
   if (fs.existsSync(cached)) return res.sendFile(cached);
   try {
+    const sharp = require('sharp');   // 지연 로드 — sharp 부재/오류가 서버 부팅을 막지 않게(원본 폴백)
     const buf = await sharp(src).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 72 }).toBuffer();
     fs.writeFile(cached, buf, () => {});                          // 캐시에 비동기 기록
     return res.send(buf);
