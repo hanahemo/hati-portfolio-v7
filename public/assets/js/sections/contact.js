@@ -1,7 +1,16 @@
+const safeHttp = (u) => (/^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '');
+
 export function initContact(settings) {
   const emailBtn = document.getElementById('contactEmail');
   const phoneBtn = document.getElementById('contactPhone');
+  const linkedinLink = document.getElementById('contactLinkedin');
   const toast = document.getElementById('toast');
+
+  const linkedin = safeHttp(settings.contactLinkedin);
+  if (linkedinLink && linkedin) {
+    linkedinLink.href = linkedin;
+    linkedinLink.hidden = false;
+  }
 
   if (emailBtn && settings.contactEmail) {
     emailBtn.textContent = settings.contactEmail;

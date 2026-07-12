@@ -20,7 +20,7 @@ const ALLOWED_CATS = new Set(['photo', 'graphic', 'video']);
 const ALLOWED_SETTINGS = new Set([
   'heroTitle', 'heroSubtitle', 'heroVideo', 'heroBackground', 'heroBackgroundType',
   'aboutText', 'aboutImage', 'aboutGallery',
-  'contactEmail', 'contactInstagram', 'contactPhone',
+  'contactEmail', 'contactInstagram', 'contactLinkedin', 'contactPhone',
   'philosophy', 'curtainMain', 'curtainSub', 'curtainAuthor',
   'clientLogos', 'featuredProjectIds',
   'keyColorA', 'keyColorB', 'est', 'reelAnchorHue', 'defaultTheme',
