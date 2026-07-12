@@ -62,15 +62,26 @@ app.get('/uploads/:file', async (req, res, next) => {
   const src = path.join(persist.UPLOADS_DIR, req.params.file);
   if (!src.startsWith(persist.UPLOADS_DIR + path.sep)) return next();   // 경로 이탈 차단
   const cached = path.join(RESIZE_CACHE, `${req.params.file}.w${width}.webp`);
-  res.type('image/webp');
-  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');  // 폭별 파생물은 불변
-  if (fs.existsSync(cached)) return res.sendFile(cached);
+  if (fs.existsSync(cached)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');  // 폭별 파생물은 불변
+    return res.sendFile(cached);                                  // .webp 확장자 → 타입 자동
+  }
   try {
     const sharp = require('sharp');   // 지연 로드 — sharp 부재/오류가 서버 부팅을 막지 않게(원본 폴백)
     const buf = await sharp(src).rotate().resize({ width, withoutEnlargement: true }).webp({ quality: 72 }).toBuffer();
     fs.writeFile(cached, buf, () => {});                          // 캐시에 비동기 기록
+    res.type('image/webp');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     return res.send(buf);
-  } catch (_) { return next(); }                                  // 이미지 아님/실패 → 원본 폴백
+  } catch (_) { return next(); }                                  // 이미지 아님/실패 → 원본(정상 타입) 폴백
+});
+
+// 임시 진단 — sharp 로드 실패 원인 확인용(고치면 제거)
+app.get('/_sharpcheck', (req, res) => {
+  const out = { platform: process.platform, arch: process.arch, node: process.version };
+  try { const s = require('sharp'); out.sharp = 'OK ' + JSON.stringify(s.versions || {}); }
+  catch (e) { out.sharp = 'FAIL: ' + ((e && e.message) || String(e)); }
+  res.json(out);
 });
 app.use('/uploads', express.static(persist.UPLOADS_DIR, {
   maxAge: 30 * 24 * 60 * 60 * 1000,
