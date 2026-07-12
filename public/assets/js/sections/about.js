@@ -19,6 +19,8 @@ export function initAbout(settings) {
     const items = [];
     const ig = safeHttp(settings.contactInstagram);
     if (ig) items.push(`<a class="pill" href="${escapeHtml(ig)}" target="_blank" rel="noopener noreferrer">instagram ↗</a>`);
+    const li = safeHttp(settings.contactLinkedin);
+    if (li) items.push(`<a class="pill" href="${escapeHtml(li)}" target="_blank" rel="noopener noreferrer">linkedin ↗</a>`);
     if (settings.contactEmail) items.push(`<a class="pill" href="mailto:${escapeHtml(settings.contactEmail)}">email ↗</a>`);
     sns.innerHTML = items.join('');
   }

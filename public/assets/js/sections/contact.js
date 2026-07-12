@@ -3,9 +3,15 @@ const safeHttp = (u) => (/^https?:\/\//i.test(String(u || '').trim()) ? String(u
 export function initContact(settings) {
   const emailBtn = document.getElementById('contactEmail');
   const phoneBtn = document.getElementById('contactPhone');
+  const instaLink = document.getElementById('contactInstagram');
   const linkedinLink = document.getElementById('contactLinkedin');
   const toast = document.getElementById('toast');
 
+  const insta = safeHttp(settings.contactInstagram);
+  if (instaLink && insta) {
+    instaLink.href = insta;
+    instaLink.hidden = false;
+  }
   const linkedin = safeHttp(settings.contactLinkedin);
   if (linkedinLink && linkedin) {
     linkedinLink.href = linkedin;
