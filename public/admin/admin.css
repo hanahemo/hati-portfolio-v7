@@ -354,6 +354,14 @@ select.admin-input option {
 .admin-media-row__type { flex: 0 0 92px; min-width: 0; padding-top: 8px; padding-bottom: 8px; }
 .admin-media-row__input { flex: 1; min-width: 0; }
 .admin-media-row__del { flex: 0 0 auto; }
+.admin-media-row__grip {
+  flex: 0 0 auto; cursor: grab; user-select: none;
+  color: var(--color-text-mute); font-size: 15px; line-height: 1;
+  padding: 0 2px; letter-spacing: -2px;
+}
+.admin-media-row__grip:active { cursor: grabbing; }
+.admin-media-row.is-dragging { opacity: 0.45; }
+.admin-media-row.is-drag-over { outline: 1px dashed var(--color-neon); outline-offset: 2px; border-radius: 4px; }
 
 /* ── Credits editor (역할 칩 + 이름 → 추가) ── */
 .admin-credits { display: flex; flex-direction: column; gap: 10px; }

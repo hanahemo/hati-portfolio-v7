@@ -322,6 +322,7 @@ function addMediaRow(url = '', type = 'image') {
   const row = document.createElement('div');
   row.className = 'admin-media-row';
   row.innerHTML = `
+    <span class="admin-media-row__grip" draggable="true" title="드래그로 순서 변경" aria-label="순서 변경 핸들">⠿</span>
     <select class="admin-input admin-media-row__type" aria-label="media type">
       <option value="image"${type === 'image' ? ' selected' : ''}>image</option>
       <option value="video"${type === 'video' ? ' selected' : ''}>video</option>
@@ -342,6 +343,46 @@ function renderMediaRows(media) {
   list.forEach(m => addMediaRow(m.url || '', m.type || 'image'));
 }
 $('#mediaAddRow')?.addEventListener('click', () => addMediaRow(''));
+
+// 미디어 행 드래그 재정렬 — 그립(⠿)으로만 시작. #mediaRows에 위임 1회(동적 추가 행도 커버).
+// 순서는 저장 시 DOM 순서로 읽히므로(저장 payload가 행 순서를 그대로 매핑) 별도 API 불필요.
+(function initMediaDrag() {
+  const wrap = $('#mediaRows');
+  if (!wrap || wrap.dataset.dragInit) return;
+  wrap.dataset.dragInit = '1';
+  let dragEl = null;
+  const clearOver = () => $$('.admin-media-row', wrap).forEach(r => r.classList.remove('is-drag-over'));
+  wrap.addEventListener('dragstart', (e) => {
+    const grip = e.target.closest('.admin-media-row__grip');
+    if (!grip) { e.preventDefault(); return; }   // 그립 외에서 시작한 드래그(텍스트 선택 등)는 무시
+    dragEl = grip.closest('.admin-media-row');
+    dragEl.classList.add('is-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', ''); } catch (_) {}
+  });
+  wrap.addEventListener('dragend', () => {
+    if (dragEl) dragEl.classList.remove('is-dragging');
+    clearOver(); dragEl = null;
+  });
+  wrap.addEventListener('dragover', (e) => {
+    if (!dragEl) return;
+    e.preventDefault();
+    const row = e.target.closest('.admin-media-row');
+    clearOver();
+    if (row && row !== dragEl) row.classList.add('is-drag-over');
+  });
+  wrap.addEventListener('drop', (e) => {
+    if (!dragEl) return;
+    e.preventDefault();
+    const row = e.target.closest('.admin-media-row');
+    if (row && row !== dragEl) {
+      const rect = row.getBoundingClientRect();
+      const after = (e.clientY - rect.top) > rect.height / 2;
+      wrap.insertBefore(dragEl, after ? row.nextSibling : row);
+    }
+    clearOver();
+  });
+})();
 
 // ── 크레딧 에디터 (역할 프리셋 칩 클릭 → 이름 입력 → 추가) ──
 // 데이터는 그대로 credits:[{role,name}]. currentCredits가 소스 오브 트루스.
