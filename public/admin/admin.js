@@ -317,12 +317,27 @@ document.addEventListener('keydown', (e) => {
 $('#addProjectBtn').addEventListener('click', () => openProjectModal(null));
 
 // ── 프로젝트 미디어 행 (구글드라이브 주소 입력) ──
+// URL → 미리보기 썸네일 후보 체인 (Drive lh3 → Drive thumbnail(영상 스틸 포함) / YouTube / 직접 이미지)
+function mediaRowThumbCandidates(url) {
+  const s = String(url || '').trim();
+  if (!s) return [];
+  const dm = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (s.includes('drive.google.com') && dm) return [
+    `https://lh3.googleusercontent.com/d/${dm[1]}=w96`,
+    `https://drive.google.com/thumbnail?id=${dm[1]}&sz=w96`
+  ];
+  const yt = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  if (yt) return [`https://img.youtube.com/vi/${yt[1]}/default.jpg`];
+  if (/^\/uploads\//.test(s) || /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(s)) return [s];
+  return [];
+}
 function addMediaRow(url = '', type = 'image') {
   const wrap = $('#mediaRows');
   const row = document.createElement('div');
   row.className = 'admin-media-row';
   row.innerHTML = `
     <span class="admin-media-row__grip" draggable="true" title="드래그로 순서 변경" aria-label="순서 변경 핸들">⠿</span>
+    <img class="admin-media-row__thumb" alt="" loading="lazy" hidden>
     <select class="admin-input admin-media-row__type" aria-label="media type">
       <option value="image"${type === 'image' ? ' selected' : ''}>image</option>
       <option value="video"${type === 'video' ? ' selected' : ''}>video</option>
@@ -333,6 +348,24 @@ function addMediaRow(url = '', type = 'image') {
     row.remove();
     if (!$$('.admin-media-row', wrap).length) addMediaRow('');   // 최소 1행 유지
   });
+  // 링크 미리보기 — 어떤 파일인지 한눈에. 실패 시 다음 후보, 다 실패하면 숨김(플레이스홀더 상태)
+  const thumbEl = row.querySelector('.admin-media-row__thumb');
+  const inputEl = row.querySelector('.admin-media-row__input');
+  const setThumb = () => {
+    const cands = mediaRowThumbCandidates(inputEl.value);
+    if (!cands.length) { thumbEl.hidden = true; return; }
+    thumbEl.dataset.alts = JSON.stringify(cands.slice(1));
+    thumbEl.hidden = false;
+    thumbEl.src = cands[0];
+  };
+  thumbEl.addEventListener('error', () => {
+    const alts = JSON.parse(thumbEl.dataset.alts || '[]');
+    if (alts.length) { const next = alts.shift(); thumbEl.dataset.alts = JSON.stringify(alts); thumbEl.src = next; }
+    else thumbEl.hidden = true;
+  });
+  thumbEl.addEventListener('click', () => { const u = inputEl.value.trim(); if (u) window.open(u, '_blank', 'noopener'); });
+  let tDeb; inputEl.addEventListener('input', () => { clearTimeout(tDeb); tDeb = setTimeout(setThumb, 500); });
+  setThumb();
   wrap.appendChild(row);
 }
 function renderMediaRows(media) {

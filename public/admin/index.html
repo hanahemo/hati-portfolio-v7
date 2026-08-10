@@ -308,7 +308,8 @@
 
   <!-- ── Project Edit Modal ── -->
   <div id="projectModal" class="admin-modal" hidden>
-    <div class="admin-modal__backdrop" data-close></div>
+    <!-- 백드롭 클릭으로 닫지 않는다 — 긴 폼 작성 중 실수 클릭 한 번에 전부 날아가던 문제. 닫기는 ✕/Esc만 -->
+    <div class="admin-modal__backdrop"></div>
     <div class="admin-modal__panel" role="dialog" aria-modal="true" aria-labelledby="projModalTitle">
       <div class="admin-modal__head">
         <h3 id="projModalTitle" class="admin-modal__title">edit project</h3>

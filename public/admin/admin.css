@@ -359,6 +359,14 @@ select.admin-input option {
   color: var(--color-text-mute); font-size: 15px; line-height: 1;
   padding: 0 2px; letter-spacing: -2px;
 }
+/* 링크 미리보기 — 어떤 파일인지 식별용. 클릭하면 원본 링크 새 탭 */
+.admin-media-row__thumb {
+  flex: 0 0 44px; width: 44px; height: 32px;
+  object-fit: cover; border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+  cursor: zoom-in;
+}
 .admin-media-row__grip:active { cursor: grabbing; }
 .admin-media-row.is-dragging { opacity: 0.45; }
 .admin-media-row.is-drag-over { outline: 1px dashed var(--color-neon); outline-offset: 2px; border-radius: 4px; }
