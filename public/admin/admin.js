@@ -49,7 +49,75 @@ async function loadAll() {
   renderReel();
   renderSettings();
   renderDeck();
+  loadHealth();   // 미디어 상태 점검 — 자동, 비동기(표 렌더를 막지 않음)
 }
+
+// ── 미디어 상태 점검 패널 — 문제 있는 프로젝트만 리스트 + 표에 ⚠ 배지. 서버가 검사(드라이브 공개 여부·삭제된 업로드·타입 누락)
+async function loadHealth(force) {
+  const box = $('#healthBox'); if (!box) return;
+  box.hidden = false; box.className = 'admin-health is-loading';
+  box.innerHTML = `<div class="admin-health__head"><span>⏳ 미디어 상태 점검 중… (${(state.portfolio.projects || []).length}개 프로젝트)</span></div>`;
+  try {
+    state.health = await api('/health' + (force ? '?force=1' : ''));
+    renderHealth();
+    markHealthRows();
+  } catch (e) {
+    box.className = 'admin-health';
+    box.innerHTML = `<div class="admin-health__head"><span>점검 실패: ${escapeHtml(e.message)}</span><button type="button" class="admin-pill admin-pill--sm" id="healthRecheck">다시 점검</button></div>`;
+    $('#healthRecheck')?.addEventListener('click', () => loadHealth(true));
+  }
+}
+function renderHealth() {
+  const box = $('#healthBox'); const h = state.health; if (!box || !h) return;
+  const n = h.projects.length;
+  const errs = h.projects.reduce((s, p) => s + p.issues.filter(i => i.level === 'error').length, 0);
+  const time = new Date(h.checkedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  const recheck = `<button type="button" class="admin-pill admin-pill--sm" id="healthRecheck">다시 점검</button>`;
+  box.className = 'admin-health ' + (n ? 'has-issues' : 'is-clean');
+  if (!n) {
+    box.innerHTML = `<div class="admin-health__head"><span>✓ 전 프로젝트 미디어 정상 — ${h.total}개 점검 · ${time}</span>${recheck}</div>`;
+  } else {
+    box.innerHTML = `
+      <div class="admin-health__head"><span>⚠ 문제 있는 프로젝트 <b>${n}</b>개 · 에러 ${errs}건 — ${h.total}개 점검 · ${time}</span>${recheck}</div>
+      <ul class="admin-health__list">${h.projects.map(p => `
+        <li class="admin-health__item">
+          <button type="button" class="admin-health__title" data-id="${p.id}">#${String(p.id).padStart(3, '0')} ${escapeHtml(p.title || '(untitled)')} <span class="admin-muted">→ 편집</span></button>
+          <ul class="admin-health__issues">${groupIssues(p.issues).map(g => `
+            <li class="admin-health__issue admin-health__issue--${g.level}">${g.indexes.length ? `<span class="admin-health__idx">미디어 ${g.indexes.join('·')}</span>` : ''}<span>${escapeHtml(g.msg)}${g.indexes.length > 1 ? ` <span class="admin-muted">× ${g.indexes.length}</span>` : ''}</span>${g.url ? `<span class="admin-health__url">${escapeHtml(g.url)}</span>` : ''}</li>`).join('')}
+          </ul>
+        </li>`).join('')}
+      </ul>`;
+  }
+  $('#healthRecheck')?.addEventListener('click', () => loadHealth(true));
+  $$('.admin-health__title', box).forEach(b => b.addEventListener('click', () => openProjectModal(parseInt(b.dataset.id, 10))));
+}
+// 같은 메시지(예: 삭제된 업로드 8건)는 한 줄로 — 미디어 번호만 나열. URL은 단건일 때만 보여준다
+function groupIssues(issues) {
+  const out = []; const byKey = new Map();
+  for (const i of issues) {
+    const key = i.level + '|' + i.msg;
+    let g = byKey.get(key);
+    if (!g) { g = { level: i.level, msg: i.msg, indexes: [], url: '' }; byKey.set(key, g); out.push(g); }
+    if (i.index) g.indexes.push(i.index);
+    g.url = g.indexes.length === 1 ? (i.url || '') : '';
+  }
+  return out;
+}
+function markHealthRows() {
+  const bad = new Map(((state.health && state.health.projects) || []).map(p => [String(p.id), p]));
+  $$('#projectsBody tr').forEach(tr => {
+    const cell = tr.querySelector('td:nth-child(3)'); if (!cell) return;
+    cell.querySelector('.admin-health__flag')?.remove();
+    const p = bad.get(tr.dataset.id); if (!p) return;
+    const s = document.createElement('span');
+    s.className = 'admin-health__flag';
+    s.title = p.issues.map(i => i.msg).join('\n');
+    s.textContent = p.issues.some(i => i.level === 'error') ? '⚠' : '△';
+    cell.prepend(s);
+  });
+}
+// 카테고리 필터 등으로 표가 다시 그려지면 배지도 다시 (tbody 직계 자식 변화만 감시 → 배지 삽입은 재귀 안 됨)
+if ($('#projectsBody')) new MutationObserver(() => { if (state.health) markHealthRows(); }).observe($('#projectsBody'), { childList: true });
 
 // ── Tabs ──
 $$('.admin-tab').forEach(tab => {

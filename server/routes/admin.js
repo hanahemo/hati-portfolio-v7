@@ -188,6 +188,84 @@ router.get('/api/settings', async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ── 미디어 상태 점검 — 어드민이 열릴 때 자동 호출. 깨진 업로드·비공개 드라이브·무효 유튜브·타입 누락을 찾는다.
+//    외부 URL 결과는 10분 캐시(URL 단위) → 저장할 때마다 다시 불러도 가볍다. ?force=1 이면 캐시 무시.
+const healthCache = new Map();   // url → { issue, at }
+const HEALTH_TTL = 10 * 60 * 1000;
+const driveIdOf = (u) => { const s = String(u || ''); const m = s.match(/\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/); return m ? m[1] : ''; };
+const ytIdOf = (u) => { const m = String(u || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/); return m ? m[1] : ''; };
+async function probeUrl(url, expectImage) {
+  const signal = AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined;
+  try {
+    let r = await fetch(url, { method: 'HEAD', redirect: 'follow', signal });
+    if (r.status === 405 || r.status === 403) r = await fetch(url, { method: 'GET', redirect: 'follow', signal });
+    if (!r.ok) return { ok: false, code: r.status };
+    if (expectImage && !/^image\//.test(r.headers.get('content-type') || '')) return { ok: false, code: r.status };   // 로그인 페이지(HTML)로 리다이렉트된 비공개 파일
+    return { ok: true };
+  } catch (e) { return { ok: false, code: 0 }; }
+}
+async function checkMediaItem(m) {
+  const url = String((m && m.url) || '').trim();
+  if (!url) return { level: 'error', msg: '빈 링크' };
+  if (url.startsWith('/uploads/')) {
+    const file = url.replace(/^\/uploads\//, '').split('?')[0];
+    return fs.existsSync(path.join(UPLOADS_DIR, file)) ? null : { level: 'error', msg: '업로드 파일이 서버에 없음 (삭제됨) — 다시 업로드하거나 항목 삭제' };
+  }
+  const hit = healthCache.get(url);
+  if (hit && Date.now() - hit.at < HEALTH_TTL) return hit.issue;
+  let issue = null;
+  if (/drive\.google\.com/.test(url)) {
+    const id = driveIdOf(url);
+    if (!id) issue = { level: 'error', msg: '드라이브 링크 형식을 인식 못 함 (file/d/…/view 형태여야 함)' };
+    else {
+      const p = await probeUrl(`https://drive.google.com/thumbnail?id=${id}&sz=w160`, true);
+      if (!p.ok) issue = { level: 'error', msg: `드라이브 파일 접근 불가 — 공유를 "링크가 있는 모든 사용자"로${p.code ? ' (' + p.code + ')' : ''}` };
+    }
+  } else if (ytIdOf(url)) {
+    const p = await probeUrl(`https://img.youtube.com/vi/${ytIdOf(url)}/hqdefault.jpg`, true);
+    if (!p.ok) issue = { level: 'error', msg: '유튜브 영상 ID가 유효하지 않음' };
+  } else if (/vimeo\.com/.test(url)) {
+    issue = null;   // oEmbed 없이는 확인 불가 — 통과
+  } else if (/^https?:\/\//.test(url)) {
+    const p = await probeUrl(url, false);
+    if (!p.ok) issue = { level: 'error', msg: `링크가 응답하지 않음${p.code ? ' (' + p.code + ')' : ''}` };
+  } else {
+    issue = { level: 'error', msg: '알 수 없는 링크 형식' };
+  }
+  healthCache.set(url, { issue, at: Date.now() });
+  return issue;
+}
+router.get('/api/health', async (req, res) => {
+  try {
+    if (req.query.force === '1') healthCache.clear();
+    const [portfolio, settings] = await Promise.all([readPortfolio(), readSettings()]);
+    const projects = (portfolio && portfolio.projects) || [];
+    const featured = new Set((settings && settings.featuredProjectIds) || []);
+    const queue = projects.slice();
+    const found = new Map();
+    // 동시 12개 — 첫 점검(캐시 없음)이 ~300개 HEAD라 6개면 40초 넘게 걸렸다. 드라이브 throttle은 이 수준에선 관측 안 됨
+    await Promise.all(Array.from({ length: 12 }, async () => {
+      while (queue.length) {
+        const p = queue.shift();
+        const media = Array.isArray(p.media) ? p.media : [];
+        const issues = [];
+        if (!media.length) issues.push({ level: 'warn', msg: '미디어가 하나도 없음 — 상세 페이지가 비어 보임' });
+        if (p.category === 'video' && media.length && !media.some(m => m.type === 'video' || ytIdOf(m.url) || /vimeo\.com/.test(m.url || ''))) {
+          issues.push({ level: 'warn', msg: '영상 프로젝트인데 video 타입 미디어가 없음 — 상세에서 영상이 재생되지 않음' });
+        }
+        for (let i = 0; i < media.length; i++) {
+          const r = await checkMediaItem(media[i]);
+          if (r) issues.push({ ...r, index: i + 1, url: String(media[i].url || '').slice(0, 90) });
+        }
+        if (featured.has(p.id) && issues.some(x => x.level === 'error' && x.index === 1)) issues.push({ level: 'warn', msg: '선택작(featured)인데 첫 미디어(대표 썸네일)가 깨져 있음' });
+        if (issues.length) found.set(p.id, { id: p.id, title: p.title, category: p.category, issues });
+      }
+    }));
+    const out = projects.filter(p => found.has(p.id)).map(p => found.get(p.id));
+    res.json({ checkedAt: Date.now(), total: projects.length, projects: out });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // 프로젝트 생성
 router.post('/api/portfolio', async (req, res) => {
   try {

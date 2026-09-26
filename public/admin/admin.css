@@ -721,3 +721,30 @@ select.admin-input option {
 }
 .admin-deck-row__grid .admin-field--wide { grid-column: 1 / -1; }
 .admin-deck-row .admin-form__actions { margin-top: 10px; }
+
+/* ── 미디어 상태 점검 (projects 탭 상단) ── */
+.admin-health {
+  margin: 0 0 14px; padding: 12px 14px;
+  border: 1px solid var(--color-border); border-radius: 10px;
+  font-size: 12px; line-height: 1.5;
+}
+.admin-health.is-loading, .admin-health.is-clean { color: var(--color-text-mute); }
+.admin-health.has-issues { border-color: rgba(255, 138, 112, 0.5); }
+.admin-health__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.admin-health__head b { color: #ff8a70; }
+.admin-health__list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.admin-health__item { padding-top: 10px; border-top: 1px dashed var(--color-border); }
+.admin-health__title {
+  background: none; border: 0; padding: 0; text-align: left;
+  color: var(--color-text); font: inherit; font-weight: 600; cursor: pointer;
+}
+.admin-health__title:hover { color: var(--color-neon); }
+.admin-health__issues { list-style: none; margin: 6px 0 0; padding: 0 0 0 12px; display: flex; flex-direction: column; gap: 4px; }
+.admin-health__issue { color: var(--color-text-mute); display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.admin-health__issue--error { color: #ff8a70; }
+.admin-health__idx {
+  flex: 0 0 auto; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
+  padding: 1px 7px; border: 1px solid currentColor; border-radius: 999px; opacity: 0.85;
+}
+.admin-health__url { font-family: var(--font-mono); font-size: 10px; opacity: 0.55; word-break: break-all; }
+.admin-health__flag { display: inline-block; margin-right: 6px; color: #ff8a70; cursor: help; }
