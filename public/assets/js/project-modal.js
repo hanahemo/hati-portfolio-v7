@@ -16,7 +16,8 @@ function getVimeoId(url) {
 }
 function toThumb(url) {
   const id = getDriveId(url);
-  if (id) return `https://lh3.googleusercontent.com/d/${id}=w1600`;
+  // 리드 폭은 뷰포트별 — 모바일(≤767)에 w1600을 보내면 원본 PNG가 MB 단위로 내려온다. -rw = WebP 변환
+  if (id) return `https://lh3.googleusercontent.com/d/${id}=w${window.innerWidth < 768 ? 1000 : 1600}-rw`;
   return url;
 }
 function toThumbFallback(url) {
@@ -67,7 +68,7 @@ function projectThumbUrl(project) {
   const pick = media.find(m => (m.type || '').startsWith('image')) || media[0];
   const raw = pick.url || '';
   const id = getDriveId(raw);
-  if (id) return `https://lh3.googleusercontent.com/d/${id}=w600`;   // 카드와 동일 해상도 → 캐시 히트
+  if (id) return `https://lh3.googleusercontent.com/d/${id}=w600-rw`;   // 카드와 동일 해상도 → 캐시 히트
   if (DIRECT_VIDEO_RE.test(raw)) return '';                          // 영상 파일은 스틸 없음 → 폴백
   return raw;                                                        // 로컬/외부 이미지
 }

@@ -124,7 +124,7 @@ function preloadThumbs(projects, onProgress, timeoutMs = 8000) {
     const est = String(settings.est || '2024');
     const pad = n => String(n).padStart(2, '0');
     const items = [
-      { num: pad(works), label: 'Selected Works' },
+      { num: pad(works), label: 'Works' },   // 전체 프로젝트 수 — 'Selected Works'(선택작 9개 섹션)와 이름이 겹쳐 45와 09가 충돌했다
       { num: pad(clients), sup: '+', label: 'Clients' },
       { num: pad(disciplines), label: 'Disciplines' },
       { num: est, label: 'Est. Seoul' },

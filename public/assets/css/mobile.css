@@ -41,7 +41,7 @@
   .philosophy__text { font-size: clamp(28px, 8.5vw, 48px); max-width: 100%; }
 
   /* ── Clients ── */
-  .clients { padding: var(--space-7) var(--page-pad-x); }
+  .clients { padding: calc(var(--space-7) + 28px) var(--page-pad-x) var(--space-7); }   /* 고정 HUD(≈57px) 아래로 'Trusted By' 라벨 확보 */
   .marquee__track { gap: var(--space-5) var(--space-6); }
   .marquee__item img { height: 52px; }   /* 로고를 키움 (기존 34px → 52px) */
   .marquee__item { font-size: 10px; }

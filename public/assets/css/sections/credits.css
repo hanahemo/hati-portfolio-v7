@@ -21,7 +21,7 @@
 .credits__stage::after { bottom: 0; background: linear-gradient(to top, #101010 20%, transparent); }
 
 .credits__roll {
-  position: absolute; left: 0; right: 0; top: 100vh;
+  position: absolute; left: 0; right: 0; top: 78vh;   /* 100vh면 핀 진입 순간 화면 전체가 빈 검정 — 'End Credits' 헤드가 하단에 먼저 걸치게 */
   will-change: transform;
   display: grid; gap: 0;
   justify-items: center;

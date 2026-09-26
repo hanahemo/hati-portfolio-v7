@@ -11,7 +11,7 @@ function getDriveId(url) {
 function normalizeMediaUrl(url, w = 1600) {
   if (!url) return '';
   const id = getDriveId(url);
-  if (id) return `https://lh3.googleusercontent.com/d/${id}=w${w}`;
+  if (id) return `https://lh3.googleusercontent.com/d/${id}=w${w}-rw`;
   return url;
 }
 function pickThumb(project) {
@@ -46,7 +46,7 @@ function driveThumbFallback(raw, w = 1600) { const id = getDriveId(raw); return 
 function mediaThumbUrl(raw, w) {
   if (!raw) return '';
   const id = getDriveId(raw);
-  if (id) return `https://lh3.googleusercontent.com/d/${id}=w${w}`;
+  if (id) return `https://lh3.googleusercontent.com/d/${id}=w${w}-rw`;
   if (DIRECT_VIDEO_RE.test(raw)) return '';
   const yt = getYouTubeId(raw); if (yt) return `https://img.youtube.com/vi/${yt}/hqdefault.jpg`;
   if (getVimeoId(raw)) return '';   // Vimeo 포스터는 oEmbed 필요 → 생략

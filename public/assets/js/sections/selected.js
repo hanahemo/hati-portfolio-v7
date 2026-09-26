@@ -23,7 +23,7 @@ export function initSelected(portfolio, settings) {
     const num = String(i + 1).padStart(2, '0');
     return `
       <a class="cframe" href="#project/${p.id}" data-id="${p.id}" data-cursor="view" aria-label="${escapeHtml(p.title)} — ${escapeHtml(p.category)}">
-        <div class="cframe__media">${thumbImg(p, 1400, '', { lazy: false })}</div>
+        <div class="cframe__media">${thumbImg(p, window.innerWidth < 768 ? 1000 : 1400, '', { lazy: false })}</div>
         <span class="cframe__n">SCENE ${num} — ${escapeHtml(String(p.category || '').toUpperCase())}</span>
         <div class="cframe__caption">
           <span class="cframe__title">${escapeHtml(p.title || '(untitled)')}</span>
@@ -66,8 +66,10 @@ export function initSelected(portfolio, settings) {
   const sizeConsts = () => {
     vw = window.innerWidth;
     // 중앙(scale 1.0) 프레임 폭 — 뷰포트 높이도 반영해 상하 넘침 방지
-    W = Math.min(vw * 0.78, 1200, Math.max(360, (window.innerHeight - 190) * 16 / 9));
-    H = Math.round(W * 9 / 16);
+    // 모바일: 16:9·78vw면 844px 화면에 171px짜리 카드 하나(20%)라 쇼케이스 존재감이 없다 → 90vw·4:3
+    const mobile = vw < 768;
+    W = mobile ? Math.round(vw * 0.9) : Math.min(vw * 0.78, 1200, Math.max(360, (window.innerHeight - 190) * 16 / 9));
+    H = Math.round(mobile ? W * 3 / 4 : W * 9 / 16);
     GAP = Math.max(10, Math.round(vw * 0.014));
     track.style.height = H + 'px';
     frames.forEach(a => { a.style.width = W + 'px'; a.style.height = H + 'px'; });

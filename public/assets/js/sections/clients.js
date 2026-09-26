@@ -18,7 +18,9 @@ export function initClients(settings) {
 
   // 로고 이미지만 — 시각 장식 (심리스 루프로 2~3회 중복되므로 alt 비움)
   function buildItem(l) {
-    const url = mapUrl(l.url);
+    let url = mapUrl(l.url);
+    // 어드민 업로드 로고는 폰 원본이 올라오기도 한다 — 표시 최대 68px 높이이니 서버 리사이즈(WebP)로 받는다
+    if (url.startsWith('/uploads/') && !url.includes('?')) url += '?w=400';
     return `<span class="marquee__item"><img src="${escapeHtml(url)}" alt="" onerror="this.closest('.marquee__item').style.display='none'"></span>`;
   }
   const html = logos.map(buildItem).join('');
