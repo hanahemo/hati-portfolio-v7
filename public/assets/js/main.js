@@ -99,6 +99,18 @@ function preloadThumbs(projects, onProgress, timeoutMs = 8000) {
   // 스크롤 엔진 먼저 기동 (Lenis 인스턴스 보관 — 최상단 리셋용)
   const lenis = initScroll();
   if (lenis) window.__lenis = lenis;
+  // 스크롤 진행 헤어라인 — Lenis도 네이티브 scroll 이벤트를 내므로 엔진 무관. rAF로 프레임당 1회
+  const progressBar = document.getElementById('scrollProgress');
+  if (progressBar) {
+    let raf = 0;
+    const paint = () => {
+      raf = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      progressBar.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max) : 0})`;
+    };
+    window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(paint); }, { passive: true });
+    paint();
+  }
   const toTop = () => {
     window.scrollTo(0, 0);
     if (lenis && lenis.scrollTo) lenis.scrollTo(0, { immediate: true });

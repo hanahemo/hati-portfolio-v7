@@ -50,7 +50,11 @@
 .contact__link:hover::after { transform: scaleX(0.35); }
 
 .contact__foot {
+  display: flex; gap: 0.9em; justify-content: center; flex-wrap: wrap;
   font-size: var(--fs-micro); font-weight: 500;
   letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--color-text-mute);
 }
+.contact__foot-sep { opacity: 0.45; }
+.contact__clock { font-family: var(--font-mono); letter-spacing: 0.14em; font-variant-numeric: tabular-nums; }
+.contact__clock:empty, .contact__clock:empty + .contact__foot-sep { display: none; }

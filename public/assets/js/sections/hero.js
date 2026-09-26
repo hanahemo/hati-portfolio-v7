@@ -10,7 +10,7 @@ export function initHero(settings, portfolio) {
   const eyebrow = document.getElementById('heroEyebrow');
   if (eyebrow) {
     const title = String(settings.heroTitle || '').trim() || 'Hati';
-    eyebrow.textContent = `${title}® — Visual Creative Studio`;
+    eyebrow.textContent = `${title}® — Visual Creative`;   // Hati는 사람 이름 — 'Studio' 붙이지 않는다 (크레딧 'A Hati® Production'과 동일 결정)
   }
   const metaRoles = hero.querySelector('.hero__meta-roles');
   const subtitle = String(settings.heroSubtitle || '').trim();

@@ -305,9 +305,73 @@ export function initProjectModal(state) {
 
   window.openProjectDetail = open;
 
+  // ── 링크 복사 — 딥링크(#project/id)는 이미 살아있다. 피칭 때 특정 작품만 보내는 용도
+  const shareBtn = modal.querySelector('#pmShare');
+  shareBtn?.addEventListener('click', async () => {
+    const p = seq[currentIdx]; if (!p) return;
+    const url = `${location.origin}${location.pathname}#project/${p.id}`;
+    let ok = false;
+    try { await navigator.clipboard.writeText(url); ok = true; }
+    catch {
+      // 클립보드 API가 막힌 환경(인앱 브라우저 등) — 임시 textarea + execCommand 폴백
+      const ta = document.createElement('textarea');
+      ta.value = url; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:-100px;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+      ta.remove();
+    }
+    if (!ok) { window.prompt('링크를 복사하세요', url); return; }
+    const label = shareBtn.textContent;
+    shareBtn.textContent = 'Copied ✓'; shareBtn.classList.add('is-done');
+    setTimeout(() => { shareBtn.textContent = label; shareBtn.classList.remove('is-done'); }, 1600);
+  });
+
+  // ── 라이트박스 — 리드/갤러리 '이미지' 클릭 → 풀스크린 뷰어. 사진 포트폴리오인데 확대가 없었다.
+  //    ←/→·Esc·스와이프·바깥 클릭. 이미 로드된 src를 그대로 써서 즉시 뜬다(재요청 없음).
+  const lb = document.createElement('div');
+  lb.className = 'lightbox'; lb.hidden = true;
+  lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-modal', 'true'); lb.setAttribute('aria-label', 'Image viewer');
+  lb.innerHTML = `
+    <span class="lightbox__pos" aria-live="polite"></span>
+    <button class="lightbox__close" type="button" aria-label="Close">✕</button>
+    <button class="lightbox__arrow lightbox__arrow--prev" type="button" aria-label="Previous">←</button>
+    <img class="lightbox__img" alt="" draggable="false">
+    <button class="lightbox__arrow lightbox__arrow--next" type="button" aria-label="Next">→</button>`;
+  document.body.appendChild(lb);
+  const lbImg = lb.querySelector('.lightbox__img'), lbPos = lb.querySelector('.lightbox__pos');
+  let lbList = [], lbIdx = 0;
+  const lbShow = (i) => {
+    if (!lbList.length) return;
+    lbIdx = (i + lbList.length) % lbList.length;
+    lbImg.src = lbList[lbIdx];
+    lbPos.textContent = `${String(lbIdx + 1).padStart(2, '0')} / ${String(lbList.length).padStart(2, '0')}`;
+    lb.classList.toggle('is-single', lbList.length < 2);
+  };
+  const lbOpen = (srcs, i) => { lbList = srcs; lb.hidden = false; document.body.classList.add('lb-open'); lbShow(i); lb.querySelector('.lightbox__close').focus({ preventScroll: true }); };
+  const lbClose = () => { lb.hidden = true; document.body.classList.remove('lb-open'); lbImg.removeAttribute('src'); };
+  lb.querySelector('.lightbox__close').addEventListener('click', lbClose);
+  lb.querySelector('.lightbox__arrow--prev').addEventListener('click', () => lbShow(lbIdx - 1));
+  lb.querySelector('.lightbox__arrow--next').addEventListener('click', () => lbShow(lbIdx + 1));
+  lb.addEventListener('click', (e) => { if (e.target === lb) lbClose(); });
+  let touchX = 0;
+  lb.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchend', (e) => { const dx = e.changedTouches[0].clientX - touchX; if (Math.abs(dx) > 48) lbShow(lbIdx + (dx < 0 ? 1 : -1)); }, { passive: true });
+  const LB_SEL = '#pmLead img, #pmGallery .pv-media:not(.pv-media--video) img';
+  modal.addEventListener('click', (e) => {
+    const img = e.target.closest(LB_SEL); if (!img) return;
+    const srcs = [...modal.querySelectorAll(LB_SEL)].map(i => i.currentSrc || i.src).filter(Boolean);
+    lbOpen(srcs, Math.max(0, srcs.indexOf(img.currentSrc || img.src)));
+  });
+
   modal.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', close));
   document.addEventListener('keydown', (e) => {
     if (modal.hidden) return;
+    if (!lb.hidden) {   // 뷰어가 열려 있으면 키는 뷰어가 먹는다 — ←/→로 작품이 넘어가 버리면 안 된다
+      if (e.key === 'Escape') lbClose();
+      else if (e.key === 'ArrowLeft') lbShow(lbIdx - 1);
+      else if (e.key === 'ArrowRight') lbShow(lbIdx + 1);
+      return;
+    }
     if (e.key === 'Escape') close();
     else if (e.key === 'ArrowLeft') go(-1);
     else if (e.key === 'ArrowRight') go(1);

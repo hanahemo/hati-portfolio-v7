@@ -226,7 +226,6 @@ function renderProjects() {
     const tr = document.createElement('tr');
     tr.dataset.id = p.id;
     tr.draggable = true;
-    const ext = (p.externalLink || '').trim();
     tr.innerHTML = `
       <td><span class="admin-drag-handle" aria-hidden="true">≡</span></td>
       <td>#${String(p.id).padStart(3, '0')}</td>
@@ -235,9 +234,6 @@ function renderProjects() {
       <td>${featured.has(p.id)
         ? `<span class="admin-badge admin-badge--on">on</span>`
         : `<span class="admin-badge admin-badge--off">—</span>`}</td>
-      <td>${ext
-        ? `<a class="admin-ext-badge" href="${escapeAttr(ext)}" target="_blank" rel="noopener" title="${escapeAttr(ext)}">↗ ${escapeHtml(ext.replace(/^https?:\/\//, '').slice(0, 24))}…</a>`
-        : `<span class="admin-muted">—</span>`}</td>
       <td>
         <div class="admin-row-actions">
           <button class="admin-pill admin-pill--sm" data-action="edit">edit</button>
@@ -477,7 +473,6 @@ function openProjectModal(id) {
   projForm.title.value = p?.title ?? '';
   projForm.category.value = p?.category ?? 'photo';
   projForm.description.value = p?.description ?? '';
-  projForm.externalLink.value = p?.externalLink ?? '';
   projForm.tags.value = (p?.tags || []).join(', ');
   projForm.order.value = p?.order ?? (state.portfolio.projects.length);
   projForm.role.value = p?.role ?? '';
@@ -505,7 +500,6 @@ projForm.addEventListener('submit', async (e) => {
     title: fd.get('title'),
     category: fd.get('category'),
     description: fd.get('description'),
-    externalLink: fd.get('externalLink'),
     order: Number(fd.get('order')) || 0,
     tags: String(fd.get('tags') || '').split(',').map(s => s.trim()).filter(Boolean),
     role: String(fd.get('role') || '').trim(),

@@ -3,7 +3,7 @@ const safeHttp = (u) => (/^https?:\/\//i.test(String(u || '').trim()) ? String(u
 
 export function initAbout(settings) {
   const title = document.getElementById('aboutTitle');
-  if (title) title.innerHTML = 'Hati<sup class="brand-reg">®</sup> Studio';   // 브랜드 마크 통일 (나브 Hati® 기준)
+  if (title) title.innerHTML = 'Hati<sup class="brand-reg">®</sup>';   // 브랜드 마크 통일 (나브 Hati® 기준) — 이름이라 'Studio' 없음
 
   const meta = document.querySelector('#about .about__meta');
   if (meta && settings.est) meta.textContent = `Director · EST. ${settings.est}`;   // 연도는 settings.est 단일 소스

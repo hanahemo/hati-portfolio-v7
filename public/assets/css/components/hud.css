@@ -52,6 +52,19 @@
   border-radius: 50%; background: #fff; vertical-align: middle; opacity: 0.85;
 }
 
+/* 스크롤 진행 헤어라인 — 데스크탑 기준 28,000px짜리 원페이지에서 '어디쯤인지'를 1px로.
+   HUD 밖(블렌드 없음)에 두어 라이트 막에서도 키컬러 라인이 뒤집히지 않는다. 채움이 아닌 선이라 톤 규칙 안. */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 1px;
+  z-index: calc(var(--z-nav) + 1);
+  background: var(--grad-key);
+  transform-origin: left center;
+  transform: scaleX(0);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
 @media (max-width: 767px) {
   .hud { padding: var(--space-4) var(--page-pad-x); }
   .hud__nav { gap: var(--space-4); }

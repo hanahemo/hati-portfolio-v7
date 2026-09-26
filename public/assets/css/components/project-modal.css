@@ -74,6 +74,11 @@
   transform-origin: left; transition: transform var(--dur-slow) var(--ease-out-quart);
 }
 .pview__close:hover::after { transform: scaleX(0.3); }
+/* 링크 복사 — CLOSE와 같은 문법, 우측에 나란히 */
+.pview__share { margin-left: auto; }
+.pview__share + .pview__close { margin-left: 0; }
+.pview__share.is-done { color: var(--pv-dim); }
+.pview__share.is-done::after { transform: scaleX(0); }
 
 /* 히어로 랜딩 — 거대 타이틀 + 대형 리드 미디어 (레이어드) */
 .pview__hero {
@@ -217,6 +222,42 @@
   border-radius: var(--radius-card); background: var(--pv-surface);
 }
 .pv-media img { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+#pmLead img, .pv-media:not(.pv-media--video) img { cursor: zoom-in; }
+
+/* 라이트박스 — 이미지 뷰어 (project-modal.js가 생성). 잉크 막 위에 사진 한 장, 4코너 컨트롤 */
+.lightbox {
+  position: fixed; inset: 0; z-index: 2000;
+  display: grid; place-items: center;
+  padding: 64px var(--page-pad-x);
+  background: rgba(12, 12, 14, 0.96);
+}
+.lightbox__img {
+  max-width: 100%; max-height: calc(100vh - 128px); max-height: calc(100svh - 128px);
+  width: auto; height: auto; object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+.lightbox__close, .lightbox__arrow {
+  position: absolute; width: 44px; height: 44px;
+  display: grid; place-items: center;
+  color: rgba(255, 255, 255, 0.82); font-size: 18px; line-height: 1;
+  background: transparent; border: 0; cursor: pointer;
+  transition: color var(--dur-base);
+}
+.lightbox__close:hover, .lightbox__arrow:hover { color: #fff; }
+.lightbox__close { top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); }
+.lightbox__arrow--prev { left: max(8px, env(safe-area-inset-left)); top: 50%; transform: translateY(-50%); }
+.lightbox__arrow--next { right: max(8px, env(safe-area-inset-right)); top: 50%; transform: translateY(-50%); }
+.lightbox.is-single .lightbox__arrow { display: none; }
+.lightbox__pos {
+  position: absolute; top: max(26px, env(safe-area-inset-top)); left: var(--page-pad-x);
+  font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.6);
+}
+@media (max-width: 767px) { .lightbox__arrow { display: none; } .lightbox { padding: 56px var(--space-4); } }   /* 터치는 스와이프 */
+body.lb-open .pview__scroll { overflow: hidden; }
+body.lb-open .pview__top { visibility: hidden; }   /* 뷰어 뒤로 카운터/CLOSE가 비치지 않게 */
 .pv-media--video { position: relative; aspect-ratio: 16/9; }
 .pv-media--video iframe, .pv-media--video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
 .pview__media-fail {

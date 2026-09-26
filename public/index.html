@@ -99,6 +99,7 @@
 </section>
 
 <!-- HUD — 고정 마이크로 내비게이션 -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 <header class="hud" id="hud">
   <a class="hud__brand" href="#main">Hati<sup>®</sup></a>
   <nav class="hud__nav" aria-label="Site">
@@ -125,7 +126,7 @@
       <div class="hero__veil" id="heroVeil" aria-hidden="true"></div>
       <div class="hero__ticks" id="heroTicks" aria-hidden="true"></div>
       <div class="hero__inner">
-        <p class="hero__eyebrow" id="heroEyebrow">Hati® — Visual Creative Studio</p>
+        <p class="hero__eyebrow" id="heroEyebrow">Hati® — Visual Creative</p>
         <div class="hero__display" aria-hidden="true">
           <span class="hero__line hero__line--name"><span class="hero__line-inner"><em class="hero__em">Hati</em><sup class="hero__reg">®</sup></span></span>
           <span class="hero__line hero__line--role"><span class="hero__line-inner"><span class="hero__role-lead">Director of</span> <span class="hero__disc" id="heroDisc" aria-hidden="true"><span class="hero__disc-word is-active">Visual Creative</span></span></span></span>
@@ -152,7 +153,7 @@
   </section>
 
   <!-- STATS — 스튜디오 크레덴셜 밴드 (monolog 참고: 대형 스탯 콜아웃) -->
-  <section class="stats" id="stats" aria-label="Studio at a glance">
+  <section class="stats" id="stats" aria-label="At a glance">
     <dl class="stats__row" id="statsRow"></dl>
   </section>
 
@@ -205,7 +206,7 @@
     <div class="about__grid">
       <div>
         <span class="about__meta">Director · EST. 2020</span>
-        <h2 class="about__title" id="aboutTitle">Hati<sup class="brand-reg">®</sup> Studio</h2>
+        <h2 class="about__title" id="aboutTitle">Hati<sup class="brand-reg">®</sup></h2>
         <p class="about__text" id="aboutText"></p>
         <blockquote class="about__quote" id="aboutQuote"></blockquote>
         <div class="about__sns" id="aboutSns"></div>
@@ -236,7 +237,11 @@
       <a class="contact__link" id="contactInstagram" data-cursor="view" target="_blank" rel="noopener noreferrer" hidden>Instagram ↗</a>
       <a class="contact__link" id="contactLinkedin" data-cursor="view" target="_blank" rel="noopener noreferrer" hidden>LinkedIn ↗</a>
     </div>
-    <div class="contact__foot">© 2026 Hati® Studio. All rights reserved.</div>
+    <div class="contact__foot">
+      <span>© <span id="contactYear">2026</span> Hati®. All rights reserved.</span>
+      <span class="contact__foot-sep" aria-hidden="true">·</span>
+      <span class="contact__clock" id="contactClock"></span>
+    </div>
   </section>
 
 </main>
@@ -248,6 +253,7 @@
     <header class="pview__top">
       <span class="pview__pos"><span id="pmNum">01</span> <span class="pview__slash">/</span> <span id="pmTotal">42</span></span>
       <span class="pview__cat" id="pmCat"></span>
+      <button class="pview__close pview__share" id="pmShare" type="button" data-cursor="copy" aria-label="Copy project link">Copy link</button>
       <button class="pview__close" data-close aria-label="Close">Close <span aria-hidden="true">✕</span></button>
     </header>
 

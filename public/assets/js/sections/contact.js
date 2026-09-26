@@ -41,6 +41,17 @@ export function initContact(settings) {
     });
   }
 
+  // 푸터 — 연도 자동, 서울 현지시간(30초 갱신). '지금 서울에서 작업 중'이라는 살아있는 신호
+  const yearEl = document.getElementById('contactYear');
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+  const clock = document.getElementById('contactClock');
+  if (clock) {
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false });
+    const tick = () => { clock.textContent = `Seoul — ${fmt.format(new Date())} KST`; };
+    tick();
+    setInterval(tick, 30000);
+  }
+
   function showToast(msg) {
     if (!toast) return;
     toast.textContent = msg;
