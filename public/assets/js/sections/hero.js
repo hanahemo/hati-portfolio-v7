@@ -45,7 +45,7 @@ export function initHero(settings, portfolio) {
       return (A[0] - B[0]) || (A[1] - B[1]) || (A[2] - B[2]) || (a.id - b.id);
     });
 
-  const THUMB_W = window.innerWidth < 768 ? 400 : 600;   // 모바일 과대샘플 방지
+  const THUMB_W = window.innerWidth < 768 ? 300 : 600;   // 모바일 슬랫 최대폭 96px — 45장이 첫 화면에 실리므로 w300으로
   let MAXW = 120, MINW = 20, GAP = 6, SLATH = 560;
   const sizeConsts = () => {
     // aristidebenoist 레퍼런스 비율 — 얇고 촘촘한 세로 슬랫(더 많이 보임) + 넉넉한 상하 여백
