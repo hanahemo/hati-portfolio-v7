@@ -42,17 +42,21 @@ function mediaInner(m, label) {
   const vimeoId = getVimeoId(url);
   const isVideo = isVideoMedia(m);
   if (isVideo && driveId) return { html: `<iframe src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay" allowfullscreen loading="lazy" title="${t}"></iframe>`, video: true };
-  if (ytId) return { html: `<iframe src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1" allow="autoplay; fullscreen" allowfullscreen loading="lazy" title="${t}"></iframe>`, video: true };
-  if (vimeoId) return { html: `<iframe src="https://player.vimeo.com/video/${vimeoId}?dnt=1" allow="autoplay; fullscreen" allowfullscreen loading="lazy" title="${t}"></iframe>`, video: true };
+  // 문서 전체는 <meta name="referrer" content="no-referrer"> (프라이빗 사이트 URL 비노출) — 그런데 유튜브 임베드는
+  // Referer 가 없으면 '오류 153(동영상 플레이어 구성 오류)'로 재생을 거부한다. 이 iframe 만 출처(origin)만 보내게 예외.
+  // strict-origin-when-cross-origin = 'https://hatist.studio' 까지만 전달, 경로(#project/…)는 안 나간다.
+  if (ytId) return { html: `<iframe src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1" allow="autoplay; fullscreen" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" title="${t}"></iframe>`, video: true };
+  if (vimeoId) return { html: `<iframe src="https://player.vimeo.com/video/${vimeoId}?dnt=1" allow="autoplay; fullscreen" allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin" title="${t}"></iframe>`, video: true };
   if (isVideo) return { html: `<video src="${escapeHtml(url)}" title="${t}" controls controlsList="nodownload noplaybackrate" disablepictureinpicture playsinline preload="metadata"></video>`, video: true };
   const main = toThumb(url), fallback = toThumbFallback(url);
   return { html: `<img src="${escapeHtml(main)}" data-fallback="${escapeHtml(fallback)}" alt="${alt}" loading="lazy" draggable="false"
     onerror="if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src=this.dataset.fallback;}else{this.closest('.pv-media,.pview__lead').innerHTML='<div class=&quot;pview__media-fail&quot;>미디어를 불러오지 못했습니다</div>';}">`, video: false };
 }
-// 그리드용 — .pv-media 래퍼(메이슨리 컬럼 아이템)
-function renderGridMedia(m, label) {
+// 그리드용 — 컨택트시트 셀: 미디어 + 필름 프레임 번호 캡션(02 · Still / 03 · Film)
+function renderGridMedia(m, label, no) {
   const inner = mediaInner(m, label);
-  return `<div class="pv-media${inner.video ? ' pv-media--video' : ''}">${inner.html}</div>`;
+  const cap = no ? `<figcaption class="pv-cell__no">${String(no).padStart(2, '0')} · ${inner.video ? 'Film' : 'Still'}</figcaption>` : '';
+  return `<figure class="pv-cell"><div class="pv-media${inner.video ? ' pv-media--video' : ''}">${inner.html}</div>${cap}</figure>`;
 }
 // 리드용 — 이미지는 원본 비율 직접, 영상은 16:9 래퍼
 function renderLead(m, label) {
@@ -154,7 +158,9 @@ export function initProjectModal(state) {
   const numEl = modal.querySelector('#pmNum');
   const totalEl = modal.querySelector('#pmTotal');
   const catEl = modal.querySelector('#pmCat');
-  const tagsEl = modal.querySelector('#pmTags');
+  const bodyEl = modal.querySelector('#pmBody');
+  const framesEl = modal.querySelector('#pmFrames');
+  let fillToken = 0;
 
   let lastTrigger = null;
   let mainHadInert = false, hudHadInert = false;
@@ -222,8 +228,13 @@ export function initProjectModal(state) {
     setTitle(project.title);
     descEl.textContent = filled(project.description);
 
-    // 상세 팩트 — role / contribution / result / credits. 어드민에서 안 채운 칸은 줄째로 빠진다.
+    // 원장(ledger) — 분류·클라이언트·연도·스코프(태그) → 롤·기여도·결과. 어드민에서 안 채운 칸은 줄째로 빠진다.
+    // 태그는 타이틀 위 알약 6개(시선이 흩어졌다) 대신 'Scope' 한 줄로.
     const rows = [];
+    const cat = filled(project.category); if (cat) rows.push(['Category', cat.charAt(0).toUpperCase() + cat.slice(1)]);
+    const client = filled(project.client); if (client) rows.push(['Client', client]);
+    const year = filled(project.year); if (year) rows.push(['Year', year]);
+    const tags = (project.tags || []).map(t => filled(t)).filter(Boolean); if (tags.length) rows.push(['Scope', tags.join(' · ')]);
     const role = filled(project.role); if (role) rows.push(['Role', role]);
     const contribution = filled(project.contribution); if (contribution) rows.push(['Contribution', contribution]);
     const result = filled(project.result); if (result) rows.push(['Result', result]);
@@ -245,9 +256,49 @@ export function initProjectModal(state) {
     const title = project.title || '';
     leadEl.innerHTML = media.length ? renderLead(media[0], title)
       : '<div class="pview__media-fail">미디어가 등록되지 않은 프로젝트입니다.</div>';
-    gallery.innerHTML = media.slice(1).map((m, i) => renderGridMedia(m, `${title} — ${i + 2}`)).join('');
+    gallery.innerHTML = media.slice(1).map((m, i) => renderGridMedia(m, `${title} — ${i + 2}`, i + 2)).join('');
+    if (framesEl) framesEl.textContent = media.length > 1 ? `— ${String(media.length - 1).padStart(2, '0')} frames` : '';
 
-    tagsEl.innerHTML = (project.tags || []).map(t => `<span class="pview__tag">${escapeHtml(t)}</span>`).join('');
+    // 레이아웃 결정 — 리드가 세로 사진이면(데스크탑) 인트로 좌 / 사진 우 스프레드. 가로·영상은 리드 풀폭 → 인트로.
+    // 치수는 이미지가 로드돼야 안다: 결정 전엔 인트로를 숨겨 두었다가(is-ready) 페이드 — 텍스트가 튀는 걸 안 보이게.
+    // 토큰으로 이전 작품의 늦은 load 이벤트가 새 작품 레이아웃을 건드리지 못하게 막는다.
+    if (bodyEl) {
+      const token = ++fillToken;
+      bodyEl.classList.remove('is-portrait', 'is-ready');
+      const img = leadEl.querySelector(':scope > img');
+      let settled = false;
+      const ready = () => { if (token === fillToken) { settled = true; bodyEl.classList.add('is-ready'); } };
+      const decideDims = (w, h) => {
+        if (token !== fillToken || settled || !w) return;   // 폴백으로 이미 보여준 뒤엔 배치를 바꾸지 않는다(읽는 중 텍스트 이동 금지)
+        bodyEl.classList.toggle('is-portrait', h > w * 1.08 && window.innerWidth >= 1024);
+        ready();
+      };
+      // 점진 로딩 — 드라이브 리드는 lh3 가 첫 요청에 수 초 걸려 변환한다(실측 6s). 히어로 롤이 페이지 로드 때
+      // 이미 받아둔 같은 파일의 작은 판(데스크탑 w600 / 모바일 w300, 캐시)을 즉시 띄우고, 고해상도가 오면 교체.
+      // 작은 판이 캐시에 있으니 방향(세로/가로)도 즉시 안다.
+      const did = img && getDriveId((media[0] || {}).url);
+      if (img && did && (media[0].type || '').startsWith('image')) {
+        const hi = img.getAttribute('src');
+        img.src = `https://lh3.googleusercontent.com/d/${did}=w${window.innerWidth < 768 ? 300 : 600}-rw`;
+        const pre = new Image();
+        pre.onload = () => { if (token === fillToken && img.isConnected) img.src = hi; };
+        pre.src = hi;
+      }
+      if (!img) ready();
+      else if (img.naturalWidth) decideDims(img.naturalWidth, img.naturalHeight);
+      else {
+        // naturalWidth 는 헤더만 디코드돼도 채워진다 — load 완료를 기다리지 않고 방향을 안다
+        const t0 = performance.now();
+        const poll = () => {
+          if (token !== fillToken || settled) return;
+          if (img.naturalWidth > 0) { decideDims(img.naturalWidth, img.naturalHeight); return; }
+          if (performance.now() - t0 > 2600) { ready(); return; }   // 응답이 아예 느리면 기본(풀폭) 배치로 먼저 보여준다
+          requestAnimationFrame(poll);
+        };
+        poll();
+        img.addEventListener('error', ready, { once: true });
+      }
+    }
   }
 
   // 작품별 배경 파스텔 — 계산 결과는 캐시(재방문 시 즉시 적용)
