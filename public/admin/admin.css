@@ -748,3 +748,22 @@ select.admin-input option {
 }
 .admin-health__url { font-family: var(--font-mono); font-size: 10px; opacity: 0.55; word-break: break-all; }
 .admin-health__flag { display: inline-block; margin-right: 6px; color: #ff8a70; cursor: help; }
+
+/* ── 모바일(≤767) — 폰에서 열어도 축소되지 않게. 데스크탑 도구지만 점검·간단 편집은 폰에서도 ── */
+@media (max-width: 767px) {
+  .admin-header { flex-wrap: wrap; gap: 10px; }
+  .admin-header__nav { gap: 8px; }
+  .admin-header__tag { display: none; }                                  /* '/ CONTROL ROOM' 태그는 좁으면 생략 */
+  .admin-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .admin-tab { white-space: nowrap; flex: 0 0 auto; }
+  .admin-panel__head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .admin-panel__actions { flex-wrap: wrap; }
+  .admin-panel__actions .admin-input { flex: 1 1 140px; min-width: 0; }
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; position: relative; }   /* 표는 좌우 스크롤 — 열이 찌그러지지 않게. relative = 안의 절대배치(sr-only 등)가 문서 폭을 못 늘리게 */
+  .admin-table { min-width: 560px; }
+  .admin-modal { padding: 12px; align-items: flex-start; }
+  .admin-modal__panel { max-width: 100%; max-height: calc(100dvh - 24px); padding: 20px 16px; }
+  .admin-media-row__type { flex-basis: 84px; }
+  .admin-health__head { flex-direction: column; align-items: flex-start; }
+}
