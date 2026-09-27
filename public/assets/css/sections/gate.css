@@ -5,16 +5,34 @@
   background: var(--color-bg);
   display: grid; grid-template-rows: auto 1fr auto;
   padding: var(--space-5) var(--page-pad-x);
-  /* 진입 = 커튼이 위로 걷히듯 슬라이드(문 열리는 연출). 클릭 없이 자동으로 열림. */
-  transform: translateY(0);
-  will-change: transform;
-  transition: transform 0.9s var(--ease-signature), visibility 0.9s;
+  /* 진입 = 티켓을 향해 들어가는 zoom-through: 티켓이 화면을 덮을 만큼 커지며 사라지고, 그 뒤로 히어로가 드러난다.
+     (이전 '커튼 위로 슬라이드'는 절취·도장 다음에 화면이 통째로 밀려 올라가 티켓과 무관한 동작이었다) */
+  will-change: opacity;
+  transition: opacity 0.85s var(--ease-signature), visibility 0.85s;
 }
-.gate.is-hidden { visibility: hidden; pointer-events: none; transform: translateY(-100%); }
+/* 필름 그레인 — 시사회 문법. 크레딧과 같은 텍스처를 첫 화면에도 */
+.gate::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: url('/assets/images/grain.png') repeat;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+.gate.is-entering { opacity: 0; }
+.gate.is-entering .gate__head, .gate.is-entering .gate__foot,
+.gate.is-entering .gate__title, .gate.is-entering .gate__sub { transition: opacity 0.35s; opacity: 0; }
+.gate.is-entering .gate__ticket {
+  will-change: transform, opacity;
+  transition: transform 0.9s cubic-bezier(0.65, 0, 0.25, 1), opacity 0.5s ease-in 0.25s;
+  transform: scale(14);
+  opacity: 0;
+}
+.gate.is-hidden { visibility: hidden; pointer-events: none; opacity: 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .gate { transition: opacity 0.3s, visibility 0.3s; transform: none; }
-  .gate.is-hidden { opacity: 0; transform: none; }
+  .gate { transition: opacity 0.3s, visibility 0.3s; }
+  .gate.is-entering .gate__ticket { transition: opacity 0.3s; transform: none; }
 }
 
 .gate__head {
@@ -105,25 +123,57 @@
 }
 .gate__ticket-stub {
   display: grid; place-items: center;
-  padding: 0 18px;
+  padding: 0 22px;
   border-left: 1px dashed var(--color-hairline);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 11px; letter-spacing: 0.2em;
   color: var(--color-text-dim);
-  transition: transform 0.32s var(--ease-signature), opacity 0.32s;
+  /* 절취 — 절취선(왼쪽 위)을 축으로 꺾이며 떨어진다. 중력감: ease-in, 불투명도는 늦게 */
+  transform-origin: left top;
+  transition: transform 0.58s cubic-bezier(0.35, 0.05, 0.6, 1), opacity 0.36s ease-in 0.2s;
 }
 /* 절취공 — 퍼포레이션 상하 펀치 노치 */
 .gate__ticket::before, .gate__ticket::after {
   content: '';
-  position: absolute; right: 47px;
+  position: absolute; right: 55px;
   width: 10px; height: 10px; border-radius: 50%;
   background: var(--color-bg);
   border: 1px solid var(--color-hairline);
 }
 .gate__ticket::before { top: -6px; }
 .gate__ticket::after { bottom: -6px; }
-/* 입장 순간 — 스텁 절취 */
-.gate.is-torn .gate__ticket-stub { transform: translateX(30px) rotate(9deg); opacity: 0; }
+/* 확인 도장 — 절취와 동시에 본권 위에 찍힌다. 헤어라인 아웃라인(필 금지), 세리프 이탤릭 */
+.gate__ticket-stamp {
+  /* 우상단 모서리에 걸쳐 찍힌다 — 'Admit One' 위에 겹치면 둘 다 안 읽혔다 */
+  position: absolute; right: 84px; top: -13px;
+  transform: rotate(-11deg) scale(1.7);
+  opacity: 0; pointer-events: none;
+  font-family: var(--font-serif); font-style: italic;
+  font-size: 15px; letter-spacing: 0.08em; line-height: 1;
+  color: var(--color-text);
+  border: 1.5px solid currentColor; border-radius: 4px;
+  padding: 4px 10px 5px;
+}
+/* 입장 순간 — 본권 반동 → 도장 → 스텁 절취 */
+.gate.is-torn .gate__ticket-stub { transform: rotate(18deg) translate(12px, 34px); opacity: 0; }
+.gate.is-torn .gate__ticket-main { animation: gateRecoil 0.4s var(--ease-signature) both; }
+.gate.is-torn .gate__ticket-stamp { animation: gateStamp 0.42s cubic-bezier(0.2, 1.25, 0.3, 1) 0.1s forwards; }
+@keyframes gateRecoil {
+  0%   { transform: translateX(0); }
+  35%  { transform: translateX(-6px) rotate(-0.5deg); }
+  100% { transform: none; }
+}
+@keyframes gateStamp {
+  0%   { opacity: 0; transform: rotate(-11deg) scale(1.7); }
+  55%  { opacity: 1; transform: rotate(-11deg) scale(0.94); }
+  100% { opacity: 1; transform: rotate(-11deg) scale(1); }
+}
+/* zoom-through 중엔 안쪽 내용은 즉시 지우고 테두리 프레임만 시야를 스쳐 지나간다 — 거대해진 글자가 히어로 위에 떠 있지 않게 */
+.gate.is-entering .gate__ticket-main, .gate.is-entering .gate__ticket-stub, .gate.is-entering .gate__ticket-stamp {
+  transition: opacity 0.18s ease-out; opacity: 0; animation: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .gate.is-torn .gate__ticket-stub { transform: none; transition: none; }
+  .gate.is-torn .gate__ticket-main, .gate.is-torn .gate__ticket-stamp { animation: none; }
+  .gate.is-torn .gate__ticket-stamp { opacity: 1; transform: rotate(-11deg); }
 }

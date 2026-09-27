@@ -60,17 +60,20 @@ export function initGate(settings, lenis) {
   const enter = () => {
     if (entering) return;
     entering = true;
-    // 절취 — 스텁이 찢겨 나간 뒤 커튼이 걷힘
+    // 절취 — 본권 반동·도장·스텁 낙하가 끝난 뒤(≈0.7s) 커튼이 걷힘. 300ms였을 땐 뜯기는 게 보이기도 전에 화면이 올라갔다
     const reducedNow = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (ticket && !reducedNow && !gate.classList.contains('is-hidden')) {
       gate.classList.add('is-torn');
-      setTimeout(doEnter, 300);
+      setTimeout(doEnter, 720);
     } else {
       doEnter();
     }
   };
   const doEnter = () => {
-    gate.classList.add('is-hidden');
+    // zoom-through: 티켓이 커지며 사라지는 동안(0.9s) 아래 히어로가 드러난다. 끝나면 게이트를 완전히 치운다
+    gate.classList.add('is-entering');
+    const reducedNow = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(() => gate.classList.add('is-hidden'), reducedNow ? 320 : 950);
     sessionStorage.setItem('hati:entered', '1');
     unlockMain();
     hud?.classList.add('is-on');
@@ -107,21 +110,47 @@ export function initGate(settings, lenis) {
     meta.textContent = `№ ${String(n).padStart(4, '0')} — ${dd}`;
   }
   if (!alreadyIn && window.gsap && !reduced) {
+    // 워드마크 — 마스크 아래에서 글자가 하나씩 솟는다 (로고 이미지일 땐 통째로 페이드업)
+    const titleNode = gate.querySelector('.gate__title');
+    let titleChars = null;
+    if (titleNode && window.SplitType && !titleNode.querySelector('img')) {
+      try {
+        titleChars = new window.SplitType(titleNode, { types: 'chars' }).chars;
+        titleNode.style.clipPath = 'inset(-0.2em 0 0 0)';   // 아래만 마스크 — 글자가 베이스라인 밑에서 올라온다
+        window.gsap.set(titleChars, { yPercent: 115 });
+      } catch (_) { titleChars = null; }
+    }
     const bits = [
-      gate.querySelector('.gate__title'),
+      titleChars ? null : titleNode,
       gate.querySelector('.gate__sub'),
-      ticket,
       btn,
     ].filter(Boolean);
     window.gsap.set(bits, { opacity: 0, y: 34 });
+    // 발권 — 티켓은 슬롯에서 뽑혀 나오듯 위→아래로 드러나고, 번호가 촤르륵 돌다가 내 번호에 멎는다
+    if (ticket) window.gsap.set(ticket, { clipPath: 'inset(0 0 100% 0)', y: -16 });
+    const finalMeta = meta ? meta.textContent : '';
     let played = false;
     const play = () => {
       if (played) return;
       played = true;
+      if (titleChars) window.gsap.to(titleChars, { yPercent: 0, duration: 1.0, ease: 'power4.out', stagger: 0.06 });
       window.gsap.to(bits, {
-        opacity: 1, y: 0, duration: 1.05, ease: 'power3.out', stagger: 0.12,
+        opacity: 1, y: 0, duration: 1.05, ease: 'power3.out', stagger: 0.12, delay: titleChars ? 0.25 : 0,
         clearProps: 'transform',
       });
+      if (ticket) {
+        window.gsap.to(ticket, { clipPath: 'inset(0 0 0% 0)', y: 0, duration: 0.75, ease: 'power2.out', delay: 0.35, clearProps: 'clipPath,transform' });
+        if (meta && /№ \d{4}/.test(finalMeta)) {
+          const t0 = performance.now(), DUR = 620;
+          const tick = () => {
+            const k = (performance.now() - t0) / DUR;
+            if (k >= 1) { meta.textContent = finalMeta; return; }
+            meta.textContent = finalMeta.replace(/№ \d{4}/, `№ ${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`);
+            setTimeout(tick, 42);
+          };
+          setTimeout(tick, 480);   // 티켓이 반쯤 나왔을 때부터 번호가 돈다
+        }
+      }
     };
     window.addEventListener('hati:loaded', play, { once: true });
     setTimeout(play, 3500);   // 로더가 이벤트를 못 쏜 경우 안전 폴백
@@ -129,7 +158,7 @@ export function initGate(settings, lenis) {
 
   // ── 자동 진입 — 클릭 없이 잠시 후 문 열리듯 자동으로 열림(첫 방문). ENTER는 즉시 스킵용. ──
   if (!alreadyIn) {
-    const delay = reduced ? 500 : 2000;   // 게이트를 잠깐 보여준 뒤 자동으로 열림
+    const delay = reduced ? 500 : 2500;   // 발권(≈1.1s)이 끝나고 티켓을 한 박자 본 뒤 자동 절취
     let armed = false;
     const arm = () => {
       if (armed) return; armed = true;
