@@ -17,6 +17,13 @@ export function initHero(settings, portfolio) {
   if (metaRoles && subtitle) metaRoles.textContent = subtitle;
   const metaLoc = hero.querySelector('.hero__meta-loc');
   if (metaLoc && settings.est) metaLoc.textContent = `Seoul — EST. ${settings.est}`;   // 연도는 settings.est 단일 소스
+  // 서울 현지시간 — 첫 화면부터 '지금 서울에서 작업 중'이라는 살아있는 신호 (컨택트 푸터와 같은 문법)
+  const heroClock = document.getElementById('heroClock');
+  if (heroClock) {
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false });
+    const tick = () => { heroClock.textContent = `${fmt.format(new Date())} KST`; };
+    tick(); setInterval(tick, 30000);
+  }
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const lines = hero.querySelectorAll('.hero__line-inner');
@@ -105,7 +112,7 @@ export function initHero(settings, portfolio) {
       yPercent: 110, duration: 1.1, ease: 'power4.out', stagger: 0.12, delay: 0.1,
       onComplete: clearClip
     });
-    window.gsap.from([eyebrow, hero.querySelector('.hero__meta'), foot].filter(Boolean), {
+    window.gsap.from([eyebrow, hero.querySelector('.hero__meta'), hero.querySelector('.hero__np'), foot].filter(Boolean), {
       opacity: 0, y: 12, duration: 0.8, ease: 'power2.out', stagger: 0.1, delay: 0.5
     });
   };
@@ -180,8 +187,26 @@ export function initHero(settings, portfolio) {
 
   // ── 직군 리엘 — 'Director of [단어]', 영상 스크럽 진행(vid.t)에 따라 단어가 순서대로 교체 ──
   const discEl = document.getElementById('heroDisc');
+  const discIdxEl = document.getElementById('heroDiscIdx');
   const DISCS = ['Visual Creative', 'Photography', 'Graphic', 'Video', 'Generative AI'];
   let discNodes = [], discW = [], discIdx = -1;
+  // 브랜드 필름 장면 컷(프레임 차분으로 검출) — 단어가 '장면이 바뀌는 순간' 함께 바뀐다.
+  // 기본 필름(hero_cerial.mp4) 전용 테이블. 어드민이 다른 영상을 넣으면 균등 분할로 폴백.
+  const DEFAULT_FILM = !settings.heroVideo || /hero_cerial\.mp4(\?|$)/.test(settings.heroVideo);
+  const SCENES = DEFAULT_FILM ? [
+    { t: 0,    n: 'Milk' },
+    { t: 1.92, n: 'Chocolate' },
+    { t: 3.52, n: 'Pudding' },
+    { t: 4.88, n: 'Latte' },
+    { t: 5.88, n: 'Toast' },
+    { t: 7.08, n: 'Chocolate Bar' },
+  ] : null;
+  const sceneAt = (sec) => { let s = 0; for (let k = 0; k < SCENES.length; k++) if (sec >= SCENES[k].t) s = k; return s; };
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const tcOf = (sec) => `00:${pad2(Math.floor(sec))}:${pad2(Math.floor((sec % 1) * 24))}`;   // 24fps 타임코드
+  const npSc = document.getElementById('heroNpSc'), npName = document.getElementById('heroNpName');
+  const npTc = document.getElementById('heroNpTc'), npDur = document.getElementById('heroNpDur'), npFill = document.getElementById('heroNpFill');
+  let npScene = -1, npTcStr = '';
   // 폭 모션은 GSAP 이 인라인 width 를 매 프레임 쓰게 해서 만든다.
   // CSS transition:width 는 핀(fixed)+스크럽 아래에서 진행되지 않아 이전 폭에 얼어붙고,
   // 바가 단어보다 좁아지면 글자가 잘린다. --disc-w 는 CSS 기본값 경로용으로 함께 유지한다.
@@ -197,6 +222,7 @@ export function initHero(settings, portfolio) {
     discNodes.forEach((s, k) => { s.classList.toggle('is-active', k === i); s.classList.toggle('is-out', k < i); });
     const w = discW[i] || Math.ceil(discNodes[i].offsetWidth);   // 캐시가 비었으면 그 자리에서 잰다
     if (w) applyDiscW(w, first);
+    if (discIdxEl) discIdxEl.textContent = `${pad2(i + 1)}/${pad2(DISCS.length)}`;
     discIdx = i;
   };
   const measureDisc = () => {
@@ -213,10 +239,17 @@ export function initHero(settings, portfolio) {
   };
   if (discEl) {
     discEl.innerHTML = '';   // HTML 기본 단어 제거 후 5개로 채움(리엘)
-    discNodes = DISCS.map(w => { const s = document.createElement('span'); s.className = 'hero__disc-word'; s.textContent = w; discEl.appendChild(s); return s; });
+    // 글자 단위로 쪼갠다 — 단어 교체 시 글자가 마스크 아래에서 순차로 솟고, 나가는 단어는 위로 빠진다(키네틱 타이포)
+    discNodes = DISCS.map(w => {
+      const s = document.createElement('span'); s.className = 'hero__disc-word';
+      [...w].forEach((ch, k) => { const c = document.createElement('span'); c.className = 'hero__disc-ch'; c.style.setProperty('--i', k); c.textContent = ch === ' ' ? ' ' : ch; s.appendChild(c); });
+      discEl.appendChild(s); return s;
+    });
     measureDisc();
     setDisc(0);
     window.ScrollTrigger.addEventListener('refresh', measureDisc);
+    // 세리프 이탤릭(Instrument Serif)은 웹폰트 — 로드 전 폴백 폭으로 잰 알약이 단어를 자르지 않게 로드 후 재측정
+    document.fonts?.ready.then(measureDisc);
   }
 
   // 타임라인(총 1.0): [0→VID] 영상 스크럽 · [VID→VID+SHR] 영상 '크기' 축소 핸드오프 · [VID+SHR→1] 롤 스윕
@@ -251,6 +284,8 @@ export function initHero(settings, portfolio) {
   tl.to(hand, { h: 1, ease: 'power2.inOut', duration: SHR }, VID);
   if (scrim) tl.to(scrim, { opacity: 0, ease: 'power1.in', duration: SHR * 0.7 }, VID);
   tl.to(inner, { opacity: 0, y: -60, scale: 0.98, ease: 'power1.in', duration: 0.10 }, VID - 0.04);
+  const metaEl = hero.querySelector('.hero__meta');
+  if (metaEl) tl.to(metaEl, { opacity: 0, ease: 'power1.in', duration: 0.08 }, VID - 0.04);
   tl.to(roll, { opacity: 1, ease: 'none', duration: SHR * 0.55 }, VID + SHR * 0.45)
     .to(ticksWrap, { opacity: 1, ease: 'none', duration: SHR * 0.55 }, VID + SHR * 0.45)
     .to(prox, { p: 1, ease: 'none', duration: 1 - (VID + SHR) }, VID + SHR);
@@ -281,14 +316,29 @@ export function initHero(settings, portfolio) {
 
   const frame = () => {
     // 영상 스크럽 — 스무딩된 vid.t를 currentTime에 매핑 (rideradian 문법)
+    let tt = -1;
     if (video && vidReady && vidDur > 0) {
-      const tt = Math.min(vidDur - 0.05, Math.max(0, vid.t * vidDur));
+      tt = Math.min(vidDur - 0.05, Math.max(0, vid.t * vidDur));
       if (!video.seeking && Math.abs((video.currentTime || 0) - tt) > 0.033) {
         try { video.currentTime = tt; } catch (_) {}
       }
     }
-    // 직군 리엘 — 스크럽 진행에 따라 단어 교체 (Visual Creative → … → Generative AI)
-    if (discEl) setDisc(vid.t * DISCS.length);
+    // 직군 리엘 — 장면 컷에 맞춰 단어 교체 (우유=Visual Creative, 초콜릿=Photography, 푸딩=Graphic …).
+    // 장면 테이블이 없거나 영상 준비 전이면 스크럽 진행 균등 분할.
+    const sc = (SCENES && tt >= 0) ? sceneAt(tt) : -1;
+    if (discEl) setDisc(sc >= 0 ? Math.min(sc, DISCS.length - 1) : vid.t * DISCS.length);
+    // Now Playing — 장면명·타임코드·진행 헤어라인. 바뀔 때만 DOM 기록
+    if (tt >= 0) {
+      if (SCENES && sc !== npScene) {
+        npScene = sc;
+        if (npSc) npSc.textContent = `SC.${pad2(sc + 1)}`;
+        if (npName) npName.textContent = SCENES[sc].n;
+      }
+      const tcs = tcOf(tt);
+      if (tcs !== npTcStr) { npTcStr = tcs; if (npTc) npTc.textContent = tcs; }
+      if (npFill) npFill.style.transform = `scaleX(${Math.min(1, tt / Math.max(0.01, vidDur - 0.05)).toFixed(4)})`;
+      if (npDur && !npDur._set) { npDur.textContent = tcOf(vidDur); npDur._set = 1; }
+    }
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;

@@ -138,16 +138,18 @@
   text-shadow: none;   /* 그라데이션 클립 텍스트는 섀도 제외(할로 방지) */
 }
 
-/* 이름은 시그니처(작게) · 'Director of [바]'가 주인공 — 단, 리파인드하게(과하지 않은 크기·비율) */
+/* 에디토리얼 좌하단 블록 (Hati 결정: C안) — 영상 속 'Hati' 로고가 주인공이므로 타이포는 한 발 물러난다.
+   190px 오버사이즈가 화면 중앙의 로고를 가렸다 → 좌하단 블록으로 줄이고, 대신 타이포 대비로 존재감을 만든다:
+   세리프 이탤릭(이름) / 그로테스크(Director of) / 세리프 이탤릭 알약(직군 — 게이트 'Admitted' 도장과 같은 문법) */
 .hero__line--name .hero__line-inner {
-  /* 사인 록업 승격 (Hati 결정 1=안1) — 세리프 이름이 디스플레이의 첫 줄.
-     세리프(이름) → 산세리프(직함) 대비 = 덱 커버와 같은 문법. 배경 Hati 응용 영상과 호응. */
-  font-size: clamp(34px, 5.2vw, 88px);
+  /* 사인 록업 (Hati 결정 1=안1) — 세리프 이름이 디스플레이의 첫 줄 */
+  font-size: clamp(30px, 3.2vw, 54px);
   color: var(--color-text-dim);
 }
 .hero__line--role .hero__line-inner {
-  font-size: clamp(44px, 12vw, 190px);   /* 빅 사이즈 — 화면 꽉 차게(트렌디 오버사이즈) */
+  font-size: clamp(40px, 6.4vw, 112px);
   line-height: 0.98;
+  letter-spacing: -0.042em;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 2px 30px rgba(0,0,0,0.5);   /* 밝은 영상 위 가독성 */
 }
 .hero__reg {
@@ -162,6 +164,7 @@
 .hero__disc {
   position: relative;
   display: inline-block; vertical-align: -0.2em;
+  font-size: 1.22em;                 /* 직군 단어가 'Director of'보다 한 단계 크다 — 이 블록의 주인공 */
   height: 1em; overflow: hidden;
   border-radius: 999px;              /* 알약 */
   background: transparent;           /* 내부는 비운다 — 영상이 그대로 비쳐야 한다 */
@@ -189,14 +192,33 @@
 .hero__disc-word {
   position: absolute; top: 0; left: 0;
   height: 100%; display: flex; align-items: center;
-  padding: 0 0.72em 0.1em; white-space: nowrap;  /* 알약 곡선에 글자가 물리지 않을 만큼의 좌우 여백 + 하단 여백(디센더가 바닥에 안 닿게) */
-  color: var(--color-text); font-weight: 600; font-size: 0.8em; line-height: 1; letter-spacing: -0.02em;  /* 디센더(g,p,y)까지 바 안에 들어오도록 살짝 축소 */
+  padding: 0 0.62em 0.06em; white-space: nowrap;  /* 알약 곡선에 글자가 물리지 않을 만큼의 좌우 여백 */
+  /* 세리프 이탤릭 — 그로테스크 'Director of'와 대비. Instrument Serif는 x-height가 작아 0.9em이어야 시각 크기가 맞는다 */
+  font-family: var(--font-serif); font-style: italic; font-weight: 400;
+  color: var(--color-text); font-size: 0.9em; line-height: 1; letter-spacing: -0.01em;
   text-shadow: 0 1px 3px rgba(0,0,0,0.62), 0 2px 16px rgba(0,0,0,0.45);  /* 바 내부가 비어 있어 가독성은 섀도가 전담한다 */
-  opacity: 0; transform: translateY(1.15em);
-  transition: opacity 0.32s var(--ease-signature), transform 0.5s var(--ease-signature);
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-signature);
 }
-.hero__disc-word.is-active { opacity: 1; transform: translateY(0); }
-.hero__disc-word.is-out { opacity: 0; transform: translateY(-1.15em); }
+.hero__disc-word.is-active { opacity: 1; }
+.hero__disc-word.is-out { opacity: 0; }
+/* 키네틱 교체 — 글자가 마스크(알약 overflow) 아래에서 순차로 솟고, 나가는 단어는 위로 빠진다 */
+.hero__disc-ch {
+  display: inline-block;
+  transform: translateY(1.35em);
+  transition: transform 0.62s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i, 0) * 22ms);
+}
+.hero__disc-word.is-active .hero__disc-ch { transform: translateY(0); }
+.hero__disc-word.is-out .hero__disc-ch { transform: translateY(-1.35em); }
+@media (prefers-reduced-motion: reduce) { .hero__disc-ch { transition: none; } }
+/* 직군 인덱스 — 알약 우상단의 모노 각주 (01/05). 알약 폭이 바뀌면 함께 미끄러진다 */
+.hero__disc-idx {
+  font-family: var(--font-mono); font-size: 0.13em; font-weight: 500;
+  letter-spacing: 0.1em; color: rgba(255,255,255,0.8);
+  vertical-align: top; position: relative; top: 1.1em; margin-left: 0.9em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+.hero--static .hero__disc-idx { display: none; }
 /* 정적 폴백(모바일/모션최소화) — 리엘 JS 미실행 시 기본 단어 하나만 자연스럽게 */
 .hero__disc:has(.hero__disc-word:only-child) { width: auto; }
 .hero__disc-word:only-child { position: static; opacity: 1; transform: none; }
@@ -204,15 +226,56 @@
    단어 길이가 바뀌어도 줄바꿈이 안 튀고, 넓은 화면에서 폰트가 커도 한 줄이 넘치지 않음. */
 .hero__role-lead { display: block; }
 
+/* 좌상단 리드아웃 — HUD 브랜드 바로 아래. 상단 스크림(z3) 위(z4) */
 .hero__meta {
-  display: flex; align-items: baseline; gap: var(--space-6);
-  flex-wrap: wrap;
-  font-size: var(--fs-label); font-weight: 500;
-  letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--color-text);
-  text-shadow: 0 1px 3px rgba(0,0,0,0.75), 0 2px 20px rgba(0,0,0,0.6);
+  position: absolute; left: var(--page-pad-x); top: calc(var(--space-5) + 42px);
+  z-index: 4;
+  display: flex; align-items: baseline; gap: 0.8em;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(255,255,255,0.78);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.55);
+  pointer-events: none;
 }
-.hero__meta-loc { color: var(--color-text); }
+.hero__meta-sep { opacity: 0.5; }
+.hero__meta-clock { font-variant-numeric: tabular-nums; }
+.hero__meta-sep:has(+ .hero__meta-clock:empty) { display: none; }
+
+/* ── Now Playing — 스크럽 중인 브랜드 필름의 장면 리드아웃 (우하단). 글래스 카드, 헤어라인 진행 ── */
+.hero__np {
+  position: absolute; right: 0; bottom: var(--space-4);
+  width: 288px;
+  display: grid; gap: 6px;
+  padding: 16px 18px 14px;
+  border: 1px solid rgba(233,231,226,0.26);
+  border-radius: 12px;
+  background: rgba(12,12,13,0.34);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  color: var(--color-text);
+}
+.hero__np-k {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(233,231,226,0.62);
+}
+.hero__np-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--grad-key); animation: heroNpPulse 1.6s ease-in-out infinite; }
+@keyframes heroNpPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+.hero__np-t { font-family: var(--font-display); font-size: 18px; font-weight: 500; letter-spacing: -0.01em; margin-top: 4px; }
+.hero__np-t sup { font-size: 0.5em; font-weight: 500; }
+.hero__np-sc {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(233,231,226,0.62);
+}
+.hero__np-sc b { font-weight: 500; color: var(--color-text); margin-right: 0.5em; }
+.hero__np-bar { display: block; height: 1px; background: rgba(233,231,226,0.2); margin: 10px 0 4px; overflow: hidden; }
+.hero__np-bar i { display: block; height: 100%; background: var(--grad-key); transform-origin: left center; transform: scaleX(0); }
+.hero__np-row {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+  color: rgba(233,231,226,0.6); font-variant-numeric: tabular-nums;
+}
+.hero--static .hero__np { display: none; }
+@media (prefers-reduced-motion: reduce) { .hero__np-dot { animation: none; } }
 
 /* ── 인덱스 틱 (작품 수만큼, 상단 중앙) ── */
 .hero__ticks {
@@ -345,16 +408,30 @@
   .hero__tick { height: 8px; }
   .hero__tick.is-on { height: 14px; }
 
-  /* 인트로 헤드카피 — 하단 앵커 대신 '중앙에서 살짝 아래 + 가운데 정렬'.
-     (하단 앵커면 스크롤·탭 시 손가락에 가림 / transform은 GSAP 핸드오프와 충돌하므로
-      grid 정렬 + 상단 패딩 바이어스로 아래로 살짝 민다) */
+  /* 인트로 헤드카피 — 데스크탑과 같은 좌하단 에디토리얼 블록(C안).
+     예전의 '화면 중앙 정렬'은 세로 크롭에서 영상 한가운데 'Hati' 로고를 정면으로 가렸다.
+     하단 Now Playing 바 위에 앉힌다 (텍스트 레이어는 인터랙션이 없어 손가락에 걸려도 조작엔 무관) */
   .hero__inner {
-    align-content: center;
-    justify-items: center;
-    text-align: center;
+    align-content: end;
+    justify-items: start;
+    text-align: left;
     padding-top: 0;
-    padding-bottom: 13vh;   /* 블록을 위로 올려 헤드라인(디스크)이 중앙에서 살짝 아래에 오게 */
+    padding-bottom: calc(var(--space-3) + 46px);   /* Now Playing 바(≈26px) + 여백 */
   }
-  .hero__display { justify-items: center; }
+  .hero__display { justify-items: start; }
   .hero__line { margin-left: 0; padding-right: 0; }
+  .hero__disc-idx { display: none; }   /* 좁은 화면에선 알약 옆 각주가 줄을 넘긴다 — Now Playing 바가 인덱스를 대신 */
+
+  /* Now Playing — 카드 대신 하단 슬림 바: 진행 헤어라인 + 장면명 · 타임코드 */
+  .hero__np {
+    left: 0; right: 0; width: auto; bottom: var(--space-3);
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0;
+    padding: 0; border: 0; border-radius: 0;
+    background: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+    text-align: left;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  }
+  .hero__np-k, .hero__np-t, #heroNpDur { display: none; }
+  .hero__np-bar { order: -1; flex-basis: 100%; margin: 0 0 10px; }
+  .hero__np-sc, .hero__np-row { font-size: 9.5px; }
 }

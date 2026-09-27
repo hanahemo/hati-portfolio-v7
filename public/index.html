@@ -126,14 +126,24 @@
       </div>
       <div class="hero__veil" id="heroVeil" aria-hidden="true"></div>
       <div class="hero__ticks" id="heroTicks" aria-hidden="true"></div>
+      <!-- 좌상단 리드아웃 — 위치·설립·서울 현지시간 (HUD 브랜드 바로 아래) -->
+      <div class="hero__meta">
+        <span class="hero__meta-loc">Seoul — EST. 2020</span>
+        <span class="hero__meta-sep" aria-hidden="true">·</span>
+        <span class="hero__meta-clock" id="heroClock"></span>
+      </div>
       <div class="hero__inner">
-        <p class="hero__eyebrow" id="heroEyebrow">Hati® — Visual Creative</p>
         <div class="hero__display" aria-hidden="true">
           <span class="hero__line hero__line--name"><span class="hero__line-inner"><em class="hero__em">Hati</em><sup class="hero__reg">®</sup></span></span>
-          <span class="hero__line hero__line--role"><span class="hero__line-inner"><span class="hero__role-lead">Director of</span> <span class="hero__disc" id="heroDisc" aria-hidden="true"><span class="hero__disc-word is-active">Visual Creative</span></span></span></span>
+          <span class="hero__line hero__line--role"><span class="hero__line-inner"><span class="hero__role-lead">Director of</span> <span class="hero__disc" id="heroDisc" aria-hidden="true"><span class="hero__disc-word is-active">Visual Creative</span></span><sup class="hero__disc-idx" id="heroDiscIdx">01/05</sup></span></span>
         </div>
-        <div class="hero__meta">
-          <span class="hero__meta-loc">Seoul — EST. 2020</span>
+        <!-- Now Playing — 스크럽 중인 브랜드 필름의 장면·타임코드·진행 (장식, 스크린리더 제외) -->
+        <div class="hero__np" id="heroNp" aria-hidden="true">
+          <span class="hero__np-k"><i class="hero__np-dot"></i>Now Playing</span>
+          <span class="hero__np-t">Hati<sup>®</sup> — Title Sequence</span>
+          <span class="hero__np-sc"><b id="heroNpSc">SC.01</b> <span id="heroNpName">Milk</span></span>
+          <span class="hero__np-bar"><i id="heroNpFill"></i></span>
+          <span class="hero__np-row"><span id="heroNpTc">00:00:00</span><span id="heroNpDur">00:08:01</span></span>
         </div>
       </div>
       <div class="hero__roll" id="heroRoll" role="group" aria-label="Works reel">
