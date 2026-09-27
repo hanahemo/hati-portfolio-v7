@@ -383,7 +383,7 @@ async function buildSpecs({ portfolio, settings, scope }) {
     const role = filled(p.role); if (role) fact('ROLE', role);
     const contribution = filled(p.contribution); if (contribution) fact('CONTRIBUTION', contribution);
     const result = filled(p.result); if (result) fact('RESULT', bulletLines(result).map(l => '·  ' + l));
-    const credits = Array.isArray(p.credits) ? p.credits.filter(c => c && (filled(c.role) || filled(c.name))) : [];
+    const credits = Array.isArray(p.credits) ? p.credits.filter(c => c && filled(c.name)) : [];   // 이름 없는 유령 크레딧 제외
     if (credits.length) {
       const cap = compact ? 5 : 8;
       const lines = credits.slice(0, cap).map(c => [filled(c.role), filled(c.name)].filter(Boolean).join(' — '));

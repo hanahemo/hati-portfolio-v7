@@ -503,18 +503,20 @@ function renderCreditList() {
       <button type="button" class="admin-credits__del" data-i="${i}" aria-label="삭제">×</button>
     </li>`).join('');
 }
+// 이름이 있어야 크레딧이다. 추가 후 역할 칸은 (같은 역할 여러 명 입력 편의로) 남겨두는데, 예전엔 저장할 때
+// 그 남은 역할이 이름 없이 또 붙어 '마지막 역할이 빈칸으로 하나 더' 생겼다(Director·Actress 중복 버그).
 function addCredit() {
   const role = (creditRoleInput?.value || '').trim();
   const name = (creditNameInput?.value || '').trim();
-  if (!role && !name) return;
+  if (!name) return;
   currentCredits.push({ role, name });
   renderCreditList();
   if (creditNameInput) { creditNameInput.value = ''; creditNameInput.focus(); }
 }
-// 저장 시: 입력칸에 남은 값 자동 반영 후 배열 반환
+// 저장 시: 이름까지 입력돼 있던 값만 자동 반영. 기존에 저장된 이름 빈 항목도 여기서 걸러져 저장하면 정리된다
 function collectCredits() {
   addCredit();
-  return currentCredits.map(c => ({ role: c.role, name: c.name })).filter(c => c.role || c.name);
+  return currentCredits.map(c => ({ role: String(c.role || '').trim(), name: String(c.name || '').trim() })).filter(c => c.name);
 }
 $('#creditRoleChips')?.addEventListener('click', (e) => {
   const btn = e.target.closest('.admin-crole');

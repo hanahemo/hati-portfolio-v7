@@ -79,8 +79,8 @@ function pickProject(body, base = {}) {
     coverImage: safeMediaRef(body.coverImage !== undefined ? body.coverImage : base.coverImage),
     credits: Array.isArray(body.credits)
       ? body.credits
-          .filter(c => c && (c.role || c.name))
-          .map(c => ({ role: String(c.role || '').slice(0, 100), name: String(c.name || '').slice(0, 200) }))
+          .filter(c => c && String(c.name || '').trim())   // 이름 없는 크레딧은 저장하지 않는다(사이트에 빈 칸으로 렌더되던 원인)
+          .map(c => ({ role: String(c.role || '').trim().slice(0, 100), name: String(c.name || '').trim().slice(0, 200) }))
       : (Array.isArray(base.credits) ? base.credits : []),
     // 대표 색상 {h,s,l} — 어드민이 썸네일에서 자동 감지, 시네마릴 색상순 자동배치용. 미전송 시 기존 보존.
     color: pickColor(body.color !== undefined ? body.color : base.color)

@@ -241,7 +241,8 @@ export function initProjectModal(state) {
     detailsEl.innerHTML = rows.map(([label, value]) => `<div class="pview__row"><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
 
     // 크레딧 — 전용 섹션에 자동 다단 그리드(auto-fill). 양이 늘어나도 열로 알아서 정리됨.
-    const credits = Array.isArray(project.credits) ? project.credits.filter(c => c && (filled(c.role) || filled(c.name))) : [];
+    // 이름 없는 항목은 건너뛴다 — 이미 저장된 유령 크레딧(역할만 있고 이름 빈 칸)이 빈 칸으로 렌더되던 버그
+    const credits = Array.isArray(project.credits) ? project.credits.filter(c => c && filled(c.name)) : [];
     if (creditsGrid && creditsSection) {
       creditsGrid.innerHTML = credits.map(c => `
         <div class="pview__credit">
@@ -265,6 +266,7 @@ export function initProjectModal(state) {
     if (bodyEl) {
       const token = ++fillToken;
       bodyEl.classList.remove('is-portrait', 'is-ready');
+      bodyEl.classList.toggle('is-video', !!leadEl.querySelector('.pv-media--video'));   // 폰: 영상이 맨 위·풀블리드(CSS)
       const img = leadEl.querySelector(':scope > img');
       let settled = false;
       const ready = () => { if (token === fillToken) { settled = true; bodyEl.classList.add('is-ready'); } };
@@ -331,6 +333,7 @@ export function initProjectModal(state) {
     document.body.classList.add('pm-open');
     lenis?.stop();
     if (scroller) scroller.scrollTop = 0;
+    requestAnimationFrame(() => toCinema(false));   // 가로로 든 폰에서 영상 작품을 열면 곧장 영상이 화면을 채운다
     if (wasHidden) {
       mainHadInert = !!mainEl?.hasAttribute('inert'); mainEl?.setAttribute('inert', '');
       hudHadInert = !!hudEl?.hasAttribute('inert'); hudEl?.setAttribute('inert', '');
@@ -355,6 +358,16 @@ export function initProjectModal(state) {
   nextBtn?.addEventListener('click', () => go(1));
 
   window.openProjectDetail = open;
+
+  // ── 가로 시네마 — 폰을 가로로 돌리면(높이 ≤500) 영상이 화면 높이를 꽉 채우도록 CSS가 키우고,
+  //    여기서 영상 윗선을 화면 맨 위로 맞춘다. 제목·정보는 위로 스크롤하면 그대로 있다.
+  const cinemaMQ = window.matchMedia('(orientation: landscape) and (max-height: 500px)');
+  function toCinema(smooth) {
+    if (modal.hidden || !cinemaMQ.matches || !scroller || !bodyEl?.classList.contains('is-video')) return;
+    const top = leadEl.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+    scroller.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  cinemaMQ.addEventListener?.('change', () => setTimeout(() => toCinema(true), 250));   // 회전 후 레이아웃이 자리 잡은 뒤
 
   // ── 링크 복사 — 딥링크(#project/id)는 이미 살아있다. 피칭 때 특정 작품만 보내는 용도
   const shareBtn = modal.querySelector('#pmShare');

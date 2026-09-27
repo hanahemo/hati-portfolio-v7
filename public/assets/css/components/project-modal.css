@@ -320,7 +320,24 @@ body.pm-open { overflow: hidden; }
   .pview__intro { transition: none; transform: none; }
 }
 
+/* ── 폰에서 영상 작품 — 영상이 맨 위, 화면 가장자리까지(풀블리드), 제목은 그 아래 (영상 앱 문법).
+   큰 제목 밑에 358×201로 작게 앉아 있던 걸 끌어올린다. 세로(≤767)와 가로 폰(높이 ≤500) 공통 ── */
+@media (max-width: 767px), (orientation: landscape) and (max-height: 500px) {
+  .pview__hero:has(.pview__body.is-video) { display: flex; flex-direction: column; padding-top: 0; }
+  .pview__body.is-video { display: contents; }
+  .pview__body.is-video .pview__lead { order: -1; width: auto; margin: 0 calc(-1 * var(--page-pad-x)) var(--space-6); }
+  .pview__body.is-video .pview__lead .pv-media--video { max-width: none; border-radius: 0; }
+  .pview__body.is-video .pview__intro { order: 1; }
+}
+/* ── 가로 폰 시네마 — 영상이 화면 높이를 꽉 채운다(좌우는 검은 띠). 상단 바는 고정 해제해 영상을 덮지 않게 ── */
+@media (orientation: landscape) and (max-height: 500px) {
+  .pview__top { position: relative; }
+  .pview__body.is-video .pview__lead { background: #000; }
+  .pview__body.is-video .pview__lead .pv-media--video { width: min(100%, calc(100svh * 16 / 9)); margin-inline: auto; }
+}
+
 @media (max-width: 767px) {
+  .pview__top { padding-top: 10px; padding-bottom: 10px; }   /* 92px → 64px — 영상 위 공간을 덜 먹게(버튼 터치영역 44px 유지) */
   .pview__hero { padding-top: var(--space-6); }
   .pview__title { font-size: clamp(34px, 10.4vw, 56px); margin-bottom: var(--space-6); }
   .pview__intro { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-6); }
