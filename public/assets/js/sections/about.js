@@ -31,12 +31,35 @@ export function initAbout(settings) {
   if (portrait && portraitSrc) {
     // 원본 대신 표시폭(최대 520px)의 2x WebP 썸네일 — 대용량 원본 다운로드 방지
     const psized = /^\/uploads\//.test(portraitSrc) ? `${portraitSrc}${portraitSrc.includes('?') ? '&' : '?'}w=900` : portraitSrc;
-    portrait.innerHTML = `<img src="${escapeHtml(psized)}" alt="Hati portrait" loading="lazy" decoding="async" onerror="this.parentNode.hidden=true">`;
+    // 35mm 필름 가장자리 인쇄(에지 코드) — 사진이 '한 컷의 필름'으로 읽히게
+    const yr = new Date().getFullYear();
+    portrait.innerHTML = `<img src="${escapeHtml(psized)}" alt="Hati portrait" loading="lazy" decoding="async" onerror="this.parentNode.hidden=true">`
+      + `<span class="about__edge about__edge--t" aria-hidden="true"><span>Hati® 400TX</span><span>▸ 12 &nbsp;&nbsp; ▸ 12A</span></span>`
+      + `<span class="about__edge about__edge--b" aria-hidden="true"><span>Seoul — ${yr}</span><span>13 ◂</span></span>`;
     portrait.hidden = false;
   }
 
   // 스태거 리빌 — 갤러리 + 텍스트 블록
   if (!window.gsap || !window.ScrollTrigger) return;
+
+  // 암실 현상 — 포트레이트가 필름 네거티브(반전)로 들어와 스크롤에 따라 포지티브로 현상된다.
+  // 데스크탑은 스크럽(되감으면 다시 네거티브), 모바일은 진입 시 1회 시간 기반 — 터치 모멘텀에 콘텐츠가 볼모 잡히지 않게.
+  const portraitImg = portrait && portrait.querySelector('img');
+  if (portraitImg && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const NEG = 'invert(1) grayscale(0.35) contrast(1.15) brightness(0.95)';
+    const POS = 'invert(0) grayscale(0) contrast(1) brightness(1)';
+    if (window.innerWidth >= 768) {
+      window.gsap.fromTo(portraitImg, { filter: NEG }, {
+        filter: POS, ease: 'none',
+        scrollTrigger: { trigger: portrait, start: 'top 88%', end: 'top 30%', scrub: 0.6 }
+      });
+    } else {
+      window.gsap.fromTo(portraitImg, { filter: NEG }, {
+        filter: POS, duration: 2.2, ease: 'power2.inOut',
+        scrollTrigger: { trigger: portrait, start: 'top 75%', once: true }
+      });
+    }
+  }
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   const gsap = window.gsap;

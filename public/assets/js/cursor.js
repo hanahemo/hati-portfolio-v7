@@ -5,7 +5,8 @@ export function initCursor() {
 
   const cursor = document.createElement('div');
   cursor.className = 'cursor';
-  cursor.innerHTML = '<span class="cursor__text"></span>';
+  // 뷰파인더 브래킷 — 'view' 대상(작품) 위에서 커서가 카메라 초점 프레임으로 바뀐다
+  cursor.innerHTML = '<span class="cursor__vf" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="cursor__text"></span>';
   document.body.appendChild(cursor);
 
   const ring = document.createElement('div');
@@ -54,13 +55,16 @@ export function initCursor() {
     if (!t || t === hoverEl) return;
     hoverEl = t;
     cursor.classList.add('is-hover');
-    text.textContent = t.dataset.cursor || (t.classList.contains('card') ? 'view' : 'click');
+    const label = t.dataset.cursor || (t.classList.contains('card') ? 'view' : 'click');
+    text.textContent = label;
+    // 작품(이미지) 위에서만 뷰파인더 — 텍스트 링크의 'view'(인스타·링크드인)는 기존 도트 유지
+    cursor.classList.toggle('is-frame', label === 'view' && !!t.querySelector('img, video, iframe'));
   });
   document.addEventListener('pointerout', (e) => {
     if (!hoverEl) return;
     if (e.relatedTarget && hoverEl.contains(e.relatedTarget)) return;   // 여전히 같은 타깃 내부면 유지
     hoverEl = null;
-    cursor.classList.remove('is-hover');
+    cursor.classList.remove('is-hover', 'is-frame');
     text.textContent = '';
   });
 }

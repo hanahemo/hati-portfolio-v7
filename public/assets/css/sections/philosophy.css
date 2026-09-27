@@ -29,6 +29,19 @@
   background-clip: text;
   color: transparent;
 }
+/* 데스크탑 — 첫 줄 자간이 스크럽으로 넓었다 조여진다. 그 사이 줄바꿈이 튀지 않게 한 줄 고정 */
+@media (min-width: 768px) {
+  .philosophy__text { max-width: none; }
+  .philosophy__text .line1 { white-space: nowrap; }
+}
+/* 'Density breathes life.' — 숨: 5.2s 주기로 2% 부풀었다 가라앉는다 (transform만 — 컴포지터) */
+@media (prefers-reduced-motion: no-preference) {
+  .philosophy__text .line2 { transform-origin: 50% 60%; animation: philoBreathe 5.2s ease-in-out infinite; }
+  /* 단어로 쪼개진 뒤엔 부모의 text-clip을 끈다 — 부모에 transform + background-clip:text가 함께 걸리면
+     크롬이 자식 단어 글리프를 줄 왼쪽에 겹쳐 그리는 잔상을 만든다. 그라데이션은 각 .word가 가진다 */
+  .philosophy__text .line2:has(.word) { background: none; -webkit-background-clip: border-box; background-clip: border-box; }
+}
+@keyframes philoBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.022); } }
 /* SplitType가 word 스팬으로 분해해도 그라데이션 유지 (transform 스택 컨텍스트 대응) */
 .philosophy__text .line2 .word {
   background: var(--grad-key);

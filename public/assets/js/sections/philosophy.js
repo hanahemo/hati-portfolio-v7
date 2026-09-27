@@ -34,11 +34,7 @@ export function initPhilosophy(settings) {
   }
 
   gsap.set(targets, { opacity: 0.15, y: 20 });
-  gsap.to(targets, {
-    opacity: 1,
-    y: 0,
-    stagger: 0.15,
-    ease: 'cubic-bezier(0.45, 0.05, 0.55, 0.95)',
+  const tl = gsap.timeline({
     scrollTrigger: {
       trigger: section,
       start: 'top top',
@@ -49,4 +45,14 @@ export function initPhilosophy(settings) {
       refreshPriority: 3,   // credits(1)보다 먼저 refresh — 안 그러면 credits 시작점이 이 핀의 스페이서(+80%)만큼 일찍 걸려 어바웃 한중간에 핀이 튄다
     },
   });
+  tl.to(targets, {
+    opacity: 1,
+    y: 0,
+    stagger: 0.15,
+    ease: 'cubic-bezier(0.45, 0.05, 0.55, 0.95)',
+  }, 0);
+  // 키네틱 타이포 — 'Purpose breeds density.' 문장 자체가 스크롤에 따라 조여져 밀도가 생긴다(자간 0.09em → -0.03em).
+  // 두 번째 줄 'Density breathes life.'은 CSS가 숨 쉬듯 미세하게 부풀었다 가라앉는다.
+  const l1 = el.querySelector('.line1');
+  if (l1) tl.fromTo(l1, { letterSpacing: '0.09em' }, { letterSpacing: '-0.03em', ease: 'power2.inOut', duration: tl.duration() || 1 }, 0);
 }

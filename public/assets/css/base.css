@@ -202,6 +202,14 @@ ul, ol { list-style: none; }
   line-height: 0.88;
   color: var(--color-text);
 }
+/* 필름 카운터 릴 — 자릿수 칸(1em 창) 안에서 0–9 스트립이 두 바퀴 돌고 멎는다. 등폭 숫자라 칸 폭이 흔들리지 않는다 */
+.stat__num { font-variant-numeric: tabular-nums; }
+.roll { display: inline-block; height: 1em; overflow: hidden; vertical-align: top; line-height: 1; }
+.roll__strip { display: block; transform: translateY(0); will-change: transform;
+  transition: transform 1.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--s, 0) * 140ms + var(--k, 0) * 90ms); }
+.roll__strip > span { display: block; height: 1em; line-height: 1; }
+.stat.is-in .roll__strip { transform: translateY(calc(-1em * (10 + var(--d, 0)))); }
+@media (prefers-reduced-motion: reduce) { .roll__strip { transition: none; } }
 .stat__num .stat__sup {
   font-family: var(--font-mono);
   font-size: 0.28em; font-weight: 500;

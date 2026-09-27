@@ -77,17 +77,29 @@
 /* Portrait — 어바웃은 프로필 사진 한 장. 현장 스틸은 엔딩크레딧에서 흐른다.
    문서 플로우를 출렁이게 하던 대용량 갤러리를 빼고, aspect-ratio 예약으로 로드 시 레이아웃 시프트 0. */
 .about__portrait {
+  position: relative;
   margin: 0;
   width: 100%;
   aspect-ratio: 3 / 4;
-  overflow: hidden;
-  border-radius: var(--radius-card);
+  /* overflow/radius는 이미지가 가진다 — 필름 에지 인쇄가 사진 바깥(위아래)에 걸쳐야 해서 */
 }
 .about__portrait img {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: var(--radius-card);
 }
+/* 35mm 에지 코드 — 필름 가장자리의 모노 인쇄. 사진 위아래 바깥에 */
+.about__edge {
+  position: absolute; left: 2px; right: 2px;
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--color-text-mute);
+  pointer-events: none;
+}
+.about__edge--t { top: -20px; }
+.about__edge--b { bottom: -20px; }
 @media (max-width: 1199px) { .about__portrait { max-width: 520px; } }
 
 /* 모바일 — about 본문은 수동 줄바꿈(pre-line) 대신 자연 흐름. 좁은 화면에서 강제 개행이 고아줄을 만든다 */

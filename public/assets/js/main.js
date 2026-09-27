@@ -141,11 +141,23 @@ function preloadThumbs(projects, onProgress, timeoutMs = 8000) {
       { num: pad(disciplines), label: 'Disciplines' },
       { num: est, label: 'Est. Seoul' },
     ];
-    statsRow.innerHTML = items.map(s => `
-      <div class="stat">
+    // 필름 카운터 — 자릿수마다 0–9 릴 두 바퀴. 화면에 들어오면 자릿수·항목별 시차로 돌다가 제 숫자에 멎는다.
+    // 스크린리더는 sr-only 숫자만 읽는다 (릴의 0123… 나열은 aria-hidden)
+    const reel = (str) => [...str].map((ch, k) => /\d/.test(ch)
+      ? `<span class="roll" style="--d:${ch};--k:${k}"><span class="roll__strip">${'01234567890123456789'.split('').map(n => `<span>${n}</span>`).join('')}</span></span>`
+      : ch).join('');
+    statsRow.innerHTML = items.map((s, i) => `
+      <div class="stat" style="--s:${i}">
         <dt class="stat__label">${s.label}</dt>
-        <dd class="stat__num">${s.num}${s.sup ? `<span class="stat__sup">${s.sup}</span>` : ''}</dd>
+        <dd class="stat__num"><span class="sr-only">${s.num}${s.sup || ''}</span><span aria-hidden="true">${reel(s.num)}</span>${s.sup ? `<span class="stat__sup" aria-hidden="true">${s.sup}</span>` : ''}</dd>
       </div>`).join('');
+    const statEls = statsRow.querySelectorAll('.stat');
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+      }), { threshold: 0.35 });
+      statEls.forEach(el => io.observe(el));
+    } else statEls.forEach(el => el.classList.add('is-in'));
   }
 
   initGate(settings, lenis);
