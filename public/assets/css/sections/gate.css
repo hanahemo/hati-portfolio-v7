@@ -91,19 +91,24 @@
 .gate__ticket {
   display: inline-flex; align-items: stretch;
   margin-top: var(--space-4);
-  border: 1px solid var(--color-hairline);
-  border-radius: 10px;
   cursor: pointer;
   position: relative;
   user-select: none;
-  transition: border-color var(--dur-base);
 }
-.gate__ticket:hover, .gate__ticket:focus-visible { border-color: var(--color-border-neon); }
+/* 외곽선은 본권·스텁이 각자 가진다 — 부모 한 장 테두리였을 땐 스텁이 떨어져도 그 자리 외곽선이 남아
+   '점선만 날아가는' 모션으로 읽혔다. 이제 스텁은 테두리를 가진 진짜 조각이고, 점선은 본권에 남는 찢긴 단면 */
 .gate__ticket-main {
   display: grid; gap: 6px;
   padding: 16px 26px 15px;
   text-align: left;
+  border: 1px solid var(--color-hairline);
+  border-right: 1px dashed var(--color-hairline);   /* 절취선 = 본권의 오른쪽 단면 */
+  border-radius: 10px 0 0 10px;
+  transition: border-color var(--dur-base);
 }
+.gate__ticket:focus-visible { outline: 0; }   /* 포커스는 아래 테두리 색 변화가 알린다 — 기본 링은 티켓 밖에 각진 사각형으로 떴다 */
+.gate__ticket:hover .gate__ticket-main, .gate__ticket:focus-visible .gate__ticket-main,
+.gate__ticket:hover .gate__ticket-stub, .gate__ticket:focus-visible .gate__ticket-stub { border-color: var(--color-border-neon); }
 .gate__ticket-k {
   font-size: var(--fs-micro); font-weight: 500;
   letter-spacing: 0.3em; text-transform: uppercase;
@@ -124,13 +129,15 @@
 .gate__ticket-stub {
   display: grid; place-items: center;
   padding: 0 22px;
-  border-left: 1px dashed var(--color-hairline);
+  border: 1px solid var(--color-hairline);
+  border-left: 0;                                    /* 왼쪽 단면은 본권의 점선이 담당 */
+  border-radius: 0 10px 10px 0;
+  background: var(--color-bg);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 11px; letter-spacing: 0.2em;
   color: var(--color-text-dim);
-  /* 절취 — 절취선(왼쪽 위)을 축으로 꺾이며 떨어진다. 중력감: ease-in, 불투명도는 늦게 */
   transform-origin: left top;
-  transition: transform 0.58s cubic-bezier(0.35, 0.05, 0.6, 1), opacity 0.36s ease-in 0.2s;
+  transition: border-color var(--dur-base);
 }
 /* 절취공 — 퍼포레이션 상하 펀치 노치 */
 .gate__ticket::before, .gate__ticket::after {
@@ -155,8 +162,15 @@
   padding: 4px 10px 5px;
 }
 /* 입장 순간 — 본권 반동 → 도장 → 스텁 절취 */
-.gate.is-torn .gate__ticket-stub { transform: rotate(18deg) translate(12px, 34px); opacity: 0; }
+/* 절취 — 두 박자: 절취선을 따라 '뜯기며' 살짝 벌어진 뒤(0~30%), 조각이 떨어진다(30~100%) */
+.gate.is-torn .gate__ticket-stub { animation: gateTear 0.72s cubic-bezier(0.45, 0.02, 0.55, 1) forwards; }
 .gate.is-torn .gate__ticket-main { animation: gateRecoil 0.4s var(--ease-signature) both; }
+@keyframes gateTear {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  16%  { transform: translate(3px, 0) rotate(1.5deg); }
+  30%  { transform: translate(9px, 3px) rotate(4deg); opacity: 1; }
+  100% { transform: translate(34px, 76px) rotate(26deg); opacity: 0; }
+}
 .gate.is-torn .gate__ticket-stamp { animation: gateStamp 0.42s cubic-bezier(0.2, 1.25, 0.3, 1) 0.1s forwards; }
 @keyframes gateRecoil {
   0%   { transform: translateX(0); }
@@ -173,7 +187,7 @@
   transition: opacity 0.18s ease-out; opacity: 0; animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .gate.is-torn .gate__ticket-stub { transform: none; transition: none; }
+  .gate.is-torn .gate__ticket-stub { animation: none; opacity: 0; transition: opacity 0.2s; }
   .gate.is-torn .gate__ticket-main, .gate.is-torn .gate__ticket-stamp { animation: none; }
   .gate.is-torn .gate__ticket-stamp { opacity: 1; transform: rotate(-11deg); }
 }
