@@ -204,24 +204,32 @@ if (pptBtn) pptBtn.addEventListener('click', async () => {
   pptBtn.disabled = true;
   if (status) status.textContent = '생성 중… (이미지 수집에 수십 초 걸릴 수 있어요)';
   try {
-    const res = await fetch(`${API}/export-ppt?scope=${scope}`, { credentials: 'same-origin' });
+    const res = await fetch(`${API}/export-deck?scope=${scope}`, { credentials: 'same-origin' });
     if (res.status === 401) { location.href = '/admin/login'; return; }
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'export failed');
-    // 세션 만료가 302→로그인 HTML 로 돌아오는 경로 방어 — pptx 가 아니면 다운로드하지 않는다
-    if (!(res.headers.get('content-type') || '').includes('presentationml')) { location.href = '/admin/login'; return; }
-    const blob = await res.blob();
-    const cd = res.headers.get('content-disposition') || '';
-    const m = cd.match(/filename="([^"]+)"/);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (m && m[1]) || 'Hati_Portfolio.pptx';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-    if (status) status.textContent = `완료 — ${(blob.size / 1048576).toFixed(1)}MB`;
-    toast('PPT 생성 완료');
+    // 세션 만료가 302→로그인 HTML 로 돌아오는 경로 방어 — JSON 이 아니면 로그인으로
+    if (!(res.headers.get('content-type') || '').includes('json')) { location.href = '/admin/login'; return; }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'export failed');
+    // PDF·PPTX 를 연달아 받는다. 브라우저가 '여러 파일 다운로드'를 막으면 아래 링크로 직접 받기.
+    data.files.forEach((f, i) => setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = f.url; a.download = f.name;
+      document.body.appendChild(a); a.click(); a.remove();
+    }, i * 700));
+    if (status) {
+      status.textContent = `완료 — ${data.pages}장 · `;
+      data.files.forEach((f, i) => {
+        const a = document.createElement('a');
+        a.href = f.url; a.download = f.name;
+        a.textContent = `${f.kind.toUpperCase()} ${(f.size / 1048576).toFixed(1)}MB`;
+        status.append(a);
+        if (i < data.files.length - 1) status.append(' · ');
+      });
+    }
+    toast('PDF + PPT 생성 완료');
   } catch (err) {
     if (status) status.textContent = '실패: ' + err.message;
-    toast('PPT 생성 실패', 'err');
+    toast('덱 생성 실패', 'err');
   } finally { pptBtn.disabled = false; }
 });
 

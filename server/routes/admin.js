@@ -376,21 +376,37 @@ router.post('/api/upload', (req, res) => {
   });
 });
 
-// ── PPT 내보내기 — 현재 데이터의 스냅샷을 기업 제출용 표준 덱으로 (server/ppt/deck.js) ──
-// deck 모듈은 네이티브 의존성(sharp)을 물어 lazy require — 로드 실패해도 사이트 전체는 죽지 않고
-// 이 엔드포인트만 500 을 낸다.
-router.get('/api/export-ppt', async (req, res) => {
+// ── 덱 내보내기 — 현재 데이터 스냅샷을 PDF(정본) + PPTX(편집본)로 한 번에 (server/ppt/deck.js) ──
+// 한 번 빌드해 두 파일을 메모리에 잠깐(10분) 보관 → 클라이언트가 두 파일을 연달아 받는다.
+// deck 모듈은 네이티브 의존성(sharp)을 물어 lazy require — 로드 실패해도 이 엔드포인트만 500.
+const deckStore = new Map();   // token → { pdf, pptx, base, at }  ponytail: 인메모리, 최근 2건만
+const DECK_TYPES = { pdf: 'application/pdf', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' };
+router.get('/api/export-deck', async (req, res) => {
   try {
-    const { buildDeckBuffer } = require('../ppt/deck');
+    const { buildDeckFiles } = require('../ppt/deck');
     const scope = req.query.scope === 'all' ? 'all' : 'featured';
     const [portfolio, settings] = await Promise.all([readPortfolio(), readSettings()]);
-    const buf = await buildDeckBuffer({ portfolio, settings, scope });
+    const { pdf, pptx, pages } = await buildDeckFiles({ portfolio, settings, scope });
     const d = new Date();
     const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
-    res.setHeader('Content-Disposition', `attachment; filename="Hati_Portfolio_${ymd}_${scope}.pptx"`);
-    res.send(buf);
+    const base = `Hati_Portfolio_${ymd}_${scope === 'all' ? 'Complete' : 'Selected'}`;
+    const token = crypto.randomBytes(12).toString('hex');
+    deckStore.set(token, { pdf, pptx, base, at: Date.now() });
+    for (const [k, v] of deckStore) if (Date.now() - v.at > 10 * 60 * 1000) deckStore.delete(k);
+    while (deckStore.size > 2) deckStore.delete(deckStore.keys().next().value);
+    res.json({
+      pages,
+      files: ['pdf', 'pptx'].map(kind => ({ kind, name: `${base}.${kind}`, size: (kind === 'pdf' ? pdf : pptx).length, url: `/admin/api/export-deck/${token}/${kind}` })),
+    });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+router.get('/api/export-deck/:token/:kind', (req, res) => {
+  const e = deckStore.get(req.params.token);
+  const type = DECK_TYPES[req.params.kind];
+  if (!e || !type) return res.status(404).json({ error: '파일이 만료됐어요 — 다시 생성해 주세요' });
+  res.setHeader('Content-Type', type);
+  res.setHeader('Content-Disposition', `attachment; filename="${e.base}.${req.params.kind}"`);
+  res.send(e[req.params.kind]);
 });
 
 module.exports = router;

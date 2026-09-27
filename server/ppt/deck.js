@@ -1,58 +1,65 @@
-// PPT 내보내기 v3 — 필름 디렉터스 트리트먼트 문법.
-// 레퍼런스(Behance 트리트먼트 덱 실물 검수): 풀블리드 스틸 위에 큰 세리프 디스플레이 타이포,
-// 텍스트 존은 이미지에 '구운' 스크림으로 확보, 괄호 페이지 넘버 (02), 코너 메타 레일.
-//
-// 왜곡 사고의 교훈(2026-07-11): pptxgenjs 의 sizing:cover 는 Node 에서 원본 크기를 못 읽어
-// 조용히 스트레치된다. 크롭·스크림·리사이즈는 전부 sharp 로 이미지에 직접 굽고,
-// PPT 에는 '정확히 그 비율의 완성된 이미지'만 얹는다. (attention 크롭 — 인물 보존)
-//
-// 아키텍처: 데이터 → 슬라이드 스펙(JSON) → PPTX 렌더러 + HTML 프리뷰 렌더러(스크린샷 검수용).
-// 스펙: docs/superpowers/specs/2026-07-11-ppt-export-design.md
-
-const PptxGenJS = require('pptxgenjs');
+// 포트폴리오 덱 v4 — "Screening Notes". 한 번의 빌드로 PDF(정본)와 PPTX(편집본)를 함께 낸다.
+// 설계 원칙: design/deck-design-philosophy.md
+//  · 12단 스위스 그리드(마진 44 / 거터 16 / 단 58pt) — 모든 요소가 단 경계에 선다.
+//  · 활자는 사이트와 같은 계통: Pretendard(본문·디스플레이) / JetBrains Mono(기록) / Instrument Serif Italic(장면 번호).
+//  · 줄은 type.js 가 직접 짠다 — 어절 단위 줄바꿈, 제목 균형 배분, 외톨이 줄 방지. PDF·PPTX 가 같은 줄을 쓴다.
+//  · 크롭은 sharp 로 이미지에 굽는다 (pptxgenjs sizing 은 Node 에서 원본 크기를 몰라 늘어난다 — v2 사고).
+//  · 컬러는 잉크/지면 두 재질 + 라벤더 헤어라인 하나(표지·마지막 장). 면 채움 금지.
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 const { UPLOADS_DIR } = require('../persist');
+const T = require('./type');
+const { renderPdf, renderPptx } = require('./render');
 
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
 
-// ── 팔레트/타이포 ──
-const INK = '141416';
-const PAPER = 'F4F2EE';         // 순백보다 따뜻한 지면
-const WHITE = 'FFFFFF';
-const MUTE = '8A8886';
-const MUTE_INK = 'A8A6A0';
-const SOFT_INK = 'D6D4CF';
-const HAIR = 'DDDAD4';
-const SERIF = 'Georgia';        // 디스플레이(영문) — Win/Mac 공통 탑재
-const SANS = 'Malgun Gothic';   // 한글 본문/타이틀
-const KEY = 'C7B9FF';           // 브랜드 키(라벤더) — 커버 워드마크 악센트. ponytail: 솔리드(PPT는 그라데이션 텍스트 불가)
+// ── 그리드 ──
+const W = 960, H = 540;
+const MX = 44, G = 16, PITCH = 74;          // 12단: 단 58 + 거터 16
+const cx = i => MX + i * PITCH;              // i번째 단(0부터)의 왼쪽 경계
+const span = n => n * PITCH - G;             // n단 폭
+const TOP = 72, BOT = 496, RAIL = 30;        // 본문 밴드, 레일 베이스라인
+const RIGHT = W - MX;
 
-const PW = 13.333, PH = 7.5, M = 0.62;
-const DPI = 150;                 // 이미지 픽셀 밀도 (인치 → px)
-const px = inch => Math.round(inch * DPI);
+// ── 재질 ──
+const DARK = { bg: '0B0B0C', fg: 'EDEBE6', fg2: '8E8C86', fg3: '4A4945', hair: '29292B', dark: true };
+const LIGHT = { bg: 'F2F1ED', fg: '121213', fg2: '6E6C67', fg3: 'A6A49E', hair: 'D3D1CA', dark: false };
+const ON_IMG = { fg: 'F2F0EB', fg2: 'C4C2BC' };
+const KEY = 'C7B9FF';
+
+// ── 활자 역할 ── (f 페이스, s 크기pt, c 색, tr 자간em)
+const sp = (text, f, s, c, tr = 0, up = false) => ({ text, f, s, c, tr, up });
+const label = (text, c) => sp(text, 'mono', 6.5, c, 0.08, true);
+const P = (spans, o = {}) => ({ spans: Array.isArray(spans) ? spans : [spans], ...o });
+const line = (els, x1, y1, x2, y2, c, w = 0.5) => els.push({ t: 'rule', x1, y1, x2, y2, c, w });
+const text = (els, o) => { const b = T.block(o); els.push(b); return b; };
+// 조판이 끝난 요소 묶음을 세로로 옮긴다 (먼저 높이를 재고 나중에 자리를 정하는 배치용)
+function shift(els, dy) {
+  for (const e of els) {
+    if (e.t === 'text') { e.y += dy; e.bottom += dy; e.firstBase += dy; e.lastBase += dy; e.paras.forEach(p => p.lines.forEach(l => { l.base += dy; })); }
+    else if (e.t === 'rule') { e.y1 += dy; e.y2 += dy; }
+    else e.y += dy;
+  }
+}
 
 // ── 데이터 정제 ──
 function filled(v) {
   const s = String(v ?? '').trim();
   return /[\p{L}\p{N}]/u.test(s) ? s : '';
 }
-function bulletLines(s) {
-  return String(s).split('\n').map(l => l.replace(/^[-•·]\s*\t?\s*/, '').trim()).filter(Boolean);
+const bulletLines = s => String(s).split('\n').map(l => l.replace(/^[-•·–—]\s*\t?\s*/, '').trim()).filter(l => filled(l));
+function oneLiner(s, max = 140) {
+  const first = String(s || '').split('\n').map(l => l.trim()).filter(l => filled(l))[0] || '';
+  return first.length > max ? first.slice(0, max - 1).replace(/\s+\S*$/, '') + '…' : first;
 }
-function oneLiner(s, max = 120) {
-  const first = String(s || '').split('\n').map(l => l.trim()).filter(Boolean)[0] || '';
-  return first.length > max ? first.slice(0, max - 1) + '…' : first;
-}
-// 디렉터 노트 정돈 — 문단은 살리되 문단 내부 하드 줄바꿈은 흐르는 산문으로 접는다.
-// (자리표시자 '.' 줄·빈 줄 제거) 좁은 칼럼에서 줄 수가 폭발하지 않게. maxChars 로 총량 제한.
-function cleanNote(s, maxChars = 460) {
-  const paras = String(s || '')
-    .split(/\n\s*\n+/)
-    .map(p => p.split('\n').map(l => l.trim()).filter(l => /[\p{L}\p{N}]/u.test(l)).join(' ').trim())
+// 문단은 살리고 문단 안의 하드 줄바꿈(웹용 수동 개행)은 산문으로 접는다
+function prose(s, maxChars = 420) {
+  const paras = String(s || '').split(/\n\s*\n+/)
+    .map(p => p.split('\n').map(l => l.trim()).filter(l => filled(l)).join(' ').replace(/\s{2,}/g, ' ').trim())
     .filter(Boolean);
-  let out = [], total = 0;
+  const out = [];
+  let total = 0;
   for (const p of paras) {
     if (total + p.length > maxChars && out.length) break;
     out.push(p); total += p.length;
@@ -61,16 +68,19 @@ function cleanNote(s, maxChars = 460) {
   if (joined.length > maxChars) joined = joined.slice(0, maxChars - 1).replace(/\s+\S*$/, '') + '…';
   return joined;
 }
+const normRole = s => filled(s) ? s.replace(/\s*[\/,]\s*/g, ' · ').replace(/[\s·]+$/, '').replace(/^[\s·]+/, '').replace(/\s{2,}/g, ' ') : '';
 const nn = i => String(i).padStart(2, '0');
+const CAT = { video: 'Film', photo: 'Photo', graphic: 'Graphic' };
+const catOf = p => CAT[p.category] || filled(p.category) || 'Work';
 
-// ── 미디어 소스 해석 (후보 체인 — 죽은 업로드/권한 실패 우회) ──
+// ── 미디어 소스 (후보 체인 — 죽은 업로드/권한 실패 우회) ──
 function getDriveId(url) {
   if (!url || typeof url !== 'string' || !url.includes('drive.google.com')) return '';
   const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   return m ? m[1] : '';
 }
 function getYouTubeId(url) {
-  const m = String(url || '').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  const m = String(url || '').match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
   return m ? m[1] : '';
 }
 const DIRECT_VIDEO_RE = /\.(mp4|mov|webm|m4v)(\?|#|$)/i;
@@ -92,14 +102,14 @@ function mediaCandidates(raw, w) {
   }
   if (DIRECT_VIDEO_RE.test(raw)) return [];
   const yt = getYouTubeId(raw);
-  if (yt) return [{ kind: 'url', url: `https://img.youtube.com/vi/${yt}/hqdefault.jpg` }];
+  if (yt) return ['maxresdefault', 'sddefault', 'hqdefault'].map(q => ({ kind: 'url', url: `https://img.youtube.com/vi/${yt}/${q}.jpg`, letterbox: q !== 'maxresdefault' }));
   if (/vimeo\.com/.test(raw)) return [];
   if (/^https?:\/\//.test(raw)) return [{ kind: 'url', url: raw }];
   return [];
 }
 
 const bufCache = new Map();
-async function fetchBuffer(url, timeoutMs = 8000) {
+async function fetchBuffer(url, timeoutMs = 9000) {
   if (bufCache.has(url)) return bufCache.get(url);
   let result = null;
   try {
@@ -113,544 +123,552 @@ async function fetchBuffer(url, timeoutMs = 8000) {
       if (b.length > 100) result = b;
     }
   } catch (_) { /* 다음 후보로 */ }
+  if (bufCache.size > 400) bufCache.clear();
   bufCache.set(url, result);
   return result;
 }
-async function resolveBuffer(raw, w) {
+// 버퍼 + 실제 가로세로비(EXIF 회전 반영). 유튜브 sd/hq 썸네일은 4:3 레터박스 → 16:9 로 잘라낸다.
+async function resolveImage(raw, w) {
   for (const c of mediaCandidates(raw, w)) {
-    if (c.kind === 'file') { try { return fs.readFileSync(c.path); } catch (_) { continue; } }
-    const b = await fetchBuffer(c.url);
-    if (b) return b;
+    let buf = null;
+    if (c.kind === 'file') { try { buf = fs.readFileSync(c.path); } catch (_) { continue; } }
+    else buf = await fetchBuffer(c.url);
+    if (!buf) continue;
+    try {
+      const m = await sharp(buf).metadata();
+      let iw = m.width, ih = m.height;
+      if (!iw || !ih) continue;
+      if (c.letterbox) {
+        buf = await sharp(buf).extract({ left: 0, top: Math.round(ih * 0.125), width: iw, height: Math.round(ih * 0.75) }).toBuffer();
+        ih = Math.round(ih * 0.75);
+      }
+      if ((m.orientation || 1) >= 5) [iw, ih] = [ih, iw];
+      return { buf, ar: iw / ih };
+    } catch (_) { continue; }
   }
   return null;
-}
-
-// ── sharp 가공 — 크롭/스크림을 이미지에 굽는다 ──
-// scrim: 'bottom'(로어서드용 하단 그라데이션) | 'full'(전체 은은한 암막) | null
-async function bakeImage(buf, wIn, hIn, { scrim = null, position = 'attention', quality = 78 } = {}) {
-  const w = px(wIn), h = px(hIn);
-  try {
-    let pipe = sharp(buf).rotate().resize(w, h, { fit: 'cover', position });
-    if (scrim) {
-      const stops = scrim === 'bottom'
-        ? `<stop offset="0.42" stop-color="#0b0b0d" stop-opacity="0"/><stop offset="0.72" stop-color="#0b0b0d" stop-opacity="0.55"/><stop offset="1" stop-color="#0b0b0d" stop-opacity="0.88"/>`
-        : `<stop offset="0" stop-color="#0b0b0d" stop-opacity="0.38"/><stop offset="1" stop-color="#0b0b0d" stop-opacity="0.38"/>`;
-      const svg = Buffer.from(
-        `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">` +
-        `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">${stops}</linearGradient></defs>` +
-        `<rect width="100%" height="100%" fill="url(#g)"/></svg>`
-      );
-      pipe = pipe.composite([{ input: svg }]);
-    }
-    const out = await pipe.jpeg({ quality, mozjpeg: true }).toBuffer();
-    return 'data:image/jpeg;base64,' + out.toString('base64');
-  } catch (_) { return null; }   // 손상 이미지 → 없는 셈 친다
-}
-// 로고 — 비율 유지 리사이즈(투명 보존), 배치 크기(인치)도 함께 반환
-async function bakeLogo(buf, maxWIn, maxHIn) {
-  try {
-    const meta = await sharp(buf).metadata();
-    if (!meta.width || !meta.height) return null;
-    const scale = Math.min((px(maxWIn)) / meta.width, (px(maxHIn)) / meta.height, 1);
-    const w = Math.max(1, Math.round(meta.width * scale)), h = Math.max(1, Math.round(meta.height * scale));
-    // 모노톤 처리 — 홈페이지 marquee 의 brightness(0) invert(0.92) 와 동일한 톤(#EBEBEB).
-    // 원색 로고들이 잉크 지면에서 제각각 튀지 않게 알파를 마스크로 단색 화이트그레이 실루엣으로 굽는다.
-    let out;
-    if ((meta.channels || 3) >= 4 || meta.hasAlpha) {
-      const alpha = await sharp(buf).resize(w, h).ensureAlpha().extractChannel('alpha').toBuffer();
-      out = await sharp({ create: { width: w, height: h, channels: 3, background: { r: 235, g: 235, b: 235 } } })
-        .joinChannel(alpha).png().toBuffer();
-    } else {
-      out = await sharp(buf).resize(w, h).grayscale().png().toBuffer();   // 알파 없는 로고 폴백
-    }
-    return { data: 'data:image/png;base64,' + out.toString('base64'), w: w / DPI, h: h / DPI };
-  } catch (_) { return null; }
 }
 
 async function withPool(jobs, size = 5) {
   const out = new Array(jobs.length).fill(null);
   let i = 0;
-  const worker = async () => { while (i < jobs.length) { const idx = i++; out[idx] = await jobs[idx](); } };
+  const worker = async () => { while (i < jobs.length) { const idx = i++; try { out[idx] = await jobs[idx](); } catch (_) { out[idx] = null; } } };
   await Promise.all(Array.from({ length: Math.min(size, jobs.length) || 1 }, worker));
   return out;
 }
 
-// 프로젝트의 원시 이미지 버퍼 목록 — coverImage(장표 지정 커버) 우선, 이미지 → 영상 포스터 순
-async function projectBuffers(project, max, w) {
+// 프로젝트 이미지 — 장표 커버 지정 → 이미지 → 영상 포스터 순
+async function projectImages(project, max, w) {
   const media = Array.isArray(project.media) ? project.media : [];
   const isImg = m => (m.type || '').startsWith('image');
   const urls = [];
   if (filled(project.coverImage)) urls.push(project.coverImage);
   urls.push(...media.filter(isImg).map(m => m.url), ...media.filter(m => !isImg(m)).map(m => m.url));
-  const out = [];
-  const seen = new Set();
+  const out = [], seen = new Set();
   for (const u of urls) {
     if (out.length >= max) break;
-    if (seen.has(u)) continue; seen.add(u);
-    const b = await resolveBuffer(u, w);
-    if (b) out.push(b);
+    if (!u || seen.has(u)) continue;
+    seen.add(u);
+    const r = await resolveImage(u, w);
+    if (r) out.push(r);
   }
   return out;
 }
 
-// ═══════════════════════ 슬라이드 스펙 빌더 ═══════════════════════
-// 스펙 요소: {type:'text'|'image'|'line', x,y,w,h(inch), ...스타일}
-// 텍스트 스타일: text|runs, font('serif'|'sans'), size(pt), bold, italic, color(hex),
-//               align, valign, charSpacing, lineSpacingMultiple, shrink
-// 코너 메타 레일 — 모든 프레임에 흐르는 타임코드 (Printed Light: 시스템이 흔들리지 않을 때 이미지가 자유롭다)
-function railTop(slide, year, dark = true) {
-  const c = dark ? MUTE_INK : MUTE;
-  slide.push(
-    { type: 'text', text: 'HATI®', x: M, y: 0.34, w: 2, h: 0.28, font: 'sans', size: 9, color: c, charSpacing: 3 },
-    { type: 'text', text: `PORTFOLIO — ${year}`, x: PW - 4 - M, y: 0.34, w: 4, h: 0.28, font: 'sans', size: 9, color: c, charSpacing: 3, align: 'right' },
-  );
-}
-// 괄호 페이지 번호 — 필름 롤의 각인처럼 매 장 같은 자리에
-function pageNo(slide, n, dark) {
-  slide.push({ type: 'text', text: `( ${nn(n)} )`, x: PW / 2 - 1, y: PH - 0.52, w: 2, h: 0.3, font: 'serif', italic: true, size: 10.5, color: dark ? MUTE_INK : MUTE, align: 'center' });
+// 영상 원본 링크 (장표에서 바로 재생 페이지로)
+function filmLink(p) {
+  const media = Array.isArray(p.media) ? p.media : [];
+  for (const m of media) {
+    const yt = getYouTubeId(m.url);
+    if (yt) return { url: `https://youtu.be/${yt}`, label: `youtu.be/${yt}` };
+    const vm = String(m.url || '').match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vm) return { url: `https://vimeo.com/${vm[1]}`, label: `vimeo.com/${vm[1]}` };
+  }
+  const v = media.find(m => (m.type || '').startsWith('video') && getDriveId(m.url));
+  if (v) return { url: `https://drive.google.com/file/d/${getDriveId(v.url)}/view`, label: 'Google Drive' };
+  return null;
 }
 
-async function buildSpecs({ portfolio, settings, scope }) {
+// ── sharp — 크롭·스크림을 이미지에 굽는다 (150dpi) ──
+const DPI = 150;
+const px = pt => Math.max(1, Math.round(pt / 72 * DPI));
+async function bake(img, wPt, hPt, { scrim = null, quality = 80 } = {}) {
+  const w = px(wPt), h = px(hPt);
+  try {
+    let pipe = sharp(img.buf).rotate().resize(w, h, { fit: 'cover', position: sharp.strategy.attention });
+    if (scrim) {
+      const g = scrim === 'hero'
+        // 위: 레일 가독용 옅은 그늘 / 아래: 타이틀 존 — 아래 45% 에서만 어두워진다
+        ? `<linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0.5"/><stop offset="0.16" stop-color="#000" stop-opacity="0"/><stop offset="0.5" stop-color="#000" stop-opacity="0"/><stop offset="0.78" stop-color="#050506" stop-opacity="0.55"/><stop offset="1" stop-color="#050506" stop-opacity="0.86"/></linearGradient>`
+        : `<linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0.42"/><stop offset="0.2" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`;
+      pipe = pipe.composite([{ input: Buffer.from(`<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg"><defs>${g}</defs><rect width="100%" height="100%" fill="url(#a)"/></svg>`) }]);
+    }
+    return await pipe.jpeg({ quality, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
+  } catch (_) { return null; }
+}
+// 로고 — 여백을 깎고(trim), 면적을 맞춰(광학 크기 정규화) 알파 마스크 단색 실루엣으로 굽는다.
+// 가로로 긴 워드마크와 정사각 심볼이 같은 '무게'로 보이게: 넓이 = area 로 맞추고 최대 폭/높이로 제한.
+async function bakeLogo(img, area, maxW, maxH, rgb) {
+  try {
+    const trimmed = await sharp(img.buf).trim({ threshold: 8 }).toBuffer().catch(() => img.buf);
+    const meta = await sharp(trimmed).metadata();
+    const ar = meta.width / meta.height;
+    let hPt = Math.sqrt(area / ar), wPt = hPt * ar;
+    const k = Math.min(1, maxW / wPt, maxH / hPt);
+    wPt *= k; hPt *= k;
+    const w = px(wPt), h = px(hPt);
+    let out;
+    if (meta.hasAlpha) {
+      const alpha = await sharp(trimmed).resize(w, h, { fit: 'fill' }).ensureAlpha().extractChannel('alpha').toBuffer();
+      out = await sharp({ create: { width: w, height: h, channels: 3, background: rgb } }).joinChannel(alpha).png().toBuffer();
+    } else {
+      out = await sharp(trimmed).resize(w, h, { fit: 'fill' }).grayscale().png().toBuffer();
+    }
+    return { data: out, w: wPt, h: hPt };
+  } catch (_) { return null; }
+}
+
+// ── 크롭 인지 벤토 — 원본 비율과 셀 비율의 차이(면적 가중)가 가장 작은 배치/순서를 고른다 ──
+function bentoTemplates(n, x, y, w, h, g) {
+  const hw = (w - g) / 2, hh = (h - g) / 2;
+  const T3w = (w - 2 * g) / 3, T4w = (w - 3 * g) / 4;
+  const split = r => [w * r - g / 2, w * (1 - r) - g / 2];
+  if (n === 1) return [[[x, y, w, h]]];
+  if (n === 2) {
+    const [a, b] = split(0.6);
+    return [
+      [[x, y, hw, h], [x + hw + g, y, hw, h]],
+      [[x, y, w, hh], [x, y + hh + g, w, hh]],
+      [[x, y, a, h], [x + a + g, y, b, h]],
+      [[x, y, b, h], [x + b + g, y, a, h]],
+    ];
+  }
+  if (n === 3) {
+    const [a, b] = split(0.58);
+    const th = h * 0.6 - g / 2, bh = h - th - g;
+    return [
+      [[x, y, a, h], [x + a + g, y, b, hh], [x + a + g, y + hh + g, b, hh]],
+      [[x, y, b, hh], [x, y + hh + g, b, hh], [x + b + g, y, a, h]],
+      [[x, y, w, th], [x, y + th + g, hw, bh], [x + hw + g, y + th + g, hw, bh]],
+      [[x, y, T3w, h], [x + T3w + g, y, T3w, h], [x + 2 * (T3w + g), y, T3w, h]],
+    ];
+  }
+  const [a, b] = split(0.62);
+  const t3h = (h - 2 * g) / 3, th = h * 0.6 - g / 2, bh = h - th - g;
+  return [
+    [[x, y, hw, hh], [x + hw + g, y, hw, hh], [x, y + hh + g, hw, hh], [x + hw + g, y + hh + g, hw, hh]],
+    [[x, y, a, h], [x + a + g, y, b, t3h], [x + a + g, y + t3h + g, b, t3h], [x + a + g, y + 2 * (t3h + g), b, t3h]],
+    [[x, y, w, th], [x, y + th + g, T3w, bh], [x + T3w + g, y + th + g, T3w, bh], [x + 2 * (T3w + g), y + th + g, T3w, bh]],
+    [[x, y, T4w, h], [x + T4w + g, y, T4w, h], [x + 2 * (T4w + g), y, T4w, h], [x + 3 * (T4w + g), y, T4w, h]],
+  ];
+}
+function perms(a) { return a.length <= 1 ? [a] : a.flatMap((v, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map(p => [v, ...p])); }
+function bento(imgs, x, y, w, h, g) {
+  const n = Math.min(imgs.length, 4);
+  let best = null;
+  for (const cells of bentoTemplates(n, x, y, w, h, g)) {
+    for (const order of perms([...Array(n).keys()])) {
+      const cost = cells.reduce((a, [, , cw, ch], k) => a + Math.abs(Math.log(imgs[order[k]].ar / (cw / ch))) * cw * ch, 0);
+      if (!best || cost < best.cost) best = { cost, cells: cells.map((c, k) => ({ c, img: imgs[order[k]] })) };
+    }
+  }
+  return best.cells;
+}
+
+// ═══════════════════════ 장표 빌더 ═══════════════════════
+async function buildDeck({ portfolio, settings, scope }) {
   const all = Array.isArray(portfolio.projects) ? portfolio.projects : [];
   const byId = new Map(all.map(p => [p.id, p]));
   const featured = (settings.featuredProjectIds || []).map(id => byId.get(id)).filter(Boolean);
-  const CAT_PRIORITY = { video: 0, photo: 1, graphic: 2 };
+  const CAT_ORDER = { video: 0, photo: 1, graphic: 2 };
   const projects = scope === 'all'
-    ? all.slice().sort((a, b) => ((CAT_PRIORITY[a.category] ?? 9) - (CAT_PRIORITY[b.category] ?? 9)) || ((a.order ?? 0) - (b.order ?? 0)))
+    ? all.slice().sort((a, b) => ((CAT_ORDER[a.category] ?? 9) - (CAT_ORDER[b.category] ?? 9)) || ((a.order ?? 0) - (b.order ?? 0)))
     : (featured.length ? featured : all.slice(0, 9));
 
-  const deck = settings.deck || {};
+  const deckTx = settings.deck || {};
   const email = filled(settings.contactEmail);
   const phone = filled(settings.contactPhone);
   const insta = filled(settings.contactInstagram);
-  const instaHandle = insta ? '@' + insta.replace(/\/+$/, '').split('/').pop() : '';
+  const instaHandle = insta ? '@' + insta.replace(/\/+$/, '').split('/').pop().replace(/^@/, '') : '';
+  const instaUrl = insta ? (/^https?:/.test(insta) ? insta : `https://www.instagram.com/${instaHandle.slice(1)}/`) : '';
   const est = filled(settings.est);
-  const year = new Date().getFullYear();
-  const dateStr = `${year}.${nn(new Date().getMonth() + 1)}.${nn(new Date().getDate())}`;
+  const now = new Date();
+  const year = now.getFullYear();
+  const dateStr = `${year}.${nn(now.getMonth() + 1)}.${nn(now.getDate())}`;
+  const span_ = est ? `${est}—${year}` : String(year);
 
-  // ── 원시 버퍼 수집 (풀 5) ──
-  const maxImgs = scope === 'all' ? 1 : 7;
-  const jobs = projects.map(p => () => projectBuffers(p, maxImgs, 1600));
-  jobs.push(async () => {
-    const raw = filled(settings.heroBackground) || '/uploads/hero-poster.jpg';
-    return (await resolveBuffer(raw, 1920)) || (await projectBuffers(projects[0] || {}, 1, 1600))[0] || null;
-  });
-  jobs.push(() => filled(settings.aboutImage) ? resolveBuffer(settings.aboutImage, 1000) : null);
+  // ── 이미지 수집 (풀 5) ──
+  const maxImgs = scope === 'all' ? 1 : 8;
+  const jobs = projects.map(p => () => projectImages(p, maxImgs, 1800));
+  jobs.push(() => filled(settings.aboutImage) ? resolveImage(settings.aboutImage, 1400) : null);
+  const logoList = Array.isArray(settings.clientLogos) ? settings.clientLogos : [];
+  logoList.forEach(l => jobs.push(() => resolveImage(l.url, 800)));
   const resolved = await withPool(jobs, 5);
-  const rawImgs = resolved.slice(0, projects.length);
-  const aboutBuf = resolved[projects.length];   // 커버는 사진을 쓰지 않는다(타이포 전용) — hero-poster 는 인물이라 뺐다
+  const imgs = resolved.slice(0, projects.length).map(x => x || []);
+  const aboutImg = resolved[projects.length];
+  const logoImgs = resolved.slice(projects.length + 1).filter(Boolean);
 
-  // 로고
-  const logoBufs = await withPool((Array.isArray(settings.clientLogos) ? settings.clientLogos : [])
-    .map(l => () => resolveBuffer(l.url, 600)), 5);
+  const slides = [];
+  const add = (th, meta = {}) => { const s = { bg: th.bg, th, els: [], ...meta }; slides.push(s); return s; };
+  const projPage = [];                 // 프로젝트 i → 첫 장 번호
+  const late = [];                     // 전체 장 수가 정해진 뒤 채우는 것들 (인덱스·목차 번호)
 
-  const slides = [];   // {bg, dark, els:[]}
-  let pageCounter = 0;
-  const newSlide = (bg, dark) => { const s = { bg, dark, els: [] }; slides.push(s); pageCounter++; return s; };
-  const indexPatch = [];   // 인덱스 → 실제 장표 번호 매핑 (프로젝트 장표 생성 후 2-pass 로 기입)
-  const projPage = [];     // projIdx → 해당 프로젝트 첫 장표 번호
-
-  // ═══ 1. 커버 — 타이포 전용 (잉크 지면, 사진 없음). 세리프 워드마크가 주인공 ═══
+  // ═══ 1. 표지 — 거대한 워드마크가 바닥에 앉는다. 사진 없음. ═══
   {
-    const s = newSlide(INK, true);
-    railTop(s.els, year);
-    const headline = filled(deck.coverHeadline) || 'Visual Creative Portfolio';
+    const th = DARK;
+    const s = add(th, { rail: { left: 'Portfolio', mid: `Selected Works ${span_}`, right: 'Seoul, KR', rule: KEY }, outline: 'Cover' });
+    // 워드마크 — 폭 기준으로 크기를 정해 단 6.5개를 채운다
+    const mark = 'Hati';
+    const target = span(7);
+    const size = Math.min(280, target / (T.measure(mark, { f: 'semi', s: 100, tr: -0.05 }) / 100));
+    const mx = MX - T.lsb('H', { f: 'semi', s: size });   // H 기둥이 그리드 선에 정확히 닿게 (사이드베어링 상쇄)
+    const wm = text(s.els, { x: mx, y: BOT, w: span(8), anchor: 'last', paras: [P(sp(mark, 'semi', size, th.fg, -0.05), { lead: 0.9 })] });
+    const markW = T.measure(mark, { f: 'semi', s: size, tr: -0.05 });
+    text(s.els, { x: mx + markW + size * 0.02, y: wm.lastBase - size * 0.6, w: 60, anchor: 'baseline', paras: [P(sp('®', 'sans', size * 0.13, KEY))] });
+
+    // 우측 칼럼 — 헤드라인 + 레저(연락처), 워드마크 베이스라인에 맞춰 바닥 정렬
+    const x = cx(8), w = span(4);
+    const rows = [['Contact', email], ['Phone', phone], ['Instagram', instaHandle]].filter(r => r[1]);
+    let yb = BOT;
+    for (let i = rows.length - 1; i >= 0; i--) {
+      text(s.els, { x, y: yb, w: span(1), anchor: 'baseline', paras: [P(label(rows[i][0], th.fg2))] });
+      text(s.els, { x: cx(9), y: yb, w: span(3), anchor: 'baseline', paras: [P(sp(rows[i][1], 'sans', 8.5, th.fg, -0.005))] });
+      line(s.els, x, yb - 12, RIGHT, yb - 12, th.hair);
+      yb -= 22;
+    }
+    const headline = filled(deckTx.coverHeadline) || 'Visual Creative Portfolio';
     const sub = filled(settings.heroSubtitle);
-    // 상단 얇은 규칙 + 카테고리 캡션으로 프레임을 잡는다
-    s.els.push(
-      { type: 'text', text: 'PORTFOLIO', x: M, y: 2.35, w: 6, h: 0.32, font: 'sans', size: 11, color: MUTE_INK, charSpacing: 5 },
-      { type: 'text', runs: [
-          { text: 'Hati', font: 'serif', italic: true, size: 118, color: KEY },
-          { text: ' ®', font: 'sans', size: 22, color: MUTE_INK, superscript: true },   // 나브 위첨자 ® 문법과 정렬
-        ], x: M - 0.06, y: 2.75, w: PW - M * 2, h: 1.95 },
-      { type: 'text', text: headline, x: M, y: 4.78, w: 10.5, h: 0.5, font: 'sans', size: 15, color: SOFT_INK, charSpacing: 1 },
-    );
-    if (sub) s.els.push({ type: 'text', text: sub.toUpperCase(), x: M, y: 5.32, w: 10.5, h: 0.35, font: 'sans', size: 9.5, color: MUTE_INK, charSpacing: 2 });
-    // 하단 메타 스트립
-    s.els.push({ type: 'line', x: M, y: 6.72, w: PW - M * 2, color: '5A5852', width: 0.5 });
-    s.els.push(
-      { type: 'text', text: [email, phone, instaHandle].filter(Boolean).join('    ·    '), x: M, y: 6.9, w: 9, h: 0.3, font: 'sans', size: 9.5, color: MUTE_INK },
-      { type: 'text', text: `SEOUL${est ? ' — EST. ' + est : ''}`, x: PW - 4.2 - M, y: 6.9, w: 4.2, h: 0.3, font: 'sans', size: 9.5, color: MUTE_INK, align: 'right', charSpacing: 2 },
-    );
+    text(s.els, { x, y: yb - 18, w, anchor: 'last', balance: true, paras: [
+      P(sp(headline, 'semi', 19, th.fg, -0.025), { lead: 1.15 }),
+      sub && P(sp(sub, 'sans', 8.5, th.fg2, -0.005), { lead: 1.55, before: 8 }),
+    ].filter(Boolean) });
   }
 
-  // ═══ 2. 스테이트먼트 — 타이포 온리 (네거티브 스페이스) ═══
-  const statement = filled(deck.statement) || filled(settings.philosophy);
+  // ═══ 2. 스테이트먼트 — 큰 한 문장, 좌측 정렬 (스위스) ═══
+  const statement = filled(deckTx.statement) || filled(settings.philosophy);
   if (statement) {
-    const s = newSlide(INK, true);
-    railTop(s.els, year);
-    s.els.push(
-      { type: 'text', text: statement, x: 1.4, y: 2.75, w: PW - 2.8, h: 1.9, font: 'serif', italic: true, size: 38, color: WHITE, align: 'center', valign: 'middle', shrink: true, lineSpacingMultiple: 1.2 },
-    );
-    const sub = filled(settings.heroSubtitle);
-    if (sub) s.els.push({ type: 'text', text: sub.toUpperCase(), x: 1.4, y: 5.1, w: PW - 2.8, h: 0.35, font: 'sans', size: 9.5, color: MUTE_INK, align: 'center', charSpacing: 2 });
-    pageNo(s.els, pageCounter, true);
+    const th = DARK;
+    const s = add(th, { rail: { mid: 'Statement' } });
+    text(s.els, { x: MX, y: TOP + 6, w: span(3), anchor: 'baseline', paras: [P(label('( Statement )', th.fg2))] });
+    const len = statement.length;
+    const size = len < 60 ? 58 : len < 120 ? 44 : len < 220 ? 32 : 24;
+    text(s.els, { x: MX, y: TOP + 52, w: span(10), h: 300, balance: true, paras: [P(sp(statement, 'semi', size, th.fg, -0.035), { lead: 1.08 })] });
+    text(s.els, { x: MX, y: BOT, w: span(4), anchor: 'last', paras: [
+      P(sp('Hati', 'serif', 20, th.fg), { lead: 1.1 }),
+      P(label('Creative Director — Design, Photo, Film', th.fg2), { lead: 1.4, before: 6 }),
+    ] });
+    text(s.els, { x: cx(8), y: BOT, w: span(4), anchor: 'last', align: 'right', paras: [P(label(`Seoul — ${est ? 'Est. ' + est : year}`, th.fg2))] });
   }
 
-  // ═══ 3. 디렉터 노트 / About — 좌 프로필, 우 에디토리얼 ═══
-  const introText = filled(deck.introText) || filled(settings.aboutText);
-  if (introText) {
-    const s = newSlide(PAPER, false);
-    const img = aboutBuf && await bakeImage(aboutBuf, 5.4, PH, { position: 'attention', quality: 80 });
-    if (img) s.els.push({ type: 'image', data: img, x: 0, y: 0, w: 5.4, h: PH });
-    const tx = img ? 6.15 : M, tw = img ? PW - 6.15 - M : PW - M * 2;
-    s.els.push({ type: 'text', text: `PORTFOLIO — ${year}`, x: PW - 4 - M, y: 0.34, w: 4, h: 0.28, font: 'sans', size: 9, color: MUTE, charSpacing: 3, align: 'right' });
-    s.els.push(
-      { type: 'text', text: 'Introduction', x: tx, y: 0.85, w: tw, h: 0.75, font: 'serif', italic: true, size: 34, color: INK },
-      { type: 'line', x: tx + 0.02, y: 1.78, w: 1.1, color: INK, width: 1 },
-      { type: 'text', text: introText, x: tx, y: 2.15, w: tw, h: 3.2, font: 'sans', size: 12.5, color: INK, lineSpacingMultiple: 1.6, valign: 'top', shrink: true },
-    );
-    // 서비스 (deck.services 줄단위) 또는 스탯 로우
-    const services = filled(deck.services) ? deck.services.split('\n').map(t => t.trim()).filter(Boolean) : [];
-    if (services.length) {
-      s.els.push({ type: 'text', text: 'SERVICES', x: tx, y: 5.55, w: 3, h: 0.28, font: 'sans', size: 8.5, color: MUTE, charSpacing: 3 });
-      s.els.push({ type: 'text', text: services.map(t => '·  ' + t).join('\n'), x: tx, y: 5.9, w: tw, h: 1.15, font: 'sans', size: 10.5, color: INK, lineSpacingMultiple: 1.35, valign: 'top', shrink: true });
+  // ═══ 3. 소개 — 좌 인물 / 우 에디토리얼 + 서비스 + 숫자 ═══
+  const intro = prose(filled(deckTx.introText) || filled(settings.aboutText), 520);
+  if (intro) {
+    const th = LIGHT;
+    const s = add(th, { rail: { mid: 'About' } });
+    const photo = aboutImg && await bake(aboutImg, span(5), BOT - TOP, { quality: 82 });
+    const x = photo ? cx(6) : MX, w = photo ? span(6) : span(9);
+    if (photo) s.els.push({ t: 'img', data: photo, x: MX, y: TOP, w: span(5), h: BOT - TOP });
+    text(s.els, { x, y: TOP + 6, w, anchor: 'baseline', paras: [P(label('( About )', th.fg2))] });
+    const introB = text(s.els, { x, y: TOP + 24, w, h: 176, paras: [P(sp(intro, 'sans', 17, th.fg, -0.025), { lead: 1.5 })] });
+
+    // 서비스 — deck 탭 입력이 없으면 사이트 부제("Director of A, B & C")에서 분야를 뽑는다 (지어낸 문구 없음)
+    const services = filled(deckTx.services)
+      ? deckTx.services.split('\n').map(t => t.trim()).filter(Boolean)
+      : String(settings.heroSubtitle || '').replace(/^\s*director\s+of\s+/i, '').split(/\s*(?:,|&|\/|·)\s*/).map(t => t.trim()).filter(t => filled(t));
+    const listTop = Math.max(introB.bottom + 30, 290);
+    if (services.length && listTop < 380) {
+      text(s.els, { x, y: listTop, w, anchor: 'baseline', paras: [P(label(filled(deckTx.services) ? 'Services' : 'Disciplines', th.fg2))] });
+      const half = Math.ceil(services.length / 2);
+      const cw = (w - G) / 2, y0 = listTop + 10, rowH = Math.min(22, (404 - y0) / half);
+      services.forEach((sv, i) => {
+        const col = i < half ? 0 : 1, r = i < half ? i : i - half;
+        const rx = x + col * (cw + G), ry = y0 + r * rowH;
+        line(s.els, rx, ry, rx + cw, ry, th.hair);
+        text(s.els, { x: rx, y: ry + rowH * 0.66, w: cw, anchor: 'baseline', maxLines: 1, paras: [P([sp(nn(i + 1) + '   ', 'mono', 6.5, th.fg2), sp(sv, 'sans', 9.5, th.fg, -0.01)])] });
+      });
+    }
+    // 숫자 — 레저 형식 (헤어라인 / 라벨 / 숫자)
+    const cats = {};
+    all.forEach(p => { cats[p.category] = (cats[p.category] || 0) + 1; });
+    const stats = [est && ['Since', est], ['Works', nn(all.length)], ['Film', nn(cats.video || 0)], ['Photo', nn(cats.photo || 0)], ['Graphic', nn(cats.graphic || 0)]].filter(Boolean);
+    const cw = w / stats.length;
+    // 모든 숫자를 같은 크기로 — 가장 긴 값(연도)이 칸 폭의 62% 를 넘지 않는 크기
+    const ns = Math.min(34, ...stats.map(([, v]) => cw * 0.62 / (T.measure(v, { f: 'med', s: 1, tr: -0.045 }))));
+    line(s.els, x, 420, x + w, 420, th.fg, 0.6);
+    stats.forEach(([k, v], i) => {
+      text(s.els, { x: x + i * cw, y: 434, w: cw - 8, anchor: 'baseline', paras: [P(label(k, th.fg2))] });
+      text(s.els, { x: x + i * cw, y: BOT, w: cw - 4, anchor: 'last', paras: [P(sp(v, 'med', ns, th.fg, -0.045), { lead: 1 })] });
+    });
+  }
+
+  // ═══ 4. 클라이언트 — 헤어라인 표 (스펙 시트 로고월) ═══
+  if (logoImgs.length) {
+    const th = DARK;
+    const s = add(th, { rail: { mid: 'Clients' } });
+    text(s.els, { x: MX, y: TOP + 34, w: span(8), anchor: 'baseline', paras: [P([sp('Selected Clients', 'semi', 40, th.fg, -0.035), sp(`  ${nn(logoImgs.length)}`, 'serif', 24, th.fg2)], { lead: 1 })] });
+    const n = logoImgs.length;
+    const cols = n <= 8 ? 4 : n <= 15 ? 5 : 6;
+    const rows = Math.ceil(n / cols);
+    const gx = MX, gw = RIGHT - MX, gy = 168;
+    const cellW = gw / cols, cellH = Math.min(rows === 1 ? 150 : 164, (BOT - gy) / rows);
+    const area = Math.min(cellW * cellH * 0.085, 3600);
+    const logos = await withPool(logoImgs.map(img => () => bakeLogo(img, area, cellW * 0.56, cellH * 0.34, { r: 232, g: 230, b: 225 })), 5);
+    for (let r = 0; r <= rows; r++) line(s.els, gx, gy + r * cellH, gx + gw, gy + r * cellH, th.hair);
+    for (let c = 1; c < cols; c++) line(s.els, gx + c * cellW, gy, gx + c * cellW, gy + rows * cellH, th.hair);
+    logos.forEach((lg, i) => {
+      if (!lg) return;
+      const c = i % cols, r = Math.floor(i / cols);
+      s.els.push({ t: 'img', mime: 'image/png', data: lg.data, x: gx + c * cellW + (cellW - lg.w) / 2, y: gy + r * cellH + (cellH - lg.h) / 2, w: lg.w, h: lg.h });
+    });
+  }
+
+  // ═══ 5. 인덱스 — 표 (장 번호는 마지막에 채운다) ═══
+  const indexSlide = add(LIGHT, { rail: { mid: 'Index' }, outline: 'Index' });
+
+  // ═══ 6. 작품 ═══
+  const scene = i => `Scene ${nn(i + 1)}`;
+  const kickerOf = (p, i) => [scene(i), catOf(p), filled(p.client), filled(p.year)].filter(Boolean).join('   ·   ');
+
+  // 히어로 — 풀블리드 스틸 + 하단 타이틀 존
+  async function hero(p, i, img) {
+    const th = DARK;
+    const s = add(th, { rail: { mid: 'Selected Works', sub: scene(i), onImage: !!img }, outline: p.title || scene(i) });
+    projPage[i] = slides.length;
+    const data = img && await bake(img, W, H, { scrim: 'hero', quality: 82 });
+    const C = data ? ON_IMG : th;
+    if (data) s.els.push({ t: 'img', data, x: 0, y: 0, w: W, h: H });
+    else text(s.els, { x: cx(5), y: 380, w: span(7), anchor: 'last', align: 'right', paras: [P(sp(nn(i + 1), 'serif', 300, '1C1C1E'), { lead: 0.9 })] });
+    const title = text(s.els, { x: MX, y: BOT, w: span(8), h: 108, anchor: 'last', balance: true, maxLines: 2, minScale: 0.62, paras: [P(sp(p.title || 'Untitled', 'semi', 46, C.fg, -0.035), { lead: 1.04 })] });
+    text(s.els, { x: MX, y: title.y - 14, w: span(8), anchor: 'baseline', maxLines: 1, paras: [P(label(kickerOf(p, i), C.fg2))] });
+    const summary = filled(p.deckSummary) || oneLiner(p.description, 150);
+    if (summary) text(s.els, { x: cx(9), y: BOT, w: span(3), anchor: 'last', maxLines: 6, paras: [P(sp(summary, 'sans', 9, C.fg2, -0.012), { lead: 1.6 })] });
+    return s;
+  }
+
+  // 레저 행 목록 (라벨 / 값 스팬들 / 링크)
+  function facts(p, th) {
+    const rows = [];
+    const v = t => [P(sp(t, 'sans', 8.5, th.fg, -0.01), { lead: 1.5 })];
+    if (filled(p.client)) rows.push({ k: 'Client', paras: v(filled(p.client)) });
+    if (filled(p.year)) rows.push({ k: 'Year', paras: v(filled(p.year)) });
+    const role = normRole(p.role);
+    if (role) rows.push({ k: 'Role', paras: v(role) });
+    const tags = (Array.isArray(p.tags) ? p.tags : []).map(filled).filter(Boolean);
+    if (tags.length) rows.push({ k: 'Scope', paras: v(tags.join(' · ')) });
+    if (filled(p.contribution)) rows.push({ k: 'Share', paras: v(filled(p.contribution)) });
+    const result = filled(p.result) ? bulletLines(p.result) : [];
+    if (result.length) rows.push({ k: 'Result', paras: result.map(l => P(sp('— ' + l, 'sans', 8.5, th.fg, -0.01), { lead: 1.5, before: 2 })) });
+    const credits = (Array.isArray(p.credits) ? p.credits : []).filter(c => c && filled(c.name));
+    if (credits.length) rows.push({ k: 'Credits', paras: credits.slice(0, 9).map(c => P([
+      filled(c.role) ? sp(filled(c.role) + '   ', 'mono', 6.5, th.fg2, 0.04, true) : null,
+      sp(filled(c.name), 'sans', 8.5, th.fg, -0.01),
+    ].filter(Boolean), { lead: 1.5, before: 1 })) });
+    const film = filmLink(p);
+    if (film) rows.push({ k: 'Watch', paras: [P(sp(film.label + '  ↗', 'mono', 7.5, th.fg, 0))], url: film.url });
+    return rows;
+  }
+
+  // 좌측 텍스트 칼럼 — 넘치면 설명을 줄이고, 그래도 넘치면 전체 축소 (넘치는 글줄 금지)
+  function column(p, i, th, x, w, { descMax = 380 } = {}) {
+    for (const [dMax, k] of [[descMax, 1], [Math.min(descMax, 240), 1], [120, 0.94], [0, 0.9], [0, 0.82], [0, 0.74]]) {
+      const els = [];
+      text(els, { x, y: TOP + 6, w, anchor: 'baseline', paras: [P(label(`${scene(i)}   ·   ${catOf(p)}`, th.fg2))] });
+      const title = text(els, { x, y: TOP + 20, w, balance: true, maxLines: 3, paras: [P(sp(p.title || 'Untitled', 'semi', 21 * k, th.fg, -0.025), { lead: 1.16 })] });
+      let y = title.bottom + 12 * k;
+      const desc = dMax ? prose(filled(p.deckSummary) ? p.deckSummary + '\n\n' + (p.description || '') : p.description, dMax) : filled(p.deckSummary);
+      if (desc) {
+        const d = text(els, { x, y, w, fit: false, paras: desc.split('\n').map((t, j) => P(sp(t, 'sans', 9 * k, th.fg, -0.012), { lead: 1.62, before: j ? 6 : 0 })) });
+        y = d.bottom + 18 * k;
+      } else y += 8 * k;
+      // 레저는 0 에서 조판한 뒤 칼럼 바닥(BOT)에 붙인다 — 제목은 위, 기록은 아래 (벤토 하단선과 정렬)
+      const led = [];
+      let ly = 0;
+      for (const row of facts(p, th)) {
+        line(led, x, ly, x + w, ly, th.hair);
+        const paras = row.paras.map(pp => ({ ...pp, spans: pp.spans.map(s0 => ({ ...s0, s: s0.s * k })) }));
+        text(led, { x, y: ly + 11 * k, w: 70, anchor: 'baseline', paras: [P(label(row.k, th.fg2))] });
+        const val = text(led, { x: x + PITCH, y: ly + 5 * k, w: w - PITCH, fit: false, paras });
+        if (row.url) led.push({ t: 'link', x: x + PITCH, y: val.y, w: w - PITCH, h: val.h + 2, url: row.url });
+        ly = val.bottom + 6 * k;
+      }
+      if (led.length) line(led, x, ly, x + w, ly, th.hair);
+      const top = Math.max(y, BOT - ly);
+      shift(led, top);
+      if (top + ly <= BOT + 2 || k <= 0.74) return { els: els.concat(led), bottom: top + ly };
+    }
+  }
+
+  // 디테일 — 좌 칼럼 / 우 크롭 인지 벤토
+  async function detail(p, i, stills) {
+    const th = LIGHT;
+    const s = add(th, { rail: { mid: 'Selected Works', sub: scene(i) } });
+    if (stills.length) {
+      s.els.push(...column(p, i, th, MX, span(4)).els);
+      const cells = bento(stills, cx(4), TOP, span(8), BOT - TOP, 8);
+      for (const { c: [x, y, w, h], img } of cells) {
+        const data = await bake(img, w, h, { quality: 80 });
+        if (data) s.els.push({ t: 'img', data, x, y, w, h });
+      }
     } else {
-      const cats = {}; all.forEach(p => { cats[p.category] = (cats[p.category] || 0) + 1; });
-      const stats = [est && ['EST.', est], ['PROJECTS', String(all.length)], ['VIDEO', String(cats.video || 0)], ['PHOTO', String(cats.photo || 0)], ['GRAPHIC', String(cats.graphic || 0)]].filter(Boolean);
-      s.els.push({ type: 'line', x: tx, y: 5.62, w: tw, color: HAIR, width: 0.75 });
-      stats.forEach(([label, value], i) => {
-        const x = tx + i * 1.35;
-        s.els.push(
-          { type: 'text', text: value, x, y: 5.82, w: 1.3, h: 0.5, font: 'serif', size: 21, color: INK },
-          { type: 'text', text: label, x, y: 6.36, w: 1.3, h: 0.26, font: 'sans', size: 7.5, color: MUTE, charSpacing: 2 },
-        );
-      });
+      // 스틸 없음 — 좌 칼럼 + 우측에 설명 전문을 두 단 에디토리얼로
+      const colEls = column(p, i, th, MX, span(4), { descMax: 0 });
+      s.els.push(...colEls.els);
+      const full = prose(p.description, 1400);
+      if (full) {
+        // 짧은 설명은 인용문처럼 크게 (빈 종이 대신 한 문장이 페이지를 쥔다), 긴 설명은 읽는 크기로
+        const short = full.length < 180;
+        // 스틸 없는 영상 프로젝트 — 우하단에 거대한 장면 번호를 종이에 눌러 찍은 듯(헤어라인 톤) 앵커로 둔다
+        if (full.length < 600) text(s.els, { x: cx(5), y: BOT + 6, w: span(7), anchor: 'last', align: 'right', paras: [P(sp(nn(i + 1), 'serif', 260, th.hair), { lead: 0.9 })] });
+        text(s.els, { x: cx(5), y: TOP + 20, w: span(7), h: BOT - TOP - 20, balance: short,
+          paras: full.split('\n').map((t, j) => short
+            ? P(sp(t, j ? 'sans' : 'med', j ? 15 : 24, j ? th.fg2 : th.fg, -0.03), { lead: j ? 1.55 : 1.32, before: j ? 18 : 0 })
+            : P(sp(t, 'sans', 12.5, th.fg, -0.018), { lead: 1.62, before: j ? 10 : 0 })) });
+      }
     }
-    pageNo(s.els, pageCounter, false);
+    return s;
   }
 
-  // ═══ 4. 클라이언트 ═══
-  const logos = (await withPool(logoBufs.filter(Boolean).map(b => () => bakeLogo(b, 2.2, 0.85)), 5)).filter(Boolean);
-  if (logos.length) {
-    const s = newSlide(INK, true);
-    railTop(s.els, year);
-    s.els.push({ type: 'text', text: 'Selected Clients', x: M, y: 0.95, w: 8, h: 0.75, font: 'serif', italic: true, size: 34, color: WHITE });
-    const cols = 4;
-    const rows = Math.ceil(logos.length / cols);
-    const cellW = 2.85, cellH = 1.5, gridW = cols * cellW, gridH = rows * cellH;
-    const x0 = (PW - gridW) / 2, y0 = (PH - gridH) / 2 + 0.55;
-    logos.forEach((logo, i) => {
-      const cx = x0 + (i % cols) * cellW + (cellW - logo.w) / 2;
-      const cy = y0 + Math.floor(i / cols) * cellH + (cellH - logo.h) / 2;
-      s.els.push({ type: 'image', data: logo.data, x: cx, y: cy, w: logo.w, h: logo.h });
-    });
-    pageNo(s.els, pageCounter, true);
-  }
-
-  // ═══ 5. 인덱스 ═══
-  {
-    const s = newSlide(PAPER, false);
-    railTop(s.els, year, false);
-    s.els.push(
-      { type: 'text', text: 'Index', x: M, y: 0.85, w: 6, h: 0.75, font: 'serif', italic: true, size: 34, color: INK },
-      { type: 'line', x: M + 0.02, y: 1.78, w: 1.1, color: INK, width: 1 },
-    );
-    const rows = projects.map((p, i) => {
-      const meta = [filled(p.client), filled(p.year)].filter(Boolean).join(', ');
-      return { no: `( ${nn(i + 1)} )`, title: p.title || '(untitled)', meta: meta || String(p.category || '').toUpperCase() };
-    });
-    const colCount = rows.length > 12 ? 2 : 1;
-    const per = Math.ceil(rows.length / colCount);
-    const colW = colCount === 1 ? 9.5 : 5.85;
-    for (let c = 0; c < colCount; c++) {
-      const runs = [];
-      rows.slice(c * per, (c + 1) * per).forEach((r, k) => {
-        runs.push({ text: r.no + '   ', font: 'serif', italic: true, size: rows.length > 24 ? 9 : 10.5, color: MUTE });
-        runs.push({ text: r.title, font: 'sans', size: rows.length > 24 ? 10 : 12, color: INK, bold: false });
-        const metaRun = { text: '   —  ' + r.meta, font: 'sans', size: rows.length > 24 ? 8 : 9, color: MUTE, breakLine: true, paraSpaceAfter: rows.length > 24 ? 5 : 9 };
-        runs.push(metaRun);
-        indexPatch.push({ run: metaRun, projIdx: c * per + k });   // 실제 장표 번호는 프로젝트 장표가 다 잡힌 뒤 채운다
-      });
-      s.els.push({ type: 'text', runs, x: M + c * 6.35, y: 2.15, w: colW, h: 4.7, valign: 'top', shrink: true });
+  // 스틸 스프레드 — 풀블리드 + 하단 필름 엣지 밴드(캡션)
+  async function spread(p, i, stills, from) {
+    const th = DARK;
+    const s = add(th, { rail: null });
+    const bandH = 36;
+    const cells = bento(stills, 0, 0, W, H - bandH, 4);
+    for (const { c: [x, y, w, h], img } of cells) {
+      const data = await bake(img, w, h, { quality: 80 });
+      if (data) s.els.push({ t: 'img', data, x, y, w, h });
     }
-    pageNo(s.els, pageCounter, false);
+    const yb = H - 14;
+    text(s.els, { x: MX, y: yb, w: span(6), anchor: 'baseline', maxLines: 1, paras: [P([label(`${scene(i)}   ·   `, th.fg2), sp(p.title || '', 'sans', 7.5, th.fg, -0.005)])] });
+    s.captionRight = `Stills ${nn(from)}—${nn(from + cells.length - 1)}`;
+    return s;
   }
 
-  // ── 팩트 리치텍스트 — (A)(B) 에디토리얼 마커로 블록을 넘버링 (Filmsupply 각주 문법) ──
-  function factRuns(p, { compact = false } = {}) {
-    const runs = [];
-    let markerIdx = 0;
-    const fact = (label, value, opts = {}) => {
-      const marker = `( ${String.fromCharCode(65 + markerIdx++)} )  `;
-      runs.push({ text: marker, font: 'serif', italic: true, size: 8.5, color: MUTE, paraSpaceBefore: 11 });
-      runs.push({ text: label, font: 'sans', size: 8.5, color: MUTE, charSpacing: 3, breakLine: true, paraSpaceAfter: 3 });
-      (Array.isArray(value) ? value : [value]).forEach(l =>
-        runs.push({ text: l, font: 'sans', size: compact ? 10 : 11, color: INK, breakLine: true, paraSpaceAfter: 2, ...opts }));
-    };
-    const client = filled(p.client); const yearF = filled(p.year);
-    if (client || yearF) fact('CLIENT', [client, yearF].filter(Boolean).join(' — '));
-    const role = filled(p.role); if (role) fact('ROLE', role);
-    const contribution = filled(p.contribution); if (contribution) fact('CONTRIBUTION', contribution);
-    const result = filled(p.result); if (result) fact('RESULT', bulletLines(result).map(l => '·  ' + l));
-    const credits = Array.isArray(p.credits) ? p.credits.filter(c => c && filled(c.name)) : [];   // 이름 없는 유령 크레딧 제외
-    if (credits.length) {
-      const cap = compact ? 5 : 8;
-      const lines = credits.slice(0, cap).map(c => [filled(c.role), filled(c.name)].filter(Boolean).join(' — '));
-      if (credits.length > cap) lines.push(`외 ${credits.length - cap}`);
-      fact('CREDITS', lines, { size: 9, color: MUTE });
-    }
-    runs.factCount = markerIdx;   // 블록 수 — 레이아웃 분기(인라인/스킵)는 run 수가 아니라 블록 수로 판단
-    return runs;
-  }
-
-  // ═══ 6. 프로젝트 ═══
   if (scope === 'all') {
-    const CAT_LABEL = { video: 'Video', photo: 'Photo', graphic: 'Graphic' };
-    let lastCat = null;
-    for (let i = 0; i < projects.length; i++) {
-      const p = projects[i];
-      if (p.category !== lastCat) {
-        lastCat = p.category;
-        const d = newSlide(INK, true);
-        railTop(d.els, year);
-        const count = projects.filter(x => x.category === p.category).length;
-        d.els.push(
-          { type: 'text', text: CAT_LABEL[p.category] || String(p.category || ''), x: M, y: 2.6, w: 12, h: 1.7, font: 'serif', italic: true, size: 88, color: WHITE },
-          { type: 'text', text: `${count} PROJECTS`, x: M + 0.08, y: 4.5, w: 6, h: 0.32, font: 'sans', size: 10, color: MUTE_INK, charSpacing: 3 },
-        );
+    // 카탈로그 — 장(章) 구분 + 프로젝트당 1장
+    const groups = [];
+    projects.forEach((p, i) => { const g = groups[groups.length - 1]; if (g && g.cat === p.category) g.items.push(i); else groups.push({ cat: p.category, items: [i] }); });
+    for (const [gi, g] of groups.entries()) {
+      const th = DARK;
+      const d = add(th, { rail: { mid: `Chapter ${nn(gi + 1)}` }, outline: CAT[g.cat] || g.cat });
+      text(d.els, { x: MX, y: TOP + 6, w: span(4), anchor: 'baseline', paras: [P(label(`( Chapter ${nn(gi + 1)} )   ${nn(g.items.length)} works`, th.fg2))] });
+      const word = CAT[g.cat] || String(g.cat);
+      text(d.els, { x: MX - T.lsb(word[0], { f: 'semi', s: 168 }), y: BOT, w: span(8), anchor: 'last', paras: [P(sp(word, 'semi', 168, th.fg, -0.055), { lead: 0.9 })] });
+      late.push(() => {
+        const paras = g.items.map(i => P([sp(nn(projPage[i] || 0) + '   ', 'mono', 6.5, th.fg2, 0.04), sp(projects[i].title || 'Untitled', 'sans', 8, th.fg, -0.01)], { lead: 1.55 }));
+        const b = text(d.els, { x: cx(8), y: TOP, w: span(4), h: BOT - TOP, paras, widow: false, minScale: 0.7 });
+        b.paras.forEach((pp, k) => { const ln = pp.lines[0]; if (ln && projPage[g.items[k]]) d.els.push({ t: 'link', x: cx(8), y: ln.base - pp.pitch * 0.72, w: span(4), h: pp.pitch * pp.lines.length, page: projPage[g.items[k]] }); });
+      });
+      for (const i of g.items) {
+        const p = projects[i];
+        const img = imgs[i][0];
+        const rows = facts(p, LIGHT);
+        const sparse = !filled(p.deckSummary) && !filled(p.description) && rows.length < 2;
+        if (img && sparse) { await hero(p, i, img); continue; }
+        const s = add(LIGHT, { rail: { mid: CAT[p.category] || 'Works', sub: scene(i) }, outline: p.title || scene(i) });
+        projPage[i] = slides.length;
+        if (img) {
+          const data = await bake(img, span(7), BOT - TOP, { quality: 80 });
+          if (data) s.els.push({ t: 'img', data, x: MX, y: TOP, w: span(7), h: BOT - TOP });
+        }
+        s.els.push(...column(p, i, LIGHT, img ? cx(8) : MX, img ? span(4) : span(6), { descMax: 300 }).els);
       }
-      const meta = [filled(p.client), filled(p.year)].filter(Boolean).join(' — ');
-      const tagLine = [String(p.category || '').toUpperCase(), ...(Array.isArray(p.tags) ? p.tags.filter(filled) : [])].join(' · ');
-      const sum = filled(p.deckSummary) || '';
-      const facts = factRuns(p, { compact: true });
-      const buf = (rawImgs[i] || [])[0];
-
-      // 팩트도 요약도 빈약하면 스플릿 우측이 빈 종이가 된다 — 풀블리드 히어로로 전환 (이미지가 주인공)
-      if (buf && !sum && (facts.factCount || 0) < 2) {
-        const s = newSlide(INK, true);
-        projPage[i] = pageCounter;
-        const img = await bakeImage(buf, PW, PH, { scrim: 'bottom', position: 'attention', quality: 78 });
-        if (img) s.els.push({ type: 'image', data: img, x: 0, y: 0, w: PW, h: PH });
-        s.els.push(
-          { type: 'text', runs: [
-              { text: `( ${nn(i + 1)} )`, font: 'serif', italic: true, size: 12, color: SOFT_INK },
-              { text: '    ' + tagLine + (meta ? `    —    ${meta}` : ''), font: 'sans', size: 9, color: SOFT_INK, charSpacing: 2 },
-            ], x: M, y: 5.75, w: PW - M * 2, h: 0.32 },
-          { type: 'text', text: p.title || '(untitled)', x: M - 0.02, y: 6.1, w: PW - M * 2, h: 0.75, font: 'sans', size: 25, bold: true, color: WHITE, valign: 'top', shrink: true },
-        );
-        pageNo(s.els, pageCounter, true);
-        continue;
-      }
-
-      const s = newSlide(PAPER, false);
-      projPage[i] = pageCounter;
-      const img = buf && await bakeImage(buf, 6.4, PH, { position: 'attention' });
-      if (img) s.els.push({ type: 'image', data: img, x: 0, y: 0, w: 6.4, h: PH });
-      const tx = img ? 7.0 : M, tw = img ? PW - 7.0 - M : PW - M * 2;
-      const runs = [
-        { text: `( ${nn(i + 1)} )`, font: 'serif', italic: true, size: 12, color: MUTE, breakLine: true, paraSpaceAfter: 12 },
-        { text: p.title || '(untitled)', font: 'sans', size: 21, bold: true, color: INK, breakLine: true, paraSpaceAfter: 5 },
-      ];
-      if (meta) runs.push({ text: meta, font: 'sans', size: 10.5, color: INK, breakLine: true, paraSpaceAfter: 3 });
-      runs.push({ text: tagLine, font: 'sans', size: 9, color: MUTE, breakLine: true, paraSpaceAfter: 6, charSpacing: 1 });
-      if (sum) runs.push({ text: sum, font: 'sans', size: 10.5, color: INK, breakLine: true, paraSpaceAfter: 4, lineSpacingMultiple: 1.4 });
-      runs.push(...facts);
-      s.els.push({ type: 'text', runs, x: tx, y: 0.85, w: tw, h: PH - 1.6, valign: 'top', shrink: true });
-      pageNo(s.els, pageCounter, false);
     }
   } else {
     for (let i = 0; i < projects.length; i++) {
       const p = projects[i];
-      const bufs = rawImgs[i] || [];
-      const title = p.title || '(untitled)';
-      const meta = [filled(p.client), filled(p.year)].filter(Boolean).join(' — ');
-      const tagLine = [String(p.category || '').toUpperCase(), ...(Array.isArray(p.tags) ? p.tags.filter(filled) : []).slice(0, 4)].join(' · ');
-      const summary = filled(p.deckSummary) || oneLiner(p.description);
-
-      // ── 히어로: 풀블리드 + 구운 하단 스크림, 트리트먼트 타이포 ──
-      const s = newSlide(INK, true);
-      projPage[i] = pageCounter;
-      const heroImg = bufs[0] && await bakeImage(bufs[0], PW, PH, { scrim: 'bottom', position: 'attention', quality: 80 });
-      if (heroImg) s.els.push({ type: 'image', data: heroImg, x: 0, y: 0, w: PW, h: PH });
-      railTop(s.els, year);
-      if (!heroImg) s.els.push({ type: 'text', text: nn(i + 1), x: PW - 4.4, y: 0.7, w: 3.8, h: 2.6, font: 'serif', italic: true, size: 150, color: '26262A', align: 'right' });
-      s.els.push(
-        { type: 'text', runs: [
-            { text: `( ${nn(i + 1)} )`, font: 'serif', italic: true, size: 13, color: SOFT_INK },
-            { text: '    ' + tagLine + (meta ? `    —    ${meta}` : ''), font: 'sans', size: 9.5, color: SOFT_INK, charSpacing: 2 },
-          ], x: M, y: 5.28, w: PW - M * 2, h: 0.34 },
-        { type: 'text', text: title, x: M - 0.02, y: 5.66, w: PW - M * 2, h: 0.9, font: 'sans', size: 30, bold: true, color: WHITE, valign: 'top', shrink: true },
-      );
-      if (summary) s.els.push({ type: 'text', text: summary, x: M, y: 6.62, w: PW - M * 2, h: 0.55, font: 'sans', size: 11, color: SOFT_INK, valign: 'top', shrink: true, lineSpacingMultiple: 1.3 });
-
-      // ── 디테일: 팩트 칼럼 + 벤토 (sharp 로 셀 비율 정확히 크롭) ──
-      const stillBufs = bufs.slice(1);
-      let runs = factRuns(p);
-      const descFull = cleanNote(p.description, 460);
-      // 팩트가 한두 줄뿐이면 칼럼이 죽는다 — 킥커 라인에 인라인으로 붙이고 벤토를 전폭으로
-      let inlineFacts = '';
-      if (stillBufs.length && runs.length && (runs.factCount || 0) < 2) {
-        inlineFacts = [
-          filled(p.contribution) && `CONTRIBUTION ${filled(p.contribution)}`,
-          filled(p.role) && oneLiner(p.role, 60),
-        ].filter(Boolean).join('   ·   ');
-        runs = [];
-      }
-      // 스틸도 설명도 없고 팩트마저 짧으면 — 빈 종이를 만드느니 디테일을 생략 (히어로가 이미 킥커를 든다)
-      const skipDetail = !stillBufs.length && !descFull && (runs.factCount || 0) < 3;
-      if ((runs.length || stillBufs.length || descFull) && !skipDetail) {
-        const d = newSlide(PAPER, false);
-        d.els.push(
-          { type: 'text', runs: [
-              { text: `( ${nn(i + 1)} )  `, font: 'serif', italic: true, size: 11, color: MUTE },
-              { text: title + (inlineFacts ? '      —      ' + inlineFacts : ''), font: 'sans', size: 10, color: MUTE, charSpacing: 1 },
-            ], x: M, y: 0.55, w: PW - M * 2, h: 0.3 },
-          { type: 'line', x: M + 0.02, y: 0.98, w: 1.1, color: INK, width: 1 },
-        );
-        const hasFacts = runs.length > 0;
-        if (stillBufs.length) {
-          if (hasFacts) {
-            // 팩트 아래 남는 자리에 설명을 받친다 — 칼럼이 숨을 쉰다
-            const note = cleanNote(p.description, 300);
-            if (note) {
-              runs.push({ text: 'NOTE', font: 'sans', size: 8.5, color: MUTE, charSpacing: 3, breakLine: true, paraSpaceBefore: 12, paraSpaceAfter: 3 });
-              runs.push({ text: note, font: 'sans', size: 9.5, color: MUTE, breakLine: true, lineSpacingMultiple: 1.45 });
-            }
-            d.els.push({ type: 'text', runs, x: M, y: 1.32, w: 4.15, h: 5.55, valign: 'top', shrink: true });
-          }
-          const bx = hasFacts ? 5.15 : M, bw = PW - bx - M, by = 1.32, bh = 5.55, g = 0.16;
-          const n = Math.min(stillBufs.length, 4);
-          const cells = n === 1 ? [[bx, by, bw, bh]]
-            : n === 2 ? [[bx, by, (bw - g) / 2, bh], [bx + (bw + g) / 2, by, (bw - g) / 2, bh]]
-            : n === 3 ? [[bx, by, (bw - g) / 2, bh], [bx + (bw + g) / 2, by, (bw - g) / 2, (bh - g) / 2], [bx + (bw + g) / 2, by + (bh + g) / 2, (bw - g) / 2, (bh - g) / 2]]
-            : [[bx, by, (bw - g) / 2, (bh - g) / 2], [bx + (bw + g) / 2, by, (bw - g) / 2, (bh - g) / 2], [bx, by + (bh + g) / 2, (bw - g) / 2, (bh - g) / 2], [bx + (bw + g) / 2, by + (bh + g) / 2, (bw - g) / 2, (bh - g) / 2]];
-          for (let k = 0; k < n; k++) {
-            const [cx, cy, cw, ch] = cells[k];
-            const cImg = await bakeImage(stillBufs[k], cw, ch, { position: 'centre', quality: 74 });
-            if (cImg) d.els.push({ type: 'image', data: cImg, x: cx, y: cy, w: cw, h: ch });
-          }
-        } else {
-          // 스틸 없음 — 좌 팩트 / 우 에디토리얼 설명 (빈 종이 금지). descFull 은 cleanNote 로 정돈됨.
-          d.els.push({ type: 'text', runs, x: M, y: 1.32, w: 4.6, h: 5.55, valign: 'top', shrink: true });
-          if (descFull) {
-            d.els.push(
-              { type: 'line', x: 5.7, y: 1.42, w: 0, color: HAIR, width: 0.75, vertical: true, h: 5.2 },
-              { type: 'text', text: descFull, x: 6.35, y: 1.42, w: PW - 6.35 - M, h: 5.3, font: 'sans', size: 11, color: INK, lineSpacingMultiple: 1.55, valign: 'top', shrink: true },
-            );
-          }
-        }
-        pageNo(d.els, pageCounter, false);
-      }
-
-      // ── 스틸 스프레드: 이미지 5장 이상이면 풀블리드 2업 한 장 더 ──
-      if (bufs.length >= 6) {
-        const sp = newSlide(INK, true);
-        const g2 = 0.08;
-        const L = await bakeImage(bufs[4], (PW - g2) / 2, PH, { position: 'centre', quality: 76 });
-        const R = await bakeImage(bufs[5], (PW - g2) / 2, PH, { position: 'centre', quality: 76 });
-        if (L) sp.els.push({ type: 'image', data: L, x: 0, y: 0, w: (PW - g2) / 2, h: PH });
-        if (R) sp.els.push({ type: 'image', data: R, x: (PW + g2) / 2, y: 0, w: (PW - g2) / 2, h: PH });
-        sp.els.push({ type: 'text', text: `( ${nn(i + 1)} )  ${title}`, x: M, y: PH - 0.52, w: 8, h: 0.3, font: 'sans', size: 8.5, color: SOFT_INK, charSpacing: 2 });
-      }
+      const list = imgs[i];
+      await hero(p, i, list[0]);
+      const stills = list.slice(1, 5);
+      const hasText = filled(p.description) || facts(p, LIGHT).length >= 2;
+      if (stills.length || hasText) await detail(p, i, stills);
+      const more = list.slice(5, 8);
+      if (more.length >= 2) await spread(p, i, more, 6);
     }
   }
 
-  // ═══ 7. 클로징 ═══
+  // ═══ 7. 마지막 장 — Let's create. (사이트 Contact 와 같은 문장) ═══
   {
-    const s = newSlide(INK, true);
-    railTop(s.els, year);
-    s.els.push(
-      { type: 'text', runs: [
-          { text: 'Thank you', font: 'serif', italic: true, size: 58, color: WHITE },
-          { text: '.', font: 'serif', italic: true, size: 58, color: KEY },   // 커버 라벤더와 북엔드
-        ], x: M, y: 2.35, w: 12, h: 1.15 },
-      { type: 'line', x: M + 0.03, y: 3.95, w: 1.1, color: '5A5852', width: 1 },
-    );
-    const lines = [email, phone, instaHandle && `Instagram  ${instaHandle}`, 'hatist.studio'].filter(Boolean);
-    s.els.push({ type: 'text', runs: lines.map(t => ({ text: t, font: 'sans', size: 12.5, color: SOFT_INK, breakLine: true, paraSpaceAfter: 7 })), x: M + 0.03, y: 4.3, w: 10, h: 1.9, valign: 'top' });
-    s.els.push({ type: 'text', text: `GENERATED FROM HATIST.STUDIO — ${dateStr}`, x: M + 0.03, y: PH - 0.52, w: 8, h: 0.3, font: 'sans', size: 8, color: MUTE_INK, charSpacing: 2 });
-  }
-
-  // 인덱스 2-pass — 각 행 끝에 실제 장표 번호 기입 ("… — meta · 07")
-  for (const { run, projIdx } of indexPatch) {
-    if (projPage[projIdx]) run.text += `   ·   ${nn(projPage[projIdx])}`;
-  }
-
-  return slides;
-}
-
-// ═══════════════════════ PPTX 렌더러 ═══════════════════════
-function renderPptx(slides) {
-  const pptx = new PptxGenJS();
-  pptx.defineLayout({ name: 'W169', width: PW, height: PH });
-  pptx.layout = 'W169';
-  pptx.author = 'Hati';
-  pptx.company = 'Hati — Visual Creative Studio';
-  pptx.title = 'Hati Portfolio';
-
-  const font = f => (f === 'serif' ? SERIF : SANS);
-  for (const sl of slides) {
-    const s = pptx.addSlide();
-    s.background = { color: sl.bg };
-    for (const el of sl.els) {
-      if (el.type === 'image') {
-        s.addImage({ data: el.data, x: el.x, y: el.y, w: el.w, h: el.h });
-      } else if (el.type === 'line') {
-        if (el.vertical) s.addShape('line', { x: el.x, y: el.y, w: 0, h: el.h, line: { color: el.color, width: el.width || 0.75 } });
-        else s.addShape('line', { x: el.x, y: el.y, w: el.w, h: 0, line: { color: el.color, width: el.width || 0.75 } });
-      } else if (el.type === 'text') {
-        const opts = {
-          x: el.x, y: el.y, w: el.w, h: el.h || 0.4,
-          align: el.align, valign: el.valign || 'top',
-          fit: el.shrink ? 'shrink' : undefined,
-          lineSpacingMultiple: el.lineSpacingMultiple,
-        };
-        if (el.runs) {
-          s.addText(el.runs.map(r => ({
-            text: r.text,
-            options: {
-              fontFace: font(r.font), fontSize: r.size, bold: r.bold, italic: r.italic,
-              color: r.color, charSpacing: r.charSpacing, breakLine: r.breakLine,
-              paraSpaceBefore: r.paraSpaceBefore, paraSpaceAfter: r.paraSpaceAfter,
-              lineSpacingMultiple: r.lineSpacingMultiple, superscript: r.superscript,
-            },
-          })), opts);
-        } else {
-          s.addText(el.text, {
-            ...opts,
-            fontFace: font(el.font), fontSize: el.size, bold: el.bold, italic: el.italic,
-            color: el.color, charSpacing: el.charSpacing,
-          });
-        }
-      }
+    const th = DARK;
+    const s = add(th, { rail: { mid: 'Contact', rule: KEY }, outline: 'Contact' });
+    text(s.els, { x: MX - 6, y: 250, w: span(12), anchor: 'last', paras: [P([sp('Let’s ', 'semi', 112, th.fg, -0.05), sp('create', 'serif', 124, th.fg, -0.01), sp('.', 'semi', 112, th.fg, -0.05)], { lead: 0.95 })] });
+    const rows = [['Email', email, email && `mailto:${email}`], ['Phone', phone, phone && `tel:${phone.replace(/[^\d+]/g, '')}`], ['Instagram', instaHandle, instaUrl], ['Web', 'hatist.studio', 'https://hatist.studio']].filter(r => r[1]);
+    const x = cx(6), w = span(6), rowH = 34;
+    let y = BOT - rows.length * rowH;
+    for (const [k, v, url] of rows) {
+      line(s.els, x, y, RIGHT, y, th.hair);
+      text(s.els, { x, y: y + rowH * 0.62, w: span(1), anchor: 'baseline', paras: [P(label(k, th.fg2))] });
+      text(s.els, { x: cx(7), y: y + rowH * 0.66, w: span(5), anchor: 'baseline', maxLines: 1, paras: [P(sp(v, 'med', 15, th.fg, -0.02))] });
+      if (url) s.els.push({ t: 'link', x: cx(7), y: y + 4, w: span(5), h: rowH - 8, url });
+      y += rowH;
     }
+    line(s.els, x, y, RIGHT, y, th.hair);
+    text(s.els, { x: MX, y: BOT, w: span(5), anchor: 'baseline', paras: [P(label(`Generated ${dateStr} from hatist.studio`, th.fg3))] });
   }
-  return pptx.write({ outputType: 'nodebuffer' });
+
+  // ═══ 인덱스 채우기 (장 번호 확정 후) ═══
+  {
+    const s = indexSlide, th = LIGHT;
+    text(s.els, { x: MX, y: TOP + 34, w: span(6), anchor: 'baseline', paras: [P(sp('Index', 'semi', 40, th.fg, -0.035), { lead: 1 })] });
+    text(s.els, { x: cx(8), y: TOP + 34, w: span(4), anchor: 'baseline', align: 'right', paras: [P(label(`${nn(projects.length)} works   ·   ${span_}`, th.fg2))] });
+    const n = projects.length;
+    const two = n > 14;
+    const tables = two ? [[0, Math.ceil(n / 2)], [Math.ceil(n / 2), n]] : [[0, n]];
+    const hasClient = !two && projects.some(p => filled(p.client));
+    const hasYear = !two && projects.some(p => filled(p.year));
+    const y0 = 150;
+    tables.forEach(([a, b], ti) => {
+      const x0 = two ? cx(ti * 6) : MX, x1 = two ? cx(ti * 6) + span(6) : RIGHT;
+      const cols = two
+        ? [['No.', x0, 40], ['Title', x0 + PITCH * 0.6, span(4)], ['Page', x1 - 40, 40, 'right']]
+        : [['No.', cx(0), span(1)], ['Title', cx(1), span(hasClient || hasYear ? 5 : 7)],
+           hasClient && ['Client', cx(6), span(2)], hasYear && ['Year', cx(8), span(1)],
+           ['Discipline', cx(9), span(2)], ['Page', cx(11), span(1), 'right']].filter(Boolean);
+      cols.forEach(([k, x, w, al]) => text(s.els, { x, y: y0, w, anchor: 'baseline', align: al || 'left', paras: [P(label(k, th.fg2))] }));
+      line(s.els, x0, y0 + 8, x1, y0 + 8, th.fg, 0.6);
+      const rowsN = b - a;
+      const rowH = Math.min(two ? 22 : 30, (BOT - (y0 + 8)) / rowsN);
+      const ts = two ? Math.min(9, rowH * 0.5) : Math.min(12, rowH * 0.44);
+      for (let r = 0; r < rowsN; r++) {
+        const i = a + r, p = projects[i];
+        const top = y0 + 8 + r * rowH, base = top + rowH * 0.64;
+        const cells = two
+          ? { 'No.': sp(nn(i + 1), 'mono', 6.8, th.fg2), Title: sp(p.title || 'Untitled', 'med', ts, th.fg, -0.015), Page: sp(nn(projPage[i] || 0), 'mono', 6.8, th.fg2) }
+          : { 'No.': sp(nn(i + 1), 'mono', 7.5, th.fg2), Title: sp(p.title || 'Untitled', 'med', ts, th.fg, -0.02), Client: sp(filled(p.client), 'sans', 8.5, th.fg2), Year: sp(filled(p.year), 'mono', 7.5, th.fg2), Discipline: label(catOf(p), th.fg2), Page: sp(nn(projPage[i] || 0), 'mono', 7.5, th.fg) };
+        cols.forEach(([k, x, w, al]) => { if (cells[k] && cells[k].text) text(s.els, { x, y: base, w, anchor: 'baseline', align: al || 'left', maxLines: 1, paras: [P(cells[k])] }); });
+        line(s.els, x0, top + rowH, x1, top + rowH, th.hair);
+        if (projPage[i]) s.els.push({ t: 'link', x: x0, y: top, w: x1 - x0, h: rowH, page: projPage[i] });
+      }
+    });
+  }
+  late.forEach(fn => fn());
+
+  // ═══ 레일 — 모든 장 같은 자리: Hati® / 섹션 / 장면 / 폴리오 ═══
+  const total = slides.length;
+  slides.forEach((s, idx) => {
+    if (s.rail === null) {   // 스프레드: 레일 대신 하단 엣지 밴드 — 캡션 / 스틸 번호 / 폴리오
+      if (s.captionRight) text(s.els, { x: cx(6), y: H - 14, w: span(3), anchor: 'baseline', paras: [P(label(s.captionRight, s.th.fg2))] });
+      text(s.els, { x: cx(9), y: H - 14, w: span(3), anchor: 'baseline', align: 'right', paras: [P(label(`${nn(idx + 1)} / ${nn(total)}`, s.th.fg2))] });
+      return;
+    }
+    const r = s.rail || {};
+    const C = r.onImage ? ON_IMG : s.th;
+    const first = idx === 0;
+    text(s.els, { x: MX, y: RAIL, w: span(2), anchor: 'baseline', paras: [P(first ? label(r.left || '', C.fg2) : sp('Hati®', 'semi', 8.5, C.fg, -0.01))] });
+    if (r.mid) text(s.els, { x: cx(3), y: RAIL, w: span(3), anchor: 'baseline', maxLines: 1, paras: [P(label(r.mid, C.fg2))] });
+    if (r.sub) text(s.els, { x: cx(6), y: RAIL, w: span(3), anchor: 'baseline', maxLines: 1, paras: [P(label(r.sub, C.fg2))] });
+    text(s.els, { x: cx(9), y: RAIL, w: span(3), anchor: 'baseline', align: 'right', paras: [P(label(first ? (r.right || '') : `${nn(idx + 1)} / ${nn(total)}`, C.fg2))] });
+    if (!r.onImage) line(s.els, MX, RAIL + 10, RIGHT, RAIL + 10, r.rule || s.th.hair, r.rule ? 0.6 : 0.5);
+  });
+
+  const title = `Hati — Portfolio ${year}${scope === 'all' ? ' (Complete)' : ''}`;
+  return { W, H, title, subject: 'Visual Creative Portfolio', slides };
 }
 
-// ═══════════════════════ HTML 프리뷰 렌더러 (검수용 — 스크린샷과 눈검수) ═══════════════════════
-function renderHtml(slides) {
-  const S = 96;   // px per inch
-  const font = f => (f === 'serif' ? 'Georgia, serif' : "'Malgun Gothic','Apple SD Gothic Neo',sans-serif");
-  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const runHtml = r => `<span style="font-family:${font(r.font)};font-size:${(r.size || 12) * S / 72}px;${r.bold ? 'font-weight:700;' : ''}${r.italic ? 'font-style:italic;' : ''}${r.superscript ? 'vertical-align:super;' : ''}color:#${r.color || '000'};letter-spacing:${(r.charSpacing || 0) * S / 72 / 10}px;">${esc(r.text)}</span>${r.breakLine ? `<div style="height:${((r.paraSpaceAfter || 0) + (r.paraSpaceBefore || 0)) * S / 72}px"></div>` : ''}`;
-  const body = slides.map((sl, i) => `
-  <div class="slide" style="position:relative;width:${PW * S}px;height:${PH * S}px;background:#${sl.bg};overflow:hidden;margin:24px auto;box-shadow:0 8px 40px rgba(0,0,0,0.35)" data-n="${i + 1}">
-    ${sl.els.map(el => {
-      const box = `left:${el.x * S}px;top:${el.y * S}px;width:${el.w * S}px;`;
-      if (el.type === 'image') return `<img src="${el.data}" style="position:absolute;${box}height:${el.h * S}px;object-fit:fill;display:block">`;
-      if (el.type === 'line') return el.vertical
-        ? `<div style="position:absolute;left:${el.x * S}px;top:${el.y * S}px;width:0;height:${el.h * S}px;border-left:${Math.max(1, (el.width || 0.75))}px solid #${el.color}"></div>`
-        : `<div style="position:absolute;${box}height:0;border-top:${Math.max(1, (el.width || 0.75))}px solid #${el.color}"></div>`;
-      const align = el.align ? `text-align:${el.align};` : '';
-      const va = el.valign === 'middle' ? 'display:flex;align-items:center;justify-content:' + (el.align === 'center' ? 'center' : 'flex-start') + ';' : '';
-      const lh = el.lineSpacingMultiple ? `line-height:${el.lineSpacingMultiple * 1.2};` : 'line-height:1.25;';
-      const inner = el.runs ? el.runs.map(runHtml).join('') :
-        `<span style="font-family:${font(el.font)};font-size:${(el.size || 12) * S / 72}px;${el.bold ? 'font-weight:700;' : ''}${el.italic ? 'font-style:italic;' : ''}color:#${el.color};letter-spacing:${(el.charSpacing || 0) * S / 72 / 10}px;white-space:pre-wrap;">${esc(el.text)}</span>`;
-      const shrinkAttr = el.shrink ? ' data-shrink' : '';
-      return `<div${shrinkAttr} style="position:absolute;${box}height:${(el.h || 0.4) * S}px;${align}${va}${lh}overflow:hidden;">${inner}</div>`;
-    }).join('\n')}
-  </div>`).join('\n');
-  // PPTX 의 fit:'shrink' 를 HTML 에서도 재현 — 넘치는 텍스트 박스는 폰트를 줄여 맞춘다(0.6까지).
-  // 이렇게 해야 프리뷰가 실제 PPTX 렌더와 어긋나지 않아 검수가 정확해진다.
-  const shrinkScript = `<script>document.querySelectorAll('[data-shrink]').forEach(function(el){var g=0;while(el.scrollHeight>el.clientHeight+1&&g++<14){var kids=el.querySelectorAll('span');kids.forEach(function(s){var f=parseFloat(getComputedStyle(s).fontSize);s.style.fontSize=(f*0.94)+'px';});}});<\/script>`;
-  return `<!doctype html><meta charset="utf-8"><body style="background:#333;margin:0;padding:1px 0">${body}${shrinkScript}</body>`;
+async function buildDeckFiles({ portfolio, settings, scope = 'featured' }) {
+  const deck = await buildDeck({ portfolio, settings, scope });
+  const [pdf, pptx] = await Promise.all([renderPdf(deck), renderPptx(deck)]);
+  return { pdf, pptx, pages: deck.slides.length };
 }
 
-async function buildDeckBuffer({ portfolio, settings, scope = 'featured' }) {
-  const slides = await buildSpecs({ portfolio, settings, scope });
-  return renderPptx(slides);
-}
-
-module.exports = { buildDeckBuffer, buildSpecs, renderPptx, renderHtml, filled };
+module.exports = { buildDeck, buildDeckFiles, filled };

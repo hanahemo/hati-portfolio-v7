@@ -13,9 +13,13 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "express-session": "^1.18.0",
+    "fontkit": "^2.0.4",
+    "jszip": "^3.10.2",
     "multer": "^2.1.1",
+    "pdfkit": "^0.17.2",
     "pptxgenjs": "^4.0.1",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "subset-font": "^2.9.0"
   },
   "engines": {
     "node": ">=18.0.0"
